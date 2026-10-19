@@ -1,0 +1,177 @@
+[workspace]
+members = [
+    ".",
+    "crates/corpora_config",
+    "crates/corpora_foundation",
+    "crates/corpora_persistence",
+    "crates/corpora_platform",
+    "crates/corpora_runtime_services",
+    "crates/corpora_services",
+    "crates/corpora_shell",
+    "crates/corpora_ui",
+]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+
+[workspace.lints.clippy]
+collapsible_if = "allow"
+derivable_impls = "allow"
+enum_variant_names = "allow"
+explicit_auto_deref = "allow"
+if_same_then_else = "allow"
+let_and_return = "allow"
+let_unit_value = "allow"
+map_flatten = "allow"
+map_unwrap_or = "allow"
+needless_borrow = "allow"
+new_ret_no_self = "allow"
+new_without_default = "allow"
+redundant_closure_call = "allow"
+too_many_arguments = "allow"
+type_complexity = "allow"
+unnecessary_map_or = "allow"
+unnecessary_sort_by = "allow"
+unneeded_wildcard_pattern = "allow"
+
+[workspace.dependencies]
+corpora_config = { path = "crates/corpora_config" }
+corpora_foundation = { path = "crates/corpora_foundation" }
+corpora_persistence = { path = "crates/corpora_persistence" }
+corpora_platform = { path = "crates/corpora_platform" }
+corpora_runtime_services = { path = "crates/corpora_runtime_services" }
+corpora_services = { path = "crates/corpora_services" }
+corpora_shell = { path = "crates/corpora_shell" }
+corpora_ui = { path = "crates/corpora_ui" }
+
+ely-gpui-component = { git = "https://git.zacharyzhang.com/ZacharyZhang-NY/Ely-GPUI-Components", rev = "da3fdcaf39f2fa85ce1dd9cad07c3c81cf1dd721" }
+# Ely pins gpui-pre =0.3.8; any other GPUI source is a different, type-incompatible crate.
+gpui = { package = "gpui-pre", version = "=0.3.8", default-features = false, features = ["stacker"] }
+gpui_platform = { package = "gpui-pre-platform", version = "=0.3.8", features = ["font-kit", "runtime_shaders"] }
+gpui-router = { git = "https://github.com/justjavac/gpui-router", rev = "e2ec6ea039f05cb0aabd46929fd0883da1bfd93e", default-features = false, features = ["gpui-pre"] }
+
+anyhow = "1"
+arboard = { version = "3.6.1", features = ["image-data"] }
+# `async-io`, not tokio: notify-rust forces zbus/async-io and zbus forbids both.
+ashpd = { version = "0.13", default-features = false, features = ["async-io", "notification"] }
+async-trait = "0.1"
+atomic-write-file = "0.3.0"
+base64 = "0.22"
+block2 = "0.6"
+chrono = { version = "0.4.44", features = ["serde"] }
+directories = "6.0.0"
+ed25519-dalek = { version = "2", features = ["std"] }
+flume = "0.11"
+futures-util = "0.3"
+global-hotkey = "0.8"
+# X11 window icon from the embedded 48px brand PNG.
+image = { version = "0.25", default-features = false, features = ["png"] }
+interprocess = "2.4.2"
+# Per-platform credential stores; a platform without its store feature falls
+# back to keyring's mock (writes vanish, reads miss).
+keyring = { version = "3.6.3", features = ["apple-native", "windows-native"] }
+libc = "0.2"
+network-interface = "2.0.3"
+notify = "8.2.0"
+notify-rust = "4.17.0"
+objc2 = { version = "0.6", features = ["exception"] }
+objc2-foundation = { version = "0.3.0", default-features = false, features = ["NSBundle", "NSError", "NSString", "std"] }
+objc2-user-notifications = { version = "0.3.0", default-features = false, features = ["UNNotificationSettings", "UNUserNotificationCenter", "block2", "std"] }
+open = "5.3.2"
+opentelemetry = "0.24.0"
+opentelemetry-otlp = { version = "0.17.0", features = ["http-proto", "reqwest-client"] }
+opentelemetry_sdk = { version = "0.24.1", features = ["rt-tokio", "trace"] }
+percent-encoding = "2"
+quick-xml = "0.37"
+reqwest = { version = "0.12.24", default-features = false, features = ["cookies", "json", "multipart", "rustls-tls", "stream"] }
+rfd = "0.15.4"
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+rust-embed = "8"
+rust-i18n = "4"
+semver = "1.0.28"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+single-instance = "0.3.3"
+sys-locale = "0.3"
+tempfile = "3.27.0"
+thiserror = "2.0.18"
+tokio = { version = "1", features = ["io-util", "net", "rt", "rt-multi-thread", "sync", "time"] }
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+tracing = "0.1"
+tracing-appender = "0.2"
+# tracing-log forwards Ely's `log` records into the tracing subscriber.
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "registry", "tracing-log"] }
+undo = "0.52.0"
+url = "2.5.8"
+# macOS notification backend only; Windows sends through corpora_config's win_toast.
+user-notify = "0.4.2"
+uuid = { version = "1.23.1", features = ["serde", "v4"] }
+windows = { version = "0.61", features = [
+    "Data_Xml_Dom",
+    "Foundation_Collections",
+    "UI_Notifications",
+    "Win32_Foundation",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Threading",
+    "Win32_System_Variant",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_PropertiesSystem",
+    "Win32_UI_WindowsAndMessaging",
+] }
+windows-registry = "0.6"
+winresource = "0.1"
+
+[package]
+name = "gpui-corpora"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# OTLP export over HTTP/Protobuf for the telemetry module.
+otlp = ["corpora_runtime_services/otlp"]
+websocket = ["corpora_platform/websocket"]
+# XDG Desktop Portal notification backend for Flatpak/Snap runs.
+notifications-portal = ["corpora_config/notifications-portal"]
+
+[dependencies]
+corpora_config.workspace = true
+corpora_foundation.workspace = true
+corpora_persistence.workspace = true
+corpora_platform.workspace = true
+corpora_runtime_services.workspace = true
+corpora_services.workspace = true
+corpora_shell.workspace = true
+corpora_ui.workspace = true
+
+anyhow.workspace = true
+ely-gpui-component.workspace = true
+gpui.workspace = true
+gpui-router.workspace = true
+gpui_platform.workspace = true
+rusqlite.workspace = true
+rust-i18n.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+gpui = { package = "gpui-pre", version = "=0.3.8", features = ["test-support"] }
+single-instance.workspace = true
+tempfile.workspace = true
+
+[build-dependencies]
+winresource.workspace = true
+
+[profile.dev.package]
+gpui-pre = { opt-level = 3 }
+gpui-pre-platform = { opt-level = 3 }
