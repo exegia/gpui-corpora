@@ -21,7 +21,7 @@ impl NotificationBackend for NotifyRustBackend {
             can_read_permission_state: false,
             can_send_immediate_native: true,
             can_send_interactive: false,
-            requires_packaged_runtime: cfg!(target_os = "windows"),
+            requires_packaged_runtime: cfg!(any(target_os = "macos", target_os = "windows")),
         }
     }
 
@@ -40,6 +40,9 @@ impl NotificationBackend for NotifyRustBackend {
             importance = %request.importance,
             "sending notification through notify-rust"
         );
+
+        #[cfg(target_os = "macos")]
+        macos_application()?;
 
         let mut notification = notify_rust::Notification::new();
         notification

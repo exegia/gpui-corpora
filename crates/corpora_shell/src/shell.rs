@@ -31,6 +31,7 @@ use crate::{
     },
 };
 
+pub(crate) use chrome::TITLEBAR_PADDING;
 pub use chrome::frame;
 pub use frame_time::last_frame_time_us;
 

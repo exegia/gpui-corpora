@@ -73,6 +73,10 @@ def main():
     app = None
     builder = None
     executable = root / "target" / "debug" / ("gpui-corpora.exe" if os.name == "nt" else "gpui-corpora")
+    build_command = ["cargo", "build", "--bin", "gpui-corpora", "--target-dir", str(root / "target")]
+    if sys.platform == "darwin":
+        build_command = ["bash", str(root / "scripts/macos-dev-app.sh")]
+        executable = root / "target/debug/Corpora.app/Contents/MacOS/Corpora"
 
     def interrupted(_signal, _frame):
         raise KeyboardInterrupt
@@ -83,7 +87,7 @@ def main():
         for _ in saves(root):
             print("[dev] Building…", flush=True)
             builder = subprocess.Popen(
-                ["cargo", "build", "--bin", "gpui-corpora", "--target-dir", str(root / "target")],
+                build_command,
                 cwd=root, start_new_session=True,
             )
             if builder.wait():

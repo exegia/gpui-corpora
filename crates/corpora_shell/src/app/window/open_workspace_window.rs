@@ -19,6 +19,8 @@ pub fn open_workspace_window(title: &str, cx: &mut App) -> anyhow::Result<Window
         },
         None => Bounds::centered(None, window_size, cx),
     };
+    let mut controls = cx.theme().traffic_light_origin();
+    controls.y += crate::shell::TITLEBAR_PADDING.to_pixels(cx.theme().base_rem());
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(window_bounds)),
 
@@ -29,7 +31,7 @@ pub fn open_workspace_window(title: &str, cx: &mut App) -> anyhow::Result<Window
         titlebar: Some(TitlebarOptions {
             title: Some(title.to_string().into()),
             appears_transparent: true,
-            traffic_light_position: Some(cx.theme().traffic_light_origin()),
+            traffic_light_position: Some(controls),
         }),
         kind: WindowKind::Normal,
         // Becomes Wayland app_id / X11 WM_CLASS, matching the desktop entry.

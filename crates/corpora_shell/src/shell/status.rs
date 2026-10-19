@@ -2,7 +2,9 @@ use ely_gpui_component::{
     primitives::IconName,
     shell::{Connectivity, OfflineIndicator, StatusBar, StatusBarItem},
 };
-use gpui::App;
+use gpui::{AnyElement, App, StyleRefinement, Window, prelude::*, px};
+
+use super::chrome::style_chrome;
 
 use crate::{
     connectivity::{self, ConnectivityState},

@@ -43,6 +43,13 @@ class DevWatcherTest(unittest.TestCase):
             for name in ("scripts", "src", "bin", "target/debug"):
                 (root / name).mkdir(parents=True)
             shutil.copy(Path(__file__).with_name("dev.py"), root / "scripts/dev.py")
+            (root / "scripts/macos-dev-app.sh").write_text(
+                "#!/bin/sh\nset -eu\n"
+                "cd \"$(dirname \"$0\")/..\"\n"
+                "cargo build --bin gpui-corpora\n"
+                "mkdir -p target/debug/Corpora.app/Contents/MacOS\n"
+                "cp target/debug/gpui-corpora target/debug/Corpora.app/Contents/MacOS/Corpora\n"
+            )
             source = root / "src/main.rs"
             source.write_text("initial")
             cargo = root / "bin/cargo"
@@ -59,6 +66,7 @@ class DevWatcherTest(unittest.TestCase):
                 f"#!{sys.executable}\n"
                 "import os, time\n"
                 "with open('starts', 'a') as log: log.write(f'{os.getpid()}\\n')\n"
+                "with open('executables', 'a') as log: log.write(__file__ + '\\n')\n"
                 "while True: time.sleep(0.1)\n"
             )
             cargo.chmod(0o755)
@@ -81,6 +89,9 @@ class DevWatcherTest(unittest.TestCase):
                             time.sleep(0.05)
 
                     wait_for(lambda: len(lines("starts")) == 1)
+                    if sys.platform == "darwin":
+                        wait_for(lambda: len(lines("executables")) == 1)
+                        self.assertEqual(lines("executables"), [str((root / "target/debug/Corpora.app/Contents/MacOS/Corpora").resolve())])
                     first_pid = int(lines("starts")[0])
                     (root / "target/output").write_text("ignored")
                     (root / "src/.main.rs.swp").write_text("ignored")

@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 use super::*;
 
-pub fn bar(cx: &App) -> StatusBar {
+pub fn bar(window: &mut Window, cx: &mut App) -> AnyElement {
     let connectivity = match connectivity::snapshot(cx).state {
         ConnectivityState::Online => Connectivity::Online,
         ConnectivityState::Unknown => Connectivity::Reconnecting,
@@ -40,16 +40,27 @@ pub fn bar(cx: &App) -> StatusBar {
     if let Some(frame) = frame_time_label(cx) {
         bar = bar.right(StatusBarItem::new("frame-time").label(frame));
     }
-    bar.right(navigate_on_click(
-        StatusBarItem::new("notifications")
-            .icon(IconName::Bell)
-            .label(unread.to_string())
-            .tooltip("Notifications"),
-        navigation::NOTIFICATIONS,
-    ))
-    .right(
-        StatusBarItem::new("auth-status")
-            .icon(IconName::Shield)
-            .label(session),
+    let bar = bar
+        .right(navigate_on_click(
+            StatusBarItem::new("notifications")
+                .icon(IconName::Bell)
+                .label(unread.to_string())
+                .tooltip("Notifications"),
+            navigation::NOTIFICATIONS,
+        ))
+        .right(
+            StatusBarItem::new("auth-status")
+                .icon(IconName::Shield)
+                .label(session),
+        );
+    style_chrome(
+        bar,
+        StyleRefinement::default()
+            .h(px(36.0))
+            .py_2()
+            .px_3()
+            .border_t_0(),
+        window,
+        cx,
     )
 }

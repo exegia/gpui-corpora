@@ -288,7 +288,7 @@ impl Render for Workspace {
         } else {
             routes::view(cx.entity().downgrade()).into_any_element()
         };
-        let status = status::bar(cx);
+        let status = status::bar(window, cx);
         let palette = self.palette_open.then(|| self.palette(cx));
         let theme = cx.theme();
         let scope = FocusScope::new(&self.focus)

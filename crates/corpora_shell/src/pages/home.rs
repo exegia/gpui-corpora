@@ -41,11 +41,11 @@ pub fn home() -> impl IntoElement {
                         .description("Set up the services behind your workspace."),
                 )
                 .child(Paragraph::new("No runtime connected."))
-                .footer(nav_button(
+                .child(div().flex().justify_end().child(nav_button(
                     "connection-settings",
                     "Connection settings",
                     "/settings",
-                )),
+                ))),
         )
         .child(
             div()
@@ -58,7 +58,11 @@ pub fn home() -> impl IntoElement {
                             CardHeader::new("Projects")
                                 .description("A home for your document workflows."),
                         )
-                        .footer(nav_button("open-projects", "Open projects", "/projects")),
+                        .child(div().flex().justify_end().child(nav_button(
+                            "open-projects",
+                            "Open projects",
+                            "/projects",
+                        ))),
                 )
                 .child(
                     Card::new()
@@ -67,7 +71,11 @@ pub fn home() -> impl IntoElement {
                             CardHeader::new("Corpus explorer")
                                 .description("Make room for a closer reading."),
                         )
-                        .footer(nav_button("open-explore", "Explore texts", "/explore")),
+                        .child(div().flex().justify_end().child(nav_button(
+                            "open-explore",
+                            "Explore texts",
+                            "/explore",
+                        ))),
                 ),
         )
 }

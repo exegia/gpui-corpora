@@ -5,7 +5,7 @@ use super::*;
 pub fn frame(
     workspace: WeakEntity<Workspace>,
     outlet: Outlet,
-    _: &mut Window,
+    window: &mut Window,
     cx: &mut App,
 ) -> impl IntoElement + use<> {
     let path = use_location(cx).pathname.to_string();
@@ -29,10 +29,6 @@ pub fn frame(
     let palette_owner = workspace.clone();
     // Ely TitleBar already uses its drag_region (the WindowDragRegion equivalent).
     let titlebar = TitleBar::new("titlebar")
-        .child(
-            pages::nav_button("workspace-home", "Corpora", navigation::HOME)
-                .icon(IconName::BookOpen),
-        )
         .child(
             IconButton::new("back", IconName::ArrowLeft)
                 .tooltip("Back")
@@ -64,31 +60,19 @@ pub fn frame(
                 }),
         )
         .action(
-            IconButton::new("toggle-sidebar", IconName::PanelLeft)
-                .tooltip("Toggle sidebar")
-                .on_click(move |_, _, cx| {
-                    sidebar_owner
-                        .update(cx, |state, cx| state.toggle_sidebar(cx))
-                        .ok();
-                }),
-        )
-        .action(
-            IconButton::new("toggle-dock", IconName::PanelBottom)
-                .tooltip("Toggle activity dock")
-                .on_click(move |_, _, cx| {
-                    dock_owner
-                        .update(cx, |state, cx| {
-                            state.dock_visible = !state.dock_visible;
-                            cx.notify();
-                        })
-                        .ok();
-                }),
-        )
-        .action(
             IconButton::new("settings", IconName::Settings)
                 .tooltip("Settings")
                 .on_click(|_, window, cx| use_navigate(window, cx).push(navigation::SETTINGS)),
         );
+    let titlebar = style_chrome(
+        titlebar,
+        StyleRefinement::default()
+            .h(cx.theme().titlebar_height() + TITLEBAR_PADDING * 2.0)
+            .px_1()
+            .border_b_0(),
+        window,
+        cx,
+    );
     let activity = ActivityBar::new("activity-bar")
         .item(ActivityItem::new(navigation::HOME, IconName::House, "Home"))
         .item(ActivityItem::new(
@@ -107,17 +91,20 @@ pub fn frame(
             "Notifications",
         ))
         .footer(ActivityItem::new(
-            navigation::SETTINGS,
-            IconName::Settings,
-            "Settings",
-        ))
-        .footer(ActivityItem::new(
             navigation::PROFILE,
             IconName::User,
             "Profile",
         ))
         .selected(selected)
         .on_select(|path, window, cx| use_navigate(window, cx).push(path.clone()));
+    let activity = style_chrome(
+        activity,
+        StyleRefinement::default()
+            .border_r_0()
+            .bg(gpui::transparent_black()),
+        window,
+        cx,
+    );
     let content = if loading {
         div()
             .flex()
@@ -141,21 +128,27 @@ pub fn frame(
             None => div().p_8().child(outlet).into_any_element(),
         }
     };
-    div().size_full().flex().flex_col().child(titlebar).child(
-        div()
-            .flex()
-            .flex_1()
-            .min_h_0()
-            .child(activity)
-            .when(sidebar_visible, |row| row.child(sidebar(&path)))
-            .child(
-                div()
-                    .id("route-content")
-                    .flex_1()
-                    .min_w_0()
-                    .h_full()
-                    .overflow_y_scroll()
-                    .child(content),
-            ),
-    )
+    div()
+        .border_0()
+        .size_full()
+        .flex()
+        .flex_col()
+        .child(titlebar)
+        .child(
+            div()
+                .flex()
+                .flex_1()
+                .min_h_0()
+                .child(activity)
+                .when(sidebar_visible, |row| row.child(sidebar(&path)))
+                .child(
+                    div()
+                        .id("route-content")
+                        .flex_1()
+                        .min_w_0()
+                        .h_full()
+                        .overflow_y_scroll()
+                        .child(content),
+                ),
+        )
 }

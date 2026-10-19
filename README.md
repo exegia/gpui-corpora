@@ -29,6 +29,10 @@ editor files, and groups rapid saves into one rebuild. A failed build leaves
 the current app running; saving a fix retries it. Saves during a build trigger
 another rebuild. Press `Ctrl+C` to stop the watcher and its app.
 
+On macOS the watcher builds, signs, and launches `target/debug/Corpora.app` so
+native notifications have the `com.corpora.app` identity. Unbundled launches
+use in-app notifications when native delivery is unavailable.
+
 ## Window
 
 The Ely title bar supplies native macOS traffic-light spacing and its built-in

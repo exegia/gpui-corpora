@@ -19,6 +19,8 @@ mod notify_rust_test;
 
 mod icon_candidates;
 mod log;
+#[cfg(target_os = "macos")]
+mod macos_application;
 mod notify_rust_backend;
 mod probe_app_icon;
 mod resolve_app_icon;
@@ -26,6 +28,8 @@ mod resolve_app_icon;
 #[cfg(target_os = "linux")]
 use icon_candidates::icon_candidates;
 use log::LOG;
+#[cfg(target_os = "macos")]
+use macos_application::macos_application;
 pub use notify_rust_backend::NotifyRustBackend;
 #[cfg(target_os = "linux")]
 use probe_app_icon::probe_app_icon;
