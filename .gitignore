@@ -2,3 +2,11 @@
 com.corpora.app.instance
 .idea/
 .DS_Store
+.agents/
+.claude/
+.github/aw/logs/
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.toml
