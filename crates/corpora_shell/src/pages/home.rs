@@ -1,0 +1,73 @@
+#[allow(unused_imports)]
+use super::*;
+
+pub fn home() -> impl IntoElement {
+    let metric = |label, value, note| {
+        Card::new()
+            .flex_1()
+            .header(CardHeader::new(label))
+            .child(Heading::h2(value))
+            .child(Caption::new(note))
+    };
+    div()
+        .flex()
+        .flex_col()
+        .gap_6()
+        .child(Overline::new("Workspace overview"))
+        .child(Heading::h1("Your corpus workspace."))
+        .child(Paragraph::new(
+            "Explore your texts, organize projects, and make room for a closer reading.",
+        ))
+        .child(
+            div()
+                .flex()
+                .gap_4()
+                .child(metric(
+                    "Python runtime",
+                    "Not connected",
+                    "Connect a runtime to begin processing.",
+                ))
+                .child(metric(
+                    "RPC response",
+                    "Not checked",
+                    "No service connection configured.",
+                ))
+                .child(metric("Access policy", "Local workspace", "Not signed in")),
+        )
+        .child(
+            Card::new()
+                .header(
+                    CardHeader::new("Runtime connection")
+                        .description("Set up the services behind your workspace."),
+                )
+                .child(Paragraph::new("No runtime connected."))
+                .footer(nav_button(
+                    "connection-settings",
+                    "Connection settings",
+                    "/settings",
+                )),
+        )
+        .child(
+            div()
+                .flex()
+                .gap_4()
+                .child(
+                    Card::new()
+                        .flex_1()
+                        .header(
+                            CardHeader::new("Projects")
+                                .description("A home for your document workflows."),
+                        )
+                        .footer(nav_button("open-projects", "Open projects", "/projects")),
+                )
+                .child(
+                    Card::new()
+                        .flex_1()
+                        .header(
+                            CardHeader::new("Corpus explorer")
+                                .description("Make room for a closer reading."),
+                        )
+                        .footer(nav_button("open-explore", "Explore texts", "/explore")),
+                ),
+        )
+}
