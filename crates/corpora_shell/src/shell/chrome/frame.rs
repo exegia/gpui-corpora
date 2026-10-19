@@ -9,7 +9,11 @@ pub fn frame(
     cx: &mut App,
 ) -> impl IntoElement + use<> {
     let path = use_location(cx).pathname.to_string();
-    let selected = routes::section(&path);
+    let selected = if path.starts_with(EMPTY_TAB_PREFIX) {
+        ""
+    } else {
+        routes::section(&path)
+    };
     let (sidebar_visible, loading, error_view) = workspace
         .update(cx, |state, cx| {
             (state.sidebar_visible, state.loading, state.error_view(cx))
@@ -18,15 +22,16 @@ pub fn frame(
     {
         let workspace = workspace.clone();
         let path = path.clone();
-        cx.defer(move |cx| {
+        window.defer(cx, move |window, cx| {
             workspace
-                .update(cx, |state, cx| state.path_rendered(&path, cx))
+                .update(cx, |state, cx| state.path_rendered(&path, window, cx))
                 .ok();
         });
     }
-    let sidebar_owner = workspace.clone();
-    let dock_owner = workspace.clone();
+    let tab_owner = workspace.clone();
     let palette_owner = workspace.clone();
+    let tabs = tabs::tabs(workspace.clone(), window, cx);
+    let notifications = notifications::notifications(workspace.clone(), cx);
     // Ely TitleBar already uses its drag_region (the WindowDragRegion equivalent).
     let titlebar = TitleBar::new("titlebar")
         .child(
@@ -39,14 +44,20 @@ pub fn frame(
                 .tooltip("Forward")
                 .on_click(|_, window, cx| use_navigate(window, cx).forward()),
         )
-        .child(
-            TabBar::new("workspace-tabs")
-                .tab(WindowTab::new(navigation::HOME, "Home").icon(IconName::House))
-                .tab(WindowTab::new(navigation::EXPLORE, "Explore").icon(IconName::Compass))
-                .tab(WindowTab::new(navigation::PROJECTS, "Projects").icon(IconName::Folder))
-                .selected(selected)
-                .on_select(|path, window, cx| use_navigate(window, cx).push(path.clone())),
+        .child(tabs)
+        .action(
+            IconButton::new("new-workspace-tab", IconName::Plus)
+                .tooltip("New tab")
+                .on_click(move |_, _, cx| {
+                    tab_owner
+                        .update(cx, |state, cx| {
+                            let path = state.tabs.new_empty();
+                            state.navigate(path, cx);
+                        })
+                        .ok();
+                }),
         )
+        .action(notifications)
         .action(
             IconButton::new("open-palette", IconName::Search)
                 .tooltip(format!(
@@ -69,6 +80,7 @@ pub fn frame(
         StyleRefinement::default()
             .h(cx.theme().titlebar_height() + TITLEBAR_PADDING * 2.0)
             .px_1()
+            .bg(gpui::transparent_black())
             .border_b_0(),
         window,
         cx,
@@ -84,11 +96,6 @@ pub fn frame(
             navigation::PROJECTS,
             IconName::Folder,
             "Projects",
-        ))
-        .item(ActivityItem::new(
-            navigation::NOTIFICATIONS,
-            IconName::Bell,
-            "Notifications",
         ))
         .footer(ActivityItem::new(
             navigation::PROFILE,
@@ -128,27 +135,43 @@ pub fn frame(
             None => div().p_8().child(outlet).into_any_element(),
         }
     };
+    let body = style_chrome(
+        Well::new().flex_1().min_w_0().h_full().child(
+            div()
+                .id("route-content")
+                .size_full()
+                .overflow_y_scroll()
+                .child(crate::shell::dev_target(
+                    "route-page",
+                    "Current page",
+                    content,
+                )),
+        ),
+        workspace_surface::style(cx.theme().is_dark()),
+        window,
+        cx,
+    );
     div()
         .border_0()
         .size_full()
         .flex()
         .flex_col()
-        .child(titlebar)
+        .child(crate::shell::dev_target(
+            "titlebar",
+            "Title bar and window tabs",
+            titlebar,
+        ))
         .child(
             div()
                 .flex()
                 .flex_1()
                 .min_h_0()
-                .child(activity)
+                .child(crate::shell::dev_target(
+                    "activity-bar",
+                    "Activity bar",
+                    activity,
+                ))
                 .when(sidebar_visible, |row| row.child(sidebar(&path)))
-                .child(
-                    div()
-                        .id("route-content")
-                        .flex_1()
-                        .min_w_0()
-                        .h_full()
-                        .overflow_y_scroll()
-                        .child(content),
-                ),
+                .child(body),
         )
 }

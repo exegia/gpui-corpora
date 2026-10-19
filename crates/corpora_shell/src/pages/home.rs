@@ -2,19 +2,24 @@
 use super::*;
 
 pub fn home() -> impl IntoElement {
-    let metric = |label, value, note| {
-        Card::new()
+    let metric = |id, label, value, note| {
+        let card = Card::new()
             .flex_1()
             .header(CardHeader::new(label))
             .child(Heading::h2(value))
-            .child(Caption::new(note))
+            .child(Caption::new(note));
+        crate::shell::dev_target(id, label, card)
     };
     div()
         .flex()
         .flex_col()
         .gap_6()
         .child(Overline::new("Workspace overview"))
-        .child(Heading::h1("Your corpus workspace."))
+        .child(crate::shell::dev_target(
+            "home-heading",
+            "Workspace heading",
+            Heading::h1("Your corpus workspace."),
+        ))
         .child(Paragraph::new(
             "Explore your texts, organize projects, and make room for a closer reading.",
         ))
@@ -23,18 +28,27 @@ pub fn home() -> impl IntoElement {
                 .flex()
                 .gap_4()
                 .child(metric(
+                    "runtime-metric",
                     "Python runtime",
                     "Not connected",
                     "Connect a runtime to begin processing.",
                 ))
                 .child(metric(
+                    "rpc-metric",
                     "RPC response",
                     "Not checked",
                     "No service connection configured.",
                 ))
-                .child(metric("Access policy", "Local workspace", "Not signed in")),
+                .child(metric(
+                    "access-metric",
+                    "Access policy",
+                    "Local workspace",
+                    "Not signed in",
+                )),
         )
-        .child(
+        .child(crate::shell::dev_target(
+            "runtime-connection",
+            "Runtime connection card",
             Card::new()
                 .header(
                     CardHeader::new("Runtime connection")
@@ -46,12 +60,14 @@ pub fn home() -> impl IntoElement {
                     "Connection settings",
                     "/settings",
                 ))),
-        )
+        ))
         .child(
             div()
                 .flex()
                 .gap_4()
-                .child(
+                .child(crate::shell::dev_target(
+                    "projects-card",
+                    "Projects card",
                     Card::new()
                         .flex_1()
                         .header(
@@ -63,8 +79,10 @@ pub fn home() -> impl IntoElement {
                             "Open projects",
                             "/projects",
                         ))),
-                )
-                .child(
+                ))
+                .child(crate::shell::dev_target(
+                    "explore-card",
+                    "Corpus explorer card",
                     Card::new()
                         .flex_1()
                         .header(
@@ -76,6 +94,6 @@ pub fn home() -> impl IntoElement {
                             "Explore texts",
                             "/explore",
                         ))),
-                ),
+                )),
         )
 }

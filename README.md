@@ -33,6 +33,11 @@ On macOS the watcher builds, signs, and launches `target/debug/Corpora.app` so
 native notifications have the `com.corpora.app` identity. Unbundled launches
 use in-app notifications when native delivery is unavailable.
 
+Development builds include a floating annotation toolbar for native UI feedback.
+Saved notes survive rebuilds and are available to local agent tools at
+`http://127.0.0.1:4748`. See [gpui_agentation](crates/gpui_agentation/README.md)
+for usage and the REST/SSE API. Release builds exclude the annotation feature.
+
 ## Window
 
 The Ely title bar supplies native macOS traffic-light spacing and its built-in

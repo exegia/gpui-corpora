@@ -1,0 +1,28 @@
+[package]
+name = "gpui_agentation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license = "MIT"
+description = "Development-only native GPUI feedback with a local agent API"
+
+[lints]
+workspace = true
+
+[dependencies]
+atomic-write-file.workspace = true
+axum = "0.7.9"
+ely-gpui-component.workspace = true
+futures-util.workspace = true
+gpui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["macros"] }
+uuid.workspace = true
+
+[dev-dependencies]
+gpui = { package = "gpui-pre", version = "=0.3.8", features = ["test-support"] }
+reqwest.workspace = true
+tempfile.workspace = true

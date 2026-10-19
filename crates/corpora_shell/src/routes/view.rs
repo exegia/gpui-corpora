@@ -19,6 +19,9 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
             .element(move |window, cx| shell::frame(frame.clone(), Outlet::new(), window, cx))
             .children([
                 Route::new().index().element(|_, _| pages::home()),
+                Route::new()
+                    .path("tabs/new/:tabId")
+                    .element(|_, _| gpui::div()),
                 Route::new().path("explore").children([
                     Route::new().index().element(|_, _| pages::search()),
                     Route::new().path("detail/:type/:id").children([

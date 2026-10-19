@@ -2,6 +2,7 @@
 use super::*;
 
 use ely_gpui_component::theme::ActiveTheme;
+use gpui::Half;
 
 /// Open the workspace at its persisted bounds, or centered at a size that
 /// fits the primary display.
@@ -20,7 +21,9 @@ pub fn open_workspace_window(title: &str, cx: &mut App) -> anyhow::Result<Window
         None => Bounds::centered(None, window_size, cx),
     };
     let mut controls = cx.theme().traffic_light_origin();
-    controls.y += crate::shell::TITLEBAR_PADDING.to_pixels(cx.theme().base_rem());
+    controls.y += crate::shell::TITLEBAR_PADDING
+        .to_pixels(cx.theme().base_rem())
+        .half();
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(window_bounds)),
 
@@ -36,7 +39,7 @@ pub fn open_workspace_window(title: &str, cx: &mut App) -> anyhow::Result<Window
         kind: WindowKind::Normal,
         // Becomes Wayland app_id / X11 WM_CLASS, matching the desktop entry.
         app_id: Some("corpora".to_string()),
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         window_background: gpui::WindowBackgroundAppearance::Transparent,
         #[cfg(target_os = "linux")]
         window_decorations: Some(gpui::WindowDecorations::Client),

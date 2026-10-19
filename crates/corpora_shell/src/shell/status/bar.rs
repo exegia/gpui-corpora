@@ -13,7 +13,6 @@ pub fn bar(window: &mut Window, cx: &mut App) -> AnyElement {
         SessionState::SignedIn { account_label } => format!("Signed in as {account_label}"),
         SessionState::Error(error) => format!("Session error: {error}"),
     };
-    let unread = crate::notifications::inbox::unread_count(cx);
     let tasks = crate::tasks::active_count(cx);
 
     let mut bar = StatusBar::new()
@@ -40,25 +39,18 @@ pub fn bar(window: &mut Window, cx: &mut App) -> AnyElement {
     if let Some(frame) = frame_time_label(cx) {
         bar = bar.right(StatusBarItem::new("frame-time").label(frame));
     }
-    let bar = bar
-        .right(navigate_on_click(
-            StatusBarItem::new("notifications")
-                .icon(IconName::Bell)
-                .label(unread.to_string())
-                .tooltip("Notifications"),
-            navigation::NOTIFICATIONS,
-        ))
-        .right(
-            StatusBarItem::new("auth-status")
-                .icon(IconName::Shield)
-                .label(session),
-        );
+    let bar = bar.right(
+        StatusBarItem::new("auth-status")
+            .icon(IconName::Shield)
+            .label(session),
+    );
     style_chrome(
         bar,
         StyleRefinement::default()
             .h(px(36.0))
             .py_2()
             .px_3()
+            .bg(gpui::transparent_black())
             .border_t_0(),
         window,
         cx,

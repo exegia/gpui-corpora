@@ -28,6 +28,7 @@ ely-gpui-component.workspace = true
 flume.workspace = true
 gpui.workspace = true
 gpui-router.workspace = true
+gpui_agentation.workspace = true
 rust-embed.workspace = true
 serde.workspace = true
 tracing.workspace = true

@@ -2,8 +2,10 @@
 //! the app event queue that drives navigation.
 
 mod chrome;
+mod dev_feedback;
 mod frame_time;
 mod status;
+pub(crate) use dev_feedback::target as dev_target;
 
 use std::{collections::HashMap, time::Duration};
 
@@ -41,8 +43,10 @@ mod notify_on;
 mod open_palette;
 mod pages;
 mod toggle_sidebar;
+mod window_background;
 mod workspace;
 mod workspace_handle;
+mod workspace_tabs;
 
 use command_value::command_value;
 pub use navigate_to_section::NavigateToSection;
@@ -50,5 +54,7 @@ use notify_on::notify_on;
 pub use open_palette::open_palette;
 pub use pages::Pages;
 pub use toggle_sidebar::ToggleSidebar;
+use window_background::window_background;
 pub use workspace::Workspace;
 use workspace_handle::WorkspaceHandle;
+use workspace_tabs::{EMPTY_TAB_PREFIX, WorkspaceTabs};

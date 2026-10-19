@@ -2,10 +2,13 @@
 use super::*;
 
 pub struct Workspace {
+    #[cfg(debug_assertions)]
+    annotations: Option<Entity<gpui_agentation::AnnotationOverlay>>,
     pub(crate) focus: FocusHandle,
     pub(crate) dock: Entity<Dock>,
     pub(crate) toaster: Entity<Toaster>,
     pub pages: Pages,
+    pub(crate) tabs: WorkspaceTabs,
     pub tray: Option<TrayIcon>,
     pub sidebar_visible: bool,
     pub dock_visible: bool,
@@ -74,6 +77,10 @@ impl Workspace {
 
         let (active_path, collapsed) =
             crate::app_state::with_config(cx, |c| (c.active_path.clone(), c.sidebar_collapsed));
+        #[cfg(debug_assertions)]
+        let annotations = super::dev_feedback::mount(&active_path, window, cx);
+        let mut tabs = WorkspaceTabs::default();
+        tabs.restore_empty(&active_path);
         // Startup deep links were queued before this window existed.
         let drain = cx.entity().downgrade();
         cx.defer(move |cx| {
@@ -93,10 +100,13 @@ impl Workspace {
         .detach();
 
         Self {
+            #[cfg(debug_assertions)]
+            annotations,
             focus,
             dock,
             toaster,
             pages,
+            tabs,
             tray: None,
             sidebar_visible: !collapsed,
             dock_visible: false,
@@ -237,11 +247,25 @@ impl Workspace {
 
     /// Persist the routed path once it changes; leaving a path also clears
     /// the error boundary.
-    pub(crate) fn path_rendered(&mut self, path: &str, cx: &mut Context<Self>) {
+    pub(crate) fn path_rendered(
+        &mut self,
+        path: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        #[cfg(not(debug_assertions))]
+        let _ = window;
         if self.persisted_path == path {
             return;
         }
         self.persisted_path = path.to_string();
+        self.tabs.navigated(path);
+        #[cfg(debug_assertions)]
+        if let Some(annotations) = &self.annotations {
+            annotations.update(cx, |overlay, cx| {
+                overlay.set_route(&format!("gpui://corpora{path}"), window, cx)
+            });
+        }
         self.error_page = None;
         let path = path.to_string();
         crate::app_state::update_config(cx, |config| config.active_path = path);
@@ -279,6 +303,8 @@ impl Workspace {
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        #[cfg(debug_assertions)]
+        gpui_agentation::begin_frame(window, cx);
         let started = std::time::Instant::now();
         if let Some(path) = self.pending_path.take() {
             window.defer(cx, move |window, cx| use_navigate(window, cx).push(path));
@@ -291,6 +317,7 @@ impl Render for Workspace {
         let status = status::bar(window, cx);
         let palette = self.palette_open.then(|| self.palette(cx));
         let theme = cx.theme();
+        let background = window_background(theme.is_dark());
         let scope = FocusScope::new(&self.focus)
             .root()
             .size_full()
@@ -298,15 +325,16 @@ impl Render for Workspace {
             .flex_col()
             .font_family(theme.font_family.clone())
             .text_size(theme.text_size(TextSize::Base))
-            .bg(theme.colors.bg)
             .text_color(theme.colors.fg)
-            .child(div().flex_1().min_h_0().child(body))
-            .child(status)
+            .child(div().flex_1().min_h_0().w_full().child(body))
+            .child(super::dev_target("status-bar", "Status bar", status))
             .child(ToastViewport::new("toasts", &self.toaster))
             .children(palette);
         // Actions bubble from the focused element, so handlers sit outside the scope.
         let root = div()
-            .size_full()
+            .relative()
+            .w(window.viewport_size().width)
+            .h(window.viewport_size().height)
             .on_action(
                 cx.listener(|this, NavigateToSection(i): &NavigateToSection, _, cx| {
                     if let Some(path) = navigation::SECTIONS.get(*i) {
@@ -327,7 +355,10 @@ impl Render for Workspace {
                 this.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
                 cx.notify();
             }))
+            .child(background)
             .child(scope);
+        #[cfg(debug_assertions)]
+        let root = root.children(self.annotations.clone());
         frame_time::store_frame_time(started.elapsed().as_micros() as u64);
         root
     }
