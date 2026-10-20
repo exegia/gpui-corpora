@@ -93,3 +93,14 @@ cargo fmt --check
 cargo check --locked
 cargo build --locked
 ```
+
+## GitHub automation
+
+Rust CI checks formatting, Clippy, and tests on `dev`, `next`, and `main`.
+Dependabot checks Cargo and GitHub Actions dependencies. The release flow is
+`dev` → `next` → `main`; this repository does not use the template's Python
+wheel or Make-based release pipeline.
+
+Copilot agent jobs require the organization's **Allow use of Copilot CLI
+billed to the organization** policy. See [.github/WORKFLOW.md](.github/WORKFLOW.md)
+for configuration and verification commands.

@@ -16,7 +16,7 @@ Run commands from the repository root.
 | Install the secret-scanning hook | `pre-commit install` |
 | Scan working tree for secrets | `gitleaks dir .` |
 
-Read `AGENTS.md` and `CONTRIBUTING.md` before changing code. The inherited Python packaging workflows require configuration before use.
+Read `AGENTS.md` and `CONTRIBUTING.md` before changing code. Python packaging and the old Make-based release pipeline are not used by this Rust application.
 
 ## High-level architecture
 
@@ -46,6 +46,7 @@ This repository contains the Corpora desktop application, built with Rust, GPUI,
 ### Integration conventions
 
 - `copilot-setup-steps.yml` is the bootstrap hook for GitHub Copilot coding agents.
+- Copilot agent jobs require the organization's **Allow use of Copilot CLI billed to the organization** policy. See `WORKFLOW.md`; HTTP 403 from this policy is not a token-wiring error.
 - `claude.yml` and `claude-code-review.yml` depend on `CLAUDE_CODE_OAUTH_TOKEN`.
 - Do not commit local-only agent state such as `.claude/`, `.agents/`, or workflow logs.
 
