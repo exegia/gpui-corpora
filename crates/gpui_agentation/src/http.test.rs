@@ -39,7 +39,7 @@ async fn api_should_support_the_human_agent_feedback_round_trip() {
         .unwrap();
     client
         .post(format!("{base}/annotations/{id}/thread"))
-        .json(&json!({"role": "agent", "message": "Updated padding"}))
+        .json(&json!({"role": "agent", "content": "Updated padding"}))
         .send()
         .await
         .unwrap()
@@ -47,7 +47,7 @@ async fn api_should_support_the_human_agent_feedback_round_trip() {
         .unwrap();
     client
         .patch(format!("{base}/annotations/{id}"))
-        .json(&json!({"status": "resolved"}))
+        .json(&json!({"status": "resolved", "resolvedBy": "agent"}))
         .send()
         .await
         .unwrap()

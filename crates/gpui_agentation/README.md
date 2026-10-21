@@ -107,9 +107,20 @@ Cargo may still build transitive dependencies; no annotation code is linked.
 ## Local API for MCP or Codex tools
 
 Base URL: `http://127.0.0.1:4748`. This is a REST/SSE API, not an MCP JSON-RPC
-transport. An MCP adapter or Codex plugin can wrap these endpoints. No plugin
-is installed or configured automatically, and existing `agentation-mcp` tools
-are not assumed to be wire-compatible.
+transport. The checkout's `.codex/config.toml` points `agentation-mcp` at this
+service using `server --mcp-only --http-url http://127.0.0.1:4748`. Reconnect
+the MCP server after changing that configuration. Corpora must be running in
+dev mode for its sessions to be available. The browser toolbar's separate
+default server on port 4747 does not contain native Corpora annotations.
+
+To configure another MCP client, run:
+
+```sh
+bunx agentation-mcp@1.3.2 server --mcp-only --http-url http://127.0.0.1:4748
+```
+
+The API accepts MCP's `resolvedBy` status metadata and `content` thread text,
+as well as the native client's `message` thread text.
 
 | Method | Endpoint | Response |
 | --- | --- | --- |

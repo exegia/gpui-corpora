@@ -40,7 +40,7 @@ impl Render for SplashArtwork {
                     .flex()
                     .flex_col()
                     .items_center()
-                    .gap_2()
+                    .gap_3()
                     .child(
                         img(self.image.clone())
                             .size(theme.control_height(ControlSize::Lg) * 2.0)

@@ -191,12 +191,32 @@ async fn annotation(
 ) -> Result<Json<crate::Annotation>, ApiError> {
     run(move || store.annotation(&id)).await
 }
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct UpdateAnnotation {
+    comment: Option<String>,
+    status: Option<crate::AnnotationStatus>,
+    // MCP sends attribution separately; the reply thread stores the agent's explanation.
+    #[serde(rename = "resolvedBy")]
+    _resolved_by: Option<String>,
+}
+
 async fn update(
     State(store): State<Store>,
     Path(id): Path<String>,
-    Json(patch): Json<AnnotationPatch>,
+    Json(patch): Json<UpdateAnnotation>,
 ) -> Result<Json<crate::Annotation>, ApiError> {
-    run(move || store.update(&id, patch)).await
+    run(move || {
+        store.update(
+            &id,
+            AnnotationPatch {
+                comment: patch.comment,
+                status: patch.status,
+            },
+        )
+    })
+    .await
 }
 async fn delete(
     State(store): State<Store>,
@@ -213,6 +233,7 @@ async fn delete(
 #[serde(deny_unknown_fields)]
 struct Reply {
     role: String,
+    #[serde(alias = "content")]
     message: String,
 }
 async fn reply(
