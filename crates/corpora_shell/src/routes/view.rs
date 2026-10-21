@@ -9,7 +9,7 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
     let page = |select: fn(&shell::Pages) -> AnyElement| {
         let workspace = workspace.clone();
         move |_: &mut gpui::Window, cx: &mut App| match workspace.upgrade() {
-            Some(entity) => select(&entity.read(cx).pages),
+            Some(entity) => select(entity.read(cx).pages()),
             None => pages::not_found().into_any_element(),
         }
     };

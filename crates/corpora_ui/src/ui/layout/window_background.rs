@@ -37,7 +37,8 @@ fn color(stop: (f32, f32, f32, f32)) -> Hsla {
     hsla(stop.0 / 360.0, stop.1 / 100.0, stop.2 / 100.0, 1.0)
 }
 
-pub(super) fn window_background(dark: bool) -> Div {
+/// The window gradient, positioned to fill its nearest relative parent.
+pub fn window_background(dark: bool) -> Div {
     let stops = if dark { DARK } else { LIGHT };
     // GPUI supports two stops per gradient. Successive fades preserve each interval.
     div()

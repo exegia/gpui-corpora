@@ -1,87 +1,116 @@
+use std::rc::Rc;
+
 use super::WorkspaceTabs;
 
-#[test]
-fn navigation_without_added_tabs_keeps_the_strip_empty() {
-    let mut tabs = WorkspaceTabs::default();
-    tabs.navigated("/explore");
-    tabs.navigated("/projects");
-    assert!(tabs.entries().is_empty());
+#[derive(Debug, PartialEq)]
+struct State {
+    sidebar: bool,
+    inspector_width: u16,
+    selection: String,
 }
 
-#[test]
-fn plus_always_adds_a_separate_empty_tab() {
-    let mut tabs = WorkspaceTabs::default();
-    let first = tabs.new_empty();
-    let second = tabs.new_empty();
-    assert_ne!(first, second);
-    assert_eq!(tabs.entries().len(), 2);
-    assert_eq!(tabs.active_id(), Some(second.as_str()));
-}
-
-#[test]
-fn navigation_leaves_added_tabs_and_their_empty_pages_unchanged() {
-    let mut tabs = WorkspaceTabs::default();
-    let first = tabs.new_empty();
-    tabs.navigated("/projects");
-    let second = tabs.new_empty();
-    tabs.navigated("/explore");
-    tabs.navigated("/explore/detail/text/one");
-    assert_eq!(tabs.entries().len(), 2);
-    assert_eq!(tabs.entries()[0].number, 1);
-    assert_eq!(tabs.active_id(), None);
-    assert_eq!(tabs.select(&first), Some(first.clone()));
-    assert_eq!(tabs.select(&second), Some(second.clone()));
-}
-
-#[test]
-fn closing_the_active_tab_selects_its_neighbor_then_home() {
-    let mut tabs = WorkspaceTabs::default();
-    let first = tabs.new_empty();
-    let second = tabs.new_empty();
-    assert_eq!(tabs.close(&second), Some(first.clone()));
-    assert_eq!(tabs.active_id(), Some(first.as_str()));
-    assert_eq!(tabs.close(&first).as_deref(), Some("/"));
-    assert!(tabs.entries().is_empty());
-}
-
-#[test]
-fn top_level_navigation_deselects_tabs_without_creating_entries() {
-    let mut tabs = WorkspaceTabs::default();
-    let tab = tabs.new_empty();
-    for route in [
-        "/",
-        "/explore",
-        "/projects",
-        "/settings",
-        "/profile/information",
-    ] {
-        tabs.select(&tab);
-        tabs.navigated(route);
-        assert_eq!(tabs.active_id(), None);
-        assert_eq!(tabs.entries().len(), 1);
-        assert_eq!(tabs.entries()[0].path, tab);
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            sidebar: true,
+            inspector_width: 20,
+            selection: String::new(),
+        }
     }
 }
 
 #[test]
-fn closing_a_background_tab_keeps_the_active_tab() {
+fn restored_route_has_a_tab_owner() {
     let mut tabs = WorkspaceTabs::default();
-    let first = tabs.new_empty();
-    let second = tabs.new_empty();
+    tabs.restore("/projects", State::default());
+    assert_eq!(tabs.entries().len(), 1);
+    assert_eq!(tabs.active().unwrap().path, "/projects");
+}
+
+#[test]
+fn navigation_changes_only_the_current_tab() {
+    let mut tabs = WorkspaceTabs::default();
+    let first = tabs.new_empty(());
+    tabs.navigated("/projects");
+    let second = tabs.new_empty(());
+    tabs.navigated("/explore/detail/text/one");
+    assert_eq!(tabs.select(&first).as_deref(), Some("/projects"));
+    assert_eq!(
+        tabs.select(&second).as_deref(),
+        Some("/explore/detail/text/one")
+    );
+}
+
+#[test]
+fn tabs_with_the_same_route_keep_independent_state() {
+    let mut tabs = WorkspaceTabs::default();
+    let first = tabs.new_empty(State::default());
+    tabs.navigated("/projects");
+    let state = &mut tabs.active_mut().unwrap().state;
+    state.sidebar = false;
+    state.inspector_width = 28;
+    state.selection = "first project".into();
+    let second = tabs.new_empty(State::default());
+    tabs.navigated("/projects");
+    assert_eq!(tabs.active().unwrap().state, State::default());
+    tabs.select(&first);
+    assert_eq!(
+        tabs.active().unwrap().state,
+        State {
+            sidebar: false,
+            inspector_width: 28,
+            selection: "first project".into(),
+        }
+    );
+    assert_eq!(tabs.active_id(), Some(first.as_str()));
+    tabs.select(&second);
+    assert_eq!(tabs.active().unwrap().state, State::default());
+}
+
+#[test]
+fn closing_an_active_tab_restores_its_neighbors_route_and_state() {
+    let mut tabs = WorkspaceTabs::default();
+    let first = tabs.new_empty("first state");
+    tabs.navigated("/explore");
+    let second = tabs.new_empty("second state");
+    tabs.navigated("/projects");
+    assert_eq!(tabs.close(&second).as_deref(), Some("/explore"));
+    assert_eq!(tabs.active_id(), Some(first.as_str()));
+    assert_eq!(tabs.active().unwrap().state, "first state");
+}
+
+#[test]
+fn closing_a_background_tab_releases_its_state_without_switching_tabs() {
+    let mut tabs = WorkspaceTabs::default();
+    let state = Rc::new(());
+    let first = tabs.new_empty(state.clone());
+    let second = tabs.new_empty(Rc::new(()));
     assert_eq!(tabs.close(&first), None);
+    assert_eq!(Rc::strong_count(&state), 1);
     assert_eq!(tabs.active_id(), Some(second.as_str()));
+}
+
+#[test]
+fn closing_the_last_tab_does_not_reuse_its_identity() {
+    let mut tabs = WorkspaceTabs::default();
+    let first = tabs.new_empty(());
+    tabs.close(&first);
+    assert!(tabs.active().is_none());
+    assert_ne!(tabs.new_empty(()), first);
 }
 
 #[test]
 fn restored_empty_tab_ids_are_not_reused() {
     let mut tabs = WorkspaceTabs::default();
-    tabs.restore_empty("/tabs/new/7");
-    assert_eq!(tabs.new_empty(), "/tabs/new/8");
+    tabs.restore("/tabs/new/7", ());
+    assert_eq!(tabs.new_empty(()), "/tabs/new/8");
 }
 
 #[test]
-fn restoring_a_normal_route_does_not_create_a_tab() {
+fn invalid_selection_preserves_the_current_tab() {
     let mut tabs = WorkspaceTabs::default();
-    tabs.restore_empty("/projects");
-    assert!(tabs.entries().is_empty());
+    let first = tabs.new_empty(());
+    assert_eq!(tabs.select("missing"), None);
+    assert_eq!(tabs.close("missing"), None);
+    assert_eq!(tabs.active_id(), Some(first.as_str()));
 }

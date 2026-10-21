@@ -3,21 +3,31 @@ use crate::navigation;
 pub(super) const EMPTY_TAB_PREFIX: &str = "/tabs/new/";
 
 #[derive(Clone, Debug)]
-pub(crate) struct WorkspaceTab {
+pub(crate) struct WorkspaceTab<T> {
     pub id: String,
     pub number: u64,
     pub path: String,
+    pub state: T,
 }
 
-#[derive(Default)]
-pub(crate) struct WorkspaceTabs {
-    entries: Vec<WorkspaceTab>,
+pub(crate) struct WorkspaceTabs<T> {
+    entries: Vec<WorkspaceTab<T>>,
     active: Option<String>,
     next_empty_id: u64,
 }
 
-impl WorkspaceTabs {
-    pub(crate) fn entries(&self) -> &[WorkspaceTab] {
+impl<T> Default for WorkspaceTabs<T> {
+    fn default() -> Self {
+        Self {
+            entries: Vec::new(),
+            active: None,
+            next_empty_id: 0,
+        }
+    }
+}
+
+impl<T> WorkspaceTabs<T> {
+    pub(crate) fn entries(&self) -> &[WorkspaceTab<T>] {
         &self.entries
     }
 
@@ -25,36 +35,43 @@ impl WorkspaceTabs {
         self.active.as_deref()
     }
 
-    pub(crate) fn navigated(&mut self, path: &str) {
-        self.active = self
-            .entries
+    pub(crate) fn active(&self) -> Option<&WorkspaceTab<T>> {
+        self.entries
             .iter()
-            .find(|tab| tab.path == path)
-            .map(|tab| tab.id.clone());
+            .find(|tab| Some(tab.id.as_str()) == self.active_id())
     }
 
-    pub(crate) fn restore_empty(&mut self, path: &str) {
-        if let Some(number) = path
-            .strip_prefix(EMPTY_TAB_PREFIX)
-            .and_then(|id| id.parse().ok())
-        {
-            self.next_empty_id = number;
-            self.entries.push(WorkspaceTab {
-                id: path.to_string(),
-                number,
-                path: path.to_string(),
-            });
-            self.active = Some(path.to_string());
+    pub(crate) fn active_mut(&mut self) -> Option<&mut WorkspaceTab<T>> {
+        let active = self.active.as_deref();
+        self.entries
+            .iter_mut()
+            .find(|tab| Some(tab.id.as_str()) == active)
+    }
+
+    pub(crate) fn navigated(&mut self, path: &str) {
+        if let Some(tab) = self.active_mut() {
+            tab.path = path.to_string();
         }
     }
 
-    pub(crate) fn new_empty(&mut self) -> String {
+    pub(crate) fn restore(&mut self, path: &str, state: T) {
+        self.next_empty_id = path
+            .strip_prefix(EMPTY_TAB_PREFIX)
+            .and_then(|id| id.parse::<u64>().ok())
+            .unwrap_or(1)
+            .saturating_sub(1);
+        self.new_empty(state);
+        self.navigated(path);
+    }
+
+    pub(crate) fn new_empty(&mut self, state: T) -> String {
         self.next_empty_id += 1;
         let id = format!("{EMPTY_TAB_PREFIX}{}", self.next_empty_id);
         self.entries.push(WorkspaceTab {
             id: id.clone(),
             number: self.next_empty_id,
             path: id.clone(),
+            state,
         });
         self.active = Some(id.clone());
         id

@@ -10,9 +10,27 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 
 class DevWatcherTest(unittest.TestCase):
+    def test_linux_build_uses_system_pkg_config_unless_overridden(self):
+        build_environment = runpy.run_path(str(Path(__file__).with_name("dev.py")))["build_environment"]
+        with patch("sys.platform", "linux"), patch("os.access", return_value=True):
+            with patch.dict(os.environ, {"PATH": "/home/linuxbrew/.linuxbrew/bin"}, clear=True):
+                self.assertEqual(build_environment()["PKG_CONFIG"], "/usr/bin/pkg-config")
+                self.assertNotIn("PKG_CONFIG", os.environ)
+            with patch.dict(os.environ, {"PKG_CONFIG": "/custom/pkg-config"}, clear=True):
+                self.assertEqual(build_environment()["PKG_CONFIG"], "/custom/pkg-config")
+
+    def test_other_builds_preserve_pkg_config_discovery(self):
+        build_environment = runpy.run_path(str(Path(__file__).with_name("dev.py")))["build_environment"]
+        for platform, available in [("darwin", True), ("win32", True), ("linux", False)]:
+            with self.subTest(platform=platform, available=available):
+                with patch("sys.platform", platform), patch("os.access", return_value=available):
+                    with patch.dict(os.environ, {}, clear=True):
+                        self.assertNotIn("PKG_CONFIG", build_environment())
+
     def test_stop_cleans_up_build_children(self):
         stop = runpy.run_path(str(Path(__file__).with_name("dev.py")))["stop"]
         with tempfile.TemporaryDirectory() as directory:

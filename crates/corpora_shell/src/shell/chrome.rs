@@ -15,6 +15,7 @@ use crate::{navigation, routes};
 mod brand;
 mod frame;
 mod notifications;
+mod panels;
 mod style_chrome;
 mod tabs;
 mod workspace_surface;

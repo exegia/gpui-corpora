@@ -7,8 +7,8 @@ pub struct Workspace {
     pub(crate) focus: FocusHandle,
     pub(crate) dock: Entity<Dock>,
     pub(crate) toaster: Entity<Toaster>,
-    pub pages: Pages,
-    pub(crate) tabs: WorkspaceTabs,
+    pub(crate) tabs: WorkspaceTabs<super::tab_workspace::TabWorkspace>,
+    routing_to: Option<String>,
     pub tray: Option<TrayIcon>,
     pub dock_visible: bool,
     pub loading: bool,
@@ -19,9 +19,6 @@ pub struct Workspace {
     pub(crate) pending_path: Option<String>,
     /// Last path written to config, so unchanged frames skip the write.
     pub(crate) persisted_path: String,
-    /// The error boundary replaces the routed page after a render panic until
-    /// the next navigation or "Reload Page".
-    pub(crate) error_page: Option<Entity<RenderErrorPage>>,
     pub(crate) _subscriptions: Vec<Subscription>,
 }
 
@@ -35,13 +32,7 @@ impl Workspace {
         let toaster = cx.new(|_| Toaster::default());
         crate::ui::toasts::install(toaster.clone(), cx);
 
-        let pages = Pages {
-            settings: cx.new(|cx| SettingsPage::new(this.clone(), window, cx)),
-            notifications: cx.new(|cx| NotificationsPage::new(window, cx)),
-            diagnostics: cx.new(|cx| DiagnosticsPage::new(window, cx)),
-            about: cx.new(|_| AboutPage::new()),
-        };
-        let dock = Self::new_dock(this, cx);
+        let dock = Self::new_dock(this.clone(), cx);
 
         let mut subscriptions = vec![
             cx.observe_window_appearance(window, |_, _, cx| {
@@ -73,6 +64,14 @@ impl Workspace {
             notify_on::<crate::app_state::AppState>(cx),
         ]);
 
+        cx.bind_keys([
+            KeyBinding::new("secondary-b", super::tab_workspace::ToggleSidebar, None),
+            KeyBinding::new(
+                "secondary-shift-b",
+                super::tab_workspace::ToggleInspector,
+                None,
+            ),
+        ]);
         cx.bind_keys(
             (0..navigation::SECTIONS.len().min(9))
                 .map(|i| KeyBinding::new(&crate::app::keys::page(i), NavigateToSection(i), None)),
@@ -82,7 +81,10 @@ impl Workspace {
         #[cfg(debug_assertions)]
         let annotations = super::dev_feedback::mount(&active_path, window, cx);
         let mut tabs = WorkspaceTabs::default();
-        tabs.restore_empty(&active_path);
+        tabs.restore(
+            &active_path,
+            super::tab_workspace::TabWorkspace::new(this, window, cx),
+        );
         // Startup deep links were queued before this window existed.
         let drain = cx.entity().downgrade();
         cx.defer(move |cx| {
@@ -107,8 +109,8 @@ impl Workspace {
             focus,
             dock,
             toaster,
-            pages,
             tabs,
+            routing_to: Some(active_path.clone()),
             tray: None,
             dock_visible: false,
             loading: true,
@@ -117,7 +119,6 @@ impl Workspace {
             project_statuses: HashMap::new(),
             pending_path: (active_path != navigation::HOME).then_some(active_path.clone()),
             persisted_path: active_path,
-            error_page: None,
             _subscriptions: subscriptions,
         }
     }
@@ -151,7 +152,46 @@ impl Workspace {
 
     /// Navigate after the routes next render.
     pub fn navigate(&mut self, path: impl Into<String>, cx: &mut Context<Self>) {
-        self.pending_path = Some(path.into());
+        let path = path.into();
+        self.tabs.navigated(&path);
+        self.routing_to = Some(path.clone());
+        self.pending_path = Some(path);
+        cx.notify();
+    }
+
+    pub(crate) fn tab(&self) -> &super::tab_workspace::TabWorkspace {
+        &self
+            .tabs
+            .active()
+            .expect("workspace has an active tab")
+            .state
+    }
+
+    fn tab_mut(&mut self) -> &mut super::tab_workspace::TabWorkspace {
+        &mut self
+            .tabs
+            .active_mut()
+            .expect("workspace has an active tab")
+            .state
+    }
+
+    pub(crate) fn pages(&self) -> &Pages {
+        &self.tab().pages
+    }
+
+    pub(crate) fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let state = super::tab_workspace::TabWorkspace::new(cx.entity().downgrade(), window, cx);
+        let path = self.tabs.new_empty(state);
+        self.navigate(path, cx);
+    }
+
+    pub(crate) fn close_tab(&mut self, id: &str, window: &mut Window, cx: &mut Context<Self>) {
+        let path = self.tabs.close(id);
+        if self.tabs.entries().is_empty() {
+            self.new_tab(window, cx);
+        } else if let Some(path) = path {
+            self.navigate(path, cx);
+        }
         cx.notify();
     }
 
@@ -233,9 +273,9 @@ impl Workspace {
             tracing::warn!(target: "corpora::workspace", "render panic detected; activating error boundary");
             let summary = crate::lifecycle::last_panic_summary()
                 .unwrap_or_else(|| crate::i18n::localize("render_error_unknown"));
-            self.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+            self.tab_mut().error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
         }
-        self.error_page.clone().map(Into::into)
+        self.tab_mut().error_page.clone().map(Into::into)
     }
 
     /// Persist the routed path once it changes; leaving a path also clears
@@ -248,18 +288,26 @@ impl Workspace {
     ) {
         #[cfg(not(debug_assertions))]
         let _ = window;
+        if self
+            .routing_to
+            .as_deref()
+            .is_some_and(|target| target != path)
+        {
+            return;
+        }
+        self.routing_to = None;
+        self.tabs.navigated(path);
         if self.persisted_path == path {
             return;
         }
         self.persisted_path = path.to_string();
-        self.tabs.navigated(path);
         #[cfg(debug_assertions)]
         if let Some(annotations) = &self.annotations {
             annotations.update(cx, |overlay, cx| {
                 overlay.set_route(&format!("gpui://corpora{path}"), window, cx)
             });
         }
-        self.error_page = None;
+        self.tab_mut().error_page = None;
         let path = path.to_string();
         crate::app_state::update_config(cx, |config| config.active_path = path);
         cx.notify();
@@ -328,6 +376,24 @@ impl Render for Workspace {
             .relative()
             .w(window.viewport_size().width)
             .h(window.viewport_size().height)
+            .on_action(cx.listener(
+                |this, _: &super::tab_workspace::ToggleSidebar, window, cx| {
+                    if let Some(tab) = this.tabs.active_mut() {
+                        tab.state.sidebar_visible = !tab.state.sidebar_visible;
+                    }
+                    window.focus(&this.focus, cx);
+                    cx.notify();
+                },
+            ))
+            .on_action(cx.listener(
+                |this, _: &super::tab_workspace::ToggleInspector, window, cx| {
+                    if let Some(tab) = this.tabs.active_mut() {
+                        tab.state.inspector_visible = !tab.state.inspector_visible;
+                    }
+                    window.focus(&this.focus, cx);
+                    cx.notify();
+                },
+            ))
             .on_action(
                 cx.listener(|this, NavigateToSection(i): &NavigateToSection, _, cx| {
                     if let Some(path) = navigation::SECTIONS.get(*i) {
@@ -339,12 +405,12 @@ impl Render for Workspace {
                 cx.listener(|this, _: &crate::app::ToggleSearch, _, cx| this.toggle_palette(cx)),
             )
             .on_action(cx.listener(|this, _: &ReloadCurrentPage, _, cx| {
-                this.error_page = None;
+                this.tab_mut().error_page = None;
                 cx.notify();
             }))
             .on_action(cx.listener(|this, action: &TriggerRenderError, _, cx| {
                 let summary = action.message.clone();
-                this.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+                this.tab_mut().error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
                 cx.notify();
             }))
             .child(background)

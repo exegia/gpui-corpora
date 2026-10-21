@@ -1,6 +1,6 @@
 default:
     @just --list
-
+ 
 mac *args='':
     python3 scripts/dev.py {{args}}
 

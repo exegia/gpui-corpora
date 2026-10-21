@@ -34,7 +34,11 @@ pub(super) fn tabs(
             let select_id = tab.id.clone();
             let close_owner = workspace.clone();
             let close_id = tab.id.clone();
-            let label = format!("New tab {}", tab.number);
+            let label = if tab.path.starts_with(EMPTY_TAB_PREFIX) {
+                format!("New tab {}", tab.number)
+            } else {
+                super::panels::route_title(&tab.path).to_string()
+            };
             let button = Button::new(format!("select-tab-{}", tab.id), label.clone())
                 .icon(IconName::File)
                 .variant(if selected {
@@ -63,14 +67,11 @@ pub(super) fn tabs(
             let close = IconButton::new(format!("close-tab-{}", tab.id), IconName::X)
                 .size(ControlSize::Sm)
                 .tooltip(format!("Close {label}"))
-                .on_click(move |_, _, cx| {
+                .on_click(move |_, window, cx| {
                     cx.stop_propagation();
                     close_owner
                         .update(cx, |state, cx| {
-                            if let Some(path) = state.tabs.close(&close_id) {
-                                state.navigate(path, cx);
-                            }
-                            cx.notify();
+                            state.close_tab(&close_id, window, cx);
                         })
                         .ok();
                 });

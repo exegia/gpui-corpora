@@ -62,7 +62,7 @@ pub(super) fn notifications(workspace: WeakEntity<Workspace>, cx: &App) -> Popov
                 .children(
                     workspace
                         .upgrade()
-                        .map(|workspace| workspace.read(cx).pages.notifications.clone()),
+                        .map(|workspace| workspace.read(cx).pages().notifications.clone()),
                 )
         })
 }

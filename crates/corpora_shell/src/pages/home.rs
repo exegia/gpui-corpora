@@ -5,6 +5,8 @@ pub fn home() -> impl IntoElement {
     let metric = |id, label, value, note| {
         let card = Card::new()
             .flex_1()
+            .flex_basis(gpui::rems(18.0))
+            .min_w_0()
             .header(CardHeader::new(label))
             .child(Heading::h2(value))
             .child(Caption::new(note));
@@ -26,6 +28,7 @@ pub fn home() -> impl IntoElement {
         .child(
             div()
                 .flex()
+                .flex_wrap()
                 .gap_4()
                 .child(metric(
                     "runtime-metric",
@@ -64,12 +67,15 @@ pub fn home() -> impl IntoElement {
         .child(
             div()
                 .flex()
+                .flex_wrap()
                 .gap_4()
                 .child(crate::shell::dev_target(
                     "projects-card",
                     "Projects card",
                     Card::new()
                         .flex_1()
+                        .flex_basis(gpui::rems(18.0))
+                        .min_w_0()
                         .header(
                             CardHeader::new("Projects")
                                 .description("A home for your document workflows."),
@@ -85,6 +91,8 @@ pub fn home() -> impl IntoElement {
                     "Corpus explorer card",
                     Card::new()
                         .flex_1()
+                        .flex_basis(gpui::rems(18.0))
+                        .min_w_0()
                         .header(
                             CardHeader::new("Corpus explorer")
                                 .description("Make room for a closer reading."),

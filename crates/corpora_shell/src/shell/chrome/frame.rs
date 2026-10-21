@@ -31,21 +31,34 @@ pub fn frame(
     let tabs = tabs::tabs(workspace.clone(), window, cx);
     let notifications = notifications::notifications(workspace.clone(), cx);
     // Ely TitleBar already uses its drag_region (the WindowDragRegion equivalent).
+    let (sidebar_visible, inspector_visible, scroll) = workspace
+        .upgrade()
+        .map(|owner| {
+            let owner = owner.read(cx);
+            let tab = owner.tabs.active().expect("workspace has a tab");
+            (
+                tab.state.sidebar_visible,
+                tab.state.inspector_visible,
+                tab.state.scroll.clone(),
+            )
+        })
+        .unwrap_or_default();
     let titlebar = TitleBar::new("titlebar")
         .child(brand::brand(cx))
         .child(tabs)
         .action(
             IconButton::new("new-workspace-tab", IconName::Plus)
                 .tooltip("New tab")
-                .on_click(move |_, _, cx| {
+                .on_click(move |_, window, cx| {
                     tab_owner
                         .update(cx, |state, cx| {
-                            let path = state.tabs.new_empty();
-                            state.navigate(path, cx);
+                            state.new_tab(window, cx);
                         })
                         .ok();
                 }),
         )
+        .action(panels::toggle(false, sidebar_visible))
+        .action(panels::toggle(true, inspector_visible))
         .action(notifications)
         .action(
             IconButton::new("open-palette", IconName::Search)
@@ -136,6 +149,7 @@ pub fn frame(
                 .id("route-content")
                 .size_full()
                 .overflow_y_scroll()
+                .track_scroll(&scroll)
                 .child(crate::shell::dev_target(
                     "route-page",
                     "Current page",
@@ -146,6 +160,8 @@ pub fn frame(
         window,
         cx,
     );
+    let body = corpora_ui::ui::layout::main(cx.theme().is_dark(), body);
+    let body = panels::layout(workspace, body, window, cx);
     div()
         .border_0()
         .size_full()

@@ -1,8 +1,8 @@
 #[allow(unused_imports)]
 use super::*;
 
-/// Pages that hold subscriptions live as entities for the window's life;
-/// stateless Corpora pages render from `pages` on demand.
+/// Retained pages owned by one workspace tab.
+#[derive(Clone)]
 pub struct Pages {
     pub settings: Entity<SettingsPage>,
     pub notifications: Entity<NotificationsPage>,

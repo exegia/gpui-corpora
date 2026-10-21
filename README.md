@@ -21,7 +21,9 @@ export PKG_CONFIG=/usr/bin/pkg-config
 cargo run --locked
 ```
 
-Keep that variable set for `just dev`, Clippy, and tests as well.
+Keep that variable set for direct Cargo commands, Clippy, and tests.
+`just dev` selects `/usr/bin/pkg-config` automatically on Linux when available;
+an explicit `PKG_CONFIG` setting takes precedence.
 
 Automatic updates are disabled unless `GPUI_UPDATE_MANIFEST_URL` is set to a
 release manifest URL at build time.
@@ -79,13 +81,18 @@ would register duplicate GPUI actions. Feedback follows route changes.
 ## Window
 
 The Ely title bar supplies native macOS traffic-light spacing and its built-in
-`drag_region` for dragging and double-click zoom. Home, Explore, and Projects
-use an Ely `TabBar`; the `ActivityBar` also opens Settings and Profile.
+`drag_region` for dragging and double-click zoom. The activity rail navigates
+within the selected tab. Each tab owns its route, retained pages, scroll position,
+sidebar visibility, and inspector visibility and width.
 
-The workspace uses the activity rail and top tabs for navigation, without a
-wide sidebar. The activity dock starts closed and uses Ely's `Dock` with a movable activity panel. A splash
-window precedes the workspace, which briefly shows `Skeleton` placeholders.
-Unconnected pages use `EmptyState`.
+The sidebar has a fixed gap beside the workspace; the inspector has a draggable
+splitter. Both panels use the shared window background. The title-bar controls
+animate their visibility and respect reduced motion. Use Ctrl+B for the sidebar
+and Ctrl+Shift+B for the inspector (Cmd on macOS).
+
+The activity dock starts closed and uses Ely's `Dock` with a movable activity
+panel. A splash window precedes the workspace, which briefly shows `Skeleton`
+placeholders. Unconnected pages use `EmptyState`.
 
 The menu-bar tray opens the workspace or navigates to its main sections.
 Settings provides light/dark mode, connectivity previews, a loading preview,
