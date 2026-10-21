@@ -7,7 +7,7 @@ pub(crate) fn open_with_splash(cx: &mut App) {
     cx.spawn(async move |cx| {
         // A short presentation interval lets the splash paint before the workspace.
         cx.background_executor()
-            .timer(Duration::from_secs(60))
+            .timer(Duration::from_millis(400))
             .await;
         cx.update(|cx| {
             let (_, workspace) =

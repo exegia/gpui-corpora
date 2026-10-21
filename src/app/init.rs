@@ -106,8 +106,9 @@ pub fn init(cx: &mut App) {
 
     // Install before set_mode_now: it cancels set_palette's fade and jumps to the new palette.
     corpora_ui::styles::tokens::MacosClassic::new().install(cx);
-    Theme::set_mode_now(persisted.theme.into(), cx);
-    gpui_kit::component::Theme::change(persisted.theme, None, cx);
+    let appearance = cx.window_appearance();
+    Theme::set_mode_now(persisted.theme.resolve(appearance), cx);
+    gpui_kit::component::Theme::change(persisted.theme.kit_mode(appearance), None, cx);
 
     cx.on_action(|switch: &SwitchThemeMode, cx| {
         set_theme_mode(switch.0, cx);
