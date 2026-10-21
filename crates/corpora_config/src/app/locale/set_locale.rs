@@ -3,6 +3,7 @@ use super::*;
 
 pub fn set_locale(locale: &str, cx: &mut App) {
     rust_i18n::set_locale(locale);
+    gpui_kit::component::set_locale(locale);
     if cx.has_global::<I18n>() {
         I18n::set_locale(ely_locale(locale), cx);
     }
