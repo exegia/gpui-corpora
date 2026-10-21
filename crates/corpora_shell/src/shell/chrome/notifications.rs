@@ -1,5 +1,5 @@
-use ely_gpui_component::buttons::IconButton;
-use ely_gpui_component::data_display::CountBadge;
+use corpora_ui::ely::buttons::IconButton;
+use corpora_ui::ely::data_display::CountBadge;
 use gpui_kit::{Anchor, base::Selectable, component::popover::Popover, px};
 
 use super::*;

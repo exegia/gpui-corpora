@@ -1,4 +1,4 @@
-use ely_gpui_component::primitives::IconName;
+use corpora_ui::ely::primitives::IconName;
 use gpui::{App, SharedString};
 use serde::{Deserialize, Serialize};
 

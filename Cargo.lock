@@ -1527,7 +1527,6 @@ dependencies = [
  "corpora_platform",
  "corpora_runtime_services",
  "corpora_ui",
- "ely-gpui-component",
  "futures-util",
  "gpui-kit",
  "gpui-pre",
@@ -1604,7 +1603,6 @@ dependencies = [
  "corpora_foundation",
  "corpora_platform",
  "corpora_ui",
- "ely-gpui-component",
  "flume 0.11.1",
  "futures-util",
  "gpui-pre",
@@ -1668,13 +1666,12 @@ dependencies = [
  "corpora_runtime_services",
  "corpora_services",
  "corpora_ui",
- "ely-gpui-component",
  "flume 0.11.1",
  "global-hotkey",
+ "gpui-agentation",
  "gpui-kit",
  "gpui-pre",
  "gpui-router",
- "gpui_agentation",
  "image",
  "rust-embed",
  "serde",
@@ -1687,6 +1684,7 @@ name = "corpora_ui"
 version = "0.1.0"
 dependencies = [
  "ely-gpui-component",
+ "gpui-agentation",
  "gpui-pre",
  "tracing",
 ]
@@ -3061,6 +3059,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui-agentation"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f1fb4f146372b0cc82fdc30267ca158e78e9036af7c83fcc119cf9816929a78"
+dependencies = [
+ "alacritty_terminal",
+ "anyhow",
+ "atomic-write-file",
+ "axum",
+ "barcoders",
+ "base64 0.22.1",
+ "block",
+ "cocoa 0.26.1",
+ "emojis",
+ "futures",
+ "futures-util",
+ "gpui-pre",
+ "gpui-pre-platform",
+ "image",
+ "iso_currency",
+ "isocountry",
+ "isolang",
+ "jiff",
+ "log",
+ "markdown",
+ "mermaid-rs-renderer",
+ "objc",
+ "proc-macro2",
+ "pulldown-cmark",
+ "qrcode",
+ "ratex-layout",
+ "ratex-parser",
+ "ratex-svg",
+ "ratex-types",
+ "raw-window-handle",
+ "regex",
+ "rqrr",
+ "rust-embed",
+ "rustix",
+ "serde",
+ "serde_json",
+ "similar 3.2.0",
+ "smallvec",
+ "thiserror 2.0.21",
+ "tokio",
+ "unicode-segmentation",
+ "unicode-width",
+ "usvg 0.46.0",
+ "uuid",
+ "vte",
+ "web-time",
+ "wry",
+]
+
+[[package]]
 name = "gpui-base"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3175,7 +3228,6 @@ dependencies = [
  "corpora_services",
  "corpora_shell",
  "corpora_ui",
- "ely-gpui-component",
  "gpui-kit",
  "gpui-router",
  "rusqlite",
@@ -3832,24 +3884,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
-]
-
-[[package]]
-name = "gpui_agentation"
-version = "0.1.0"
-dependencies = [
- "atomic-write-file",
- "axum",
- "ely-gpui-component",
- "futures-util",
- "gpui-pre",
- "reqwest",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "uuid",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use ely_gpui_component::{
+use corpora_ui::ely::{
     buttons::Button,
     settings::{SettingsRow, SettingsSection},
     shell::set_dock_badge,

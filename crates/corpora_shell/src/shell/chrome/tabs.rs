@@ -1,4 +1,4 @@
-use ely_gpui_component::theme::{ControlSize, TextSize};
+use corpora_ui::ely::theme::{ControlSize, TextSize};
 
 use super::*;
 

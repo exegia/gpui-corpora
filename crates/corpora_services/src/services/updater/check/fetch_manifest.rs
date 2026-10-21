@@ -6,10 +6,11 @@ pub(crate) async fn fetch_manifest(
     rt: Arc<tokio::runtime::Runtime>,
     client: reqwest::Client,
 ) -> Result<UpdateManifest, String> {
+    let manifest_url = DEFAULT_MANIFEST_URL.ok_or("Updates are not configured for this build")?;
     let response = rt
         .spawn(async move {
             client
-                .get(DEFAULT_MANIFEST_URL)
+                .get(manifest_url)
                 .timeout(std::time::Duration::from_secs(30))
                 .send()
                 .await

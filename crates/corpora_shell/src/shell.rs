@@ -9,7 +9,7 @@ pub(crate) use dev_feedback::target as dev_target;
 
 use std::{collections::HashMap, time::Duration};
 
-use ely_gpui_component::{
+use corpora_ui::ely::{
     feedback::{EmptyState, ToastViewport, Toaster},
     layout::{Dock, DockPanel, DockSide},
     navigation::{Command, CommandPalette},
@@ -43,7 +43,6 @@ mod navigate_to_section;
 mod notify_on;
 mod open_palette;
 mod pages;
-mod toggle_sidebar;
 mod window_background;
 mod workspace;
 mod workspace_handle;
@@ -54,7 +53,6 @@ pub use navigate_to_section::NavigateToSection;
 use notify_on::notify_on;
 pub use open_palette::open_palette;
 pub use pages::Pages;
-pub use toggle_sidebar::ToggleSidebar;
 use window_background::window_background;
 pub use workspace::Workspace;
 use workspace_handle::WorkspaceHandle;

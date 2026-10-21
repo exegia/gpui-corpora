@@ -3,7 +3,7 @@ use super::*;
 use std::borrow::Cow;
 use std::sync::{Arc, LazyLock};
 
-use ely_gpui_component::theme::{ActiveTheme, TextSize};
+use corpora_ui::ely::theme::{ActiveTheme, TextSize};
 use gpui::{App, Image, ImageFormat, Img, ObjectFit, div, img, px};
 use gpui_kit::base::StyledExt;
 

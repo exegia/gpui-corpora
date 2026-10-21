@@ -1,6 +1,6 @@
 use std::sync::{Arc, LazyLock};
 
-use ely_gpui_component::theme::{ActiveTheme, Radius, TextSize};
+use corpora_ui::ely::theme::{ActiveTheme, Radius, TextSize};
 use gpui::{
     App, FontWeight, Image, ImageFormat, IntoElement, MouseButton, ObjectFit, RenderOnce, Role,
     SharedString, Window, div, img, prelude::*, rems,

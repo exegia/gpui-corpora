@@ -1,4 +1,4 @@
-use ely_gpui_component::{
+use corpora_ui::ely::{
     buttons::{Button, ButtonVariant},
     forms::Switch,
     settings::{SettingsRow, SettingsSection},

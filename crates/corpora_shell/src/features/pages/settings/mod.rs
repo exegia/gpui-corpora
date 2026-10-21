@@ -6,7 +6,7 @@ mod general;
 mod notifications_section;
 mod workspace;
 
-use ely_gpui_component::{
+use corpora_ui::ely::{
     buttons::Button, primitives::IconName, settings::SettingsLayout, typography::Heading,
 };
 use gpui::{prelude::*, *};

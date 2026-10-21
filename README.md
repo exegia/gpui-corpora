@@ -2,7 +2,7 @@
 
 A native macOS workspace bootstrap using Ely's default components and theme,
 with `gpui-router` for navigation. The attached design guides the title bar,
-sidebar, overview cards, and status bar.
+activity rail, overview cards, and status bar.
 
 ```sh
 cargo run
@@ -10,6 +10,21 @@ cargo run
 
 Requires Rust 1.95 or newer. Runtime Metal shaders are enabled, so the build
 does not require the full Xcode Metal toolchain.
+
+On Linux, install the native dependencies listed in
+[`scripts/install-linux-deps.sh`](scripts/install-linux-deps.sh). If Homebrew's
+`pkg-config` is first on `PATH`, select the system executable so Cargo can find
+the system font and display libraries:
+
+```sh
+export PKG_CONFIG=/usr/bin/pkg-config
+cargo run --locked
+```
+
+Keep that variable set for `just dev`, Clippy, and tests as well.
+
+Automatic updates are disabled unless `GPUI_UPDATE_MANIFEST_URL` is set to a
+release manifest URL at build time.
 
 ## Development watcher
 
@@ -35,8 +50,31 @@ use in-app notifications when native delivery is unavailable.
 
 Development builds include a floating annotation toolbar for native UI feedback.
 Saved notes survive rebuilds and are available to local agent tools at
-`http://127.0.0.1:4748`. See [gpui_agentation](crates/gpui_agentation/README.md)
-for usage and the REST/SSE API. Release builds exclude the annotation feature.
+`http://127.0.0.1:4748`. The published
+[gpui-agentation 0.3.0](https://emmanuel-defreitas.github.io/gpui-agentation/)
+library supplies the overlay with its `native` feature. Release builds exclude
+the annotation API and UI.
+
+Install its MCP bridge once:
+
+```sh
+cargo install gpui-agentation --version 0.3.0 --locked
+```
+
+The checkout's `.codex/config.toml` runs `gpui-agentation --url
+http://127.0.0.1:4748/mcp`. Restart the MCP client after changing that configuration
+and keep Corpora running in debug mode while using the tools. The native listener
+accepts loopback requests and rejects browser origins.
+
+Feedback stays in `target/agentation/feedback.json`. Set `GPUI_AGENTATION_STORE`
+to change the path, `GPUI_AGENTATION_PORT` to change the port, or
+`GPUI_AGENTATION=0` to disable the overlay. Match a changed port in the MCP
+configuration. Run only one app process per feedback store.
+
+`corpora_ui::ely` exposes Agentation's bundled Ely in debug builds and the
+standalone Ely crate in release builds. App controls and feedback share one
+initialization, asset source, theme, and focus system; linking both Ely copies
+would register duplicate GPUI actions. Feedback follows route changes.
 
 ## Window
 
@@ -44,8 +82,8 @@ The Ely title bar supplies native macOS traffic-light spacing and its built-in
 `drag_region` for dragging and double-click zoom. Home, Explore, and Projects
 use an Ely `TabBar`; the `ActivityBar` also opens Settings and Profile.
 
-The title-bar panel buttons toggle the sidebar and activity dock. The dock
-starts closed and uses Ely's `Dock` with a movable activity panel. A splash
+The workspace uses the activity rail and top tabs for navigation, without a
+wide sidebar. The activity dock starts closed and uses Ely's `Dock` with a movable activity panel. A splash
 window precedes the workspace, which briefly shows `Skeleton` placeholders.
 Unconnected pages use `EmptyState`.
 

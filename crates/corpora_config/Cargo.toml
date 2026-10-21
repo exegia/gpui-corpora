@@ -25,7 +25,6 @@ corpora_ui.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 atomic-write-file.workspace = true
-ely-gpui-component.workspace = true
 futures-util.workspace = true
 gpui.workspace = true
 gpui-kit.workspace = true

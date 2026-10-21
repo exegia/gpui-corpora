@@ -1,6 +1,6 @@
 //! The macOS Classic theme (huacnlee/zed-theme-macos-classic) as Ely palettes.
 
-use ely_gpui_component::theme::{Mix as _, Mode, Palette, Syntax, Theme};
+use crate::ely::theme::{Mix as _, Mode, Palette, Syntax, Theme};
 use gpui::{App, Hsla, rgb, rgba};
 
 #[cfg(test)]

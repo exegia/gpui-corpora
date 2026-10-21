@@ -3,8 +3,9 @@ fn main() {
     // keeps non-Windows hosts free of that toolchain.
     if std::env::var("CARGO_CFG_TARGET_OS").is_ok_and(|os| os == "windows") {
         let mut res = winresource::WindowsResource::new();
-        res.set_icon("assets/app-icon/corpora.ico");
-        res.compile().expect("embed assets/app-icon/corpora.ico");
-        println!("cargo:rerun-if-changed=assets/app-icon/corpora.ico");
+        let icon = "crates/corpora_shell/src/shell/assets/app-icon/corpora.ico";
+        res.set_icon(icon);
+        res.compile().expect("embed Corpora app icon");
+        println!("cargo:rerun-if-changed={icon}");
     }
 }

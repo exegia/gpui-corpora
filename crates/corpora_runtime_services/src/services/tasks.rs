@@ -1,4 +1,4 @@
-use ely_gpui_component::{feedback::Toast, primitives::Severity};
+use corpora_ui::ely::{feedback::Toast, primitives::Severity};
 use gpui::{App, Global, Task};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};

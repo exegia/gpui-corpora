@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 use super::*;
 
-use ely_gpui_component::theme::ActiveTheme;
+use corpora_ui::ely::theme::ActiveTheme;
 use gpui::Half;
 
 /// Open the workspace at its persisted bounds, or centered at a size that

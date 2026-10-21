@@ -9,7 +9,6 @@ members = [
     "crates/corpora_services",
     "crates/corpora_shell",
     "crates/corpora_ui",
-    "crates/gpui_agentation",
 ]
 resolver = "3"
 
@@ -48,7 +47,7 @@ corpora_runtime_services = { path = "crates/corpora_runtime_services" }
 corpora_services = { path = "crates/corpora_services" }
 corpora_shell = { path = "crates/corpora_shell" }
 corpora_ui = { path = "crates/corpora_ui" }
-gpui_agentation = { path = "crates/gpui_agentation" }
+gpui-agentation = { version = "=0.3.0", default-features = false, features = ["native"] }
 
 ely-gpui-component = { git = "https://git.zacharyzhang.com/ZacharyZhang-NY/Ely-GPUI-Components", rev = "da3fdcaf39f2fa85ce1dd9cad07c3c81cf1dd721" }
 # Ely pins gpui-pre =0.3.8; any other GPUI source is a different, type-incompatible crate.
@@ -158,7 +157,6 @@ corpora_shell.workspace = true
 corpora_ui.workspace = true
 
 anyhow.workspace = true
-ely-gpui-component.workspace = true
 gpui-kit.workspace = true
 gpui-router.workspace = true
 rusqlite.workspace = true

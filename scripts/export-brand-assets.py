@@ -10,6 +10,7 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parent.parent
+ASSETS = ROOT / "crates/corpora_shell/src/shell/assets"
 SKETCHTOOL = "/Applications/Sketch.app/Contents/MacOS/sketchtool"
 SPLASH_IDS = "B2311831-53CE-4613-BE6D-D536C5524BAC,FD5548EB-0881-4D5E-84EB-5A82CAE769E3"
 BETA_ID = "AE40335B-2295-4E03-AC82-FB9684D882E9"
@@ -25,16 +26,16 @@ def resize(source, size, output):
 
 
 def main():
-    icons = ROOT / "assets/app-icon"
+    icons = ASSETS / "app-icon"
     if len(sys.argv) > 1:
         source = Path(sys.argv[1]).resolve()
-        for folder, ids, scale in ((ROOT / "assets/splash", SPLASH_IDS, 2), (icons, BETA_ID, 1)):
+        for folder, ids, scale in ((ASSETS / "splash", SPLASH_IDS, 2), (icons, BETA_ID, 1)):
             folder.mkdir(parents=True, exist_ok=True)
             run(SKETCHTOOL, "export", "layers", source, f"--items={ids}", "--formats=png",
                 f"--scales={scale}", "--cropped=YES", f"--output={folder}", "--overwriting=YES")
 
     for variant in ("light", "dark"):
-        resize(ROOT / f"assets/brand/{variant}.png", 1024, icons / f"{variant}.png")
+        resize(ASSETS / f"brand/{variant}.png", 1024, icons / f"{variant}.png")
 
     with tempfile.TemporaryDirectory() as temp:
         temp = Path(temp)

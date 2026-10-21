@@ -10,7 +10,6 @@ pub struct Workspace {
     pub pages: Pages,
     pub(crate) tabs: WorkspaceTabs,
     pub tray: Option<TrayIcon>,
-    pub sidebar_visible: bool,
     pub dock_visible: bool,
     pub loading: bool,
     pub badge: bool,
@@ -76,16 +75,10 @@ impl Workspace {
 
         cx.bind_keys(
             (0..navigation::SECTIONS.len().min(9))
-                .map(|i| KeyBinding::new(&crate::app::keys::page(i), NavigateToSection(i), None))
-                .chain([KeyBinding::new(
-                    crate::app::keys::TOGGLE_SIDEBAR,
-                    ToggleSidebar,
-                    None,
-                )]),
+                .map(|i| KeyBinding::new(&crate::app::keys::page(i), NavigateToSection(i), None)),
         );
 
-        let (active_path, collapsed) =
-            crate::app_state::with_config(cx, |c| (c.active_path.clone(), c.sidebar_collapsed));
+        let active_path = crate::app_state::with_config(cx, |c| c.active_path.clone());
         #[cfg(debug_assertions)]
         let annotations = super::dev_feedback::mount(&active_path, window, cx);
         let mut tabs = WorkspaceTabs::default();
@@ -117,7 +110,6 @@ impl Workspace {
             pages,
             tabs,
             tray: None,
-            sidebar_visible: !collapsed,
             dock_visible: false,
             loading: true,
             badge: false,
@@ -183,14 +175,6 @@ impl Workspace {
                 .ok();
         })
         .detach();
-    }
-
-    /// Persisted so restarts keep the choice.
-    pub(crate) fn toggle_sidebar(&mut self, cx: &mut Context<Self>) {
-        self.sidebar_visible = !self.sidebar_visible;
-        let collapsed = !self.sidebar_visible;
-        crate::app_state::update_config(cx, |config| config.sidebar_collapsed = collapsed);
-        cx.notify();
     }
 
     pub(crate) fn open_deep_link(&mut self, link: &str, cx: &mut Context<Self>) {
@@ -351,7 +335,6 @@ impl Render for Workspace {
                     }
                 }),
             )
-            .on_action(cx.listener(|this, _: &ToggleSidebar, _, cx| this.toggle_sidebar(cx)))
             .on_action(
                 cx.listener(|this, _: &crate::app::ToggleSearch, _, cx| this.toggle_palette(cx)),
             )

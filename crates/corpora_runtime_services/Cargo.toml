@@ -21,7 +21,6 @@ corpora_foundation.workspace = true
 corpora_platform.workspace = true
 corpora_ui.workspace = true
 
-ely-gpui-component.workspace = true
 flume.workspace = true
 futures-util.workspace = true
 gpui.workspace = true

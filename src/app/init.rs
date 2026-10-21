@@ -1,4 +1,4 @@
-use ely_gpui_component::theme::Theme;
+use corpora_ui::ely::theme::Theme;
 use gpui_kit::{App, KeyBinding};
 
 use crate::app::actions::*;
@@ -20,7 +20,7 @@ macro_rules! startup_step {
     }};
 }
 
-/// App services and globals. Runs after `ely_gpui_component::init`, before
+/// App services and globals. Runs after `corpora_ui::ely::init`, before
 /// any window opens.
 pub fn init(cx: &mut App) {
     let startup_start = std::time::Instant::now();

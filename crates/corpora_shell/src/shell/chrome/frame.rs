@@ -14,11 +14,9 @@ pub fn frame(
     } else {
         routes::section(&path)
     };
-    let (sidebar_visible, loading, error_view) = workspace
-        .update(cx, |state, cx| {
-            (state.sidebar_visible, state.loading, state.error_view(cx))
-        })
-        .unwrap_or((true, false, None));
+    let (loading, error_view) = workspace
+        .update(cx, |state, cx| (state.loading, state.error_view(cx)))
+        .unwrap_or((false, None));
     {
         let workspace = workspace.clone();
         let path = path.clone();
@@ -168,7 +166,6 @@ pub fn frame(
                     "Activity bar",
                     activity,
                 ))
-                .when(sidebar_visible, |row| row.child(sidebar(&path)))
                 .child(body),
         )
 }

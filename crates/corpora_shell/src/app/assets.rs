@@ -1,4 +1,4 @@
-//! App-owned assets. Ely's own icons and fonts load through `ely_gpui_component::Assets`.
+//! App-owned assets. Ely's own icons and fonts load through `corpora_ui::ely::Assets`.
 
 #[cfg(all(test, target_os = "linux"))]
 #[path = "assets.test/mod.rs"]

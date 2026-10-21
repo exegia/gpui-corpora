@@ -21,6 +21,11 @@ pub fn initialize(cx: &mut gpui::App) {
         check::check_for_updates(cx);
     });
 
+    if types::DEFAULT_MANIFEST_URL.is_none() {
+        tracing::info!(target: "corpora::updater", "automatic updates are not configured");
+        return;
+    }
+
     // GPUI background-executor timers instead of a spawned tokio sleep task.
     cx.spawn(async move |cx| {
         cx.background_executor()

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ely_gpui_component::{
+use corpora_ui::ely::{
     motion::{self, ProgressBar},
     primitives::FocusScope,
     theme::{ActiveTheme, ControlSize, TextSize},

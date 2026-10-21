@@ -24,12 +24,11 @@ corpora_services.workspace = true
 corpora_ui.workspace = true
 
 anyhow.workspace = true
-ely-gpui-component.workspace = true
 gpui-kit.workspace = true
 flume.workspace = true
 gpui.workspace = true
 gpui-router.workspace = true
-gpui_agentation.workspace = true
+gpui-agentation.workspace = true
 rust-embed.workspace = true
 serde.workspace = true
 tracing.workspace = true

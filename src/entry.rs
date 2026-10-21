@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use ely_gpui_component::{
+use corpora_ui::ely::{
     Assets,
     shell::{TrayIcon, TrayItem, set_dock_badge},
 };
