@@ -28,6 +28,7 @@ atomic-write-file.workspace = true
 ely-gpui-component.workspace = true
 futures-util.workspace = true
 gpui.workspace = true
+gpui-kit.workspace = true
 notify-rust.workspace = true
 open.workspace = true
 rust-i18n.workspace = true

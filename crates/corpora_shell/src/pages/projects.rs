@@ -3,6 +3,7 @@ use super::*;
 
 pub fn projects() -> impl IntoElement {
     page("Projects", "Organize your corpus work.")
+        .h_full()
         .child(
             div()
                 .flex()
@@ -19,10 +20,18 @@ pub fn projects() -> impl IntoElement {
                     "/projects/licenses",
                 )),
         )
-        .child(empty(
-            "projects-empty",
-            IconName::Folder,
-            "No projects yet",
-            "Your projects will appear here when project storage is connected.",
-        ))
+        .child(
+            div()
+                .flex_1()
+                .min_h_0()
+                .flex()
+                .items_center()
+                .justify_center()
+                .child(empty(
+                    "projects-empty",
+                    IconName::Folder,
+                    "No projects yet",
+                    "Your projects will appear here when project storage is connected.",
+                )),
+        )
 }
