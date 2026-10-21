@@ -45,6 +45,15 @@ impl Workspace {
         let dock = Self::new_dock(this, cx);
 
         let mut subscriptions = vec![
+            cx.observe_window_appearance(window, |_, _, cx| {
+                if crate::app::theme::current_mode(cx) == crate::app::theme::ThemeMode::System {
+                    crate::app::theme::set_theme_mode_with_record(
+                        crate::app::theme::ThemeMode::System,
+                        false,
+                        cx,
+                    );
+                }
+            }),
             cx.observe_global_in::<events::AppEventQueue>(window, |this, _, cx| {
                 this.drain_events(cx);
             }),

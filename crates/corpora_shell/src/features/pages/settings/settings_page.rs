@@ -17,6 +17,7 @@ impl SettingsPage {
         cx: &mut Context<Self>,
     ) -> Self {
         let _subscriptions = vec![
+            cx.observe_global_in::<crate::app_state::AppState>(window, |_, _, cx| cx.notify()),
             cx.observe_global_in::<LocaleState>(window, |_, _, cx| cx.notify()),
             cx.observe_global_in::<NativeNotificationState>(window, |this, _, cx| {
                 this.notifications = notifications::snapshot(cx);

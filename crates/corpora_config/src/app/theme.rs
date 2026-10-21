@@ -1,4 +1,4 @@
-use ely_gpui_component::theme::{ActiveTheme as _, Mode, Theme};
+use ely_gpui_component::theme::{Mode, Theme};
 use gpui::App;
 use serde::{Deserialize, Serialize};
 

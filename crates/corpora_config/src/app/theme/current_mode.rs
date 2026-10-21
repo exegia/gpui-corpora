@@ -2,5 +2,5 @@
 use super::*;
 
 pub fn current_mode(cx: &App) -> ThemeMode {
-    cx.theme().mode().into()
+    crate::app_state::with_config(cx, |config| config.theme)
 }

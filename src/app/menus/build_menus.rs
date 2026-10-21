@@ -2,7 +2,7 @@
 use super::*;
 
 pub(crate) fn build_menus(title: SharedString, cx: &App) -> Vec<Menu> {
-    let dark = crate::app::theme::current_mode(cx) == ThemeMode::Dark;
+    let appearance = crate::app::theme::current_mode(cx);
     vec![
         Menu {
             name: title,
@@ -16,12 +16,17 @@ pub(crate) fn build_menus(title: SharedString, cx: &App) -> Vec<Menu> {
                             crate::i18n::localize("menu_appearance_light"),
                             SwitchThemeMode(ThemeMode::Light),
                         )
-                        .checked(!dark),
+                        .checked(appearance == ThemeMode::Light),
                         MenuItem::action(
                             crate::i18n::localize("menu_appearance_dark"),
                             SwitchThemeMode(ThemeMode::Dark),
                         )
-                        .checked(dark),
+                        .checked(appearance == ThemeMode::Dark),
+                        MenuItem::action(
+                            crate::i18n::localize("menu_appearance_system"),
+                            SwitchThemeMode(ThemeMode::System),
+                        )
+                        .checked(appearance == ThemeMode::System),
                     ],
                     disabled: false,
                 }),
