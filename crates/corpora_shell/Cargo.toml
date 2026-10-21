@@ -25,6 +25,7 @@ corpora_ui.workspace = true
 
 anyhow.workspace = true
 ely-gpui-component.workspace = true
+gpui-kit.workspace = true
 flume.workspace = true
 gpui.workspace = true
 gpui-router.workspace = true

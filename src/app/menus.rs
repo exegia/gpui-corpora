@@ -4,7 +4,7 @@ use ely_gpui_component::{
     forms::{Copy, Cut, Paste, SelectAll},
     theme::Theme,
 };
-use gpui::{App, Menu, MenuItem, SharedString};
+use gpui_kit::{App, Menu, MenuItem, SharedString};
 
 use crate::{
     app::{

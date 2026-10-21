@@ -1,5 +1,5 @@
 use ely_gpui_component::theme::Theme;
-use gpui::{App, KeyBinding};
+use gpui_kit::{App, KeyBinding};
 
 use crate::app::actions::*;
 use crate::app::locale::set_locale;
@@ -107,6 +107,7 @@ pub fn init(cx: &mut App) {
     // Install before set_mode_now: it cancels set_palette's fade and jumps to the new palette.
     corpora_ui::styles::tokens::MacosClassic::new().install(cx);
     Theme::set_mode_now(persisted.theme.into(), cx);
+    gpui_kit::component::Theme::change(persisted.theme, None, cx);
 
     cx.on_action(|switch: &SwitchThemeMode, cx| {
         set_theme_mode(switch.0, cx);

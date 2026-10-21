@@ -53,8 +53,8 @@ gpui_agentation = { path = "crates/gpui_agentation" }
 ely-gpui-component = { git = "https://git.zacharyzhang.com/ZacharyZhang-NY/Ely-GPUI-Components", rev = "da3fdcaf39f2fa85ce1dd9cad07c3c81cf1dd721" }
 # Ely pins gpui-pre =0.3.8; any other GPUI source is a different, type-incompatible crate.
 gpui = { package = "gpui-pre", version = "=0.3.8", default-features = false, features = ["stacker"] }
-gpui_platform = { package = "gpui-pre-platform", version = "=0.3.8", features = ["font-kit", "runtime_shaders"] }
 gpui-router = { git = "https://github.com/justjavac/gpui-router", rev = "e2ec6ea039f05cb0aabd46929fd0883da1bfd93e", default-features = false, features = ["gpui-pre"] }
+gpui-kit = "=0.7.1"
 
 anyhow = "1"
 arboard = { version = "3.6.1", features = ["image-data"] }
@@ -159,15 +159,14 @@ corpora_ui.workspace = true
 
 anyhow.workspace = true
 ely-gpui-component.workspace = true
-gpui.workspace = true
+gpui-kit.workspace = true
 gpui-router.workspace = true
-gpui_platform.workspace = true
 rusqlite.workspace = true
 rust-i18n.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
-gpui = { package = "gpui-pre", version = "=0.3.8", features = ["test-support"] }
+gpui-kit = { workspace = true, features = ["test-support"] }
 single-instance.workspace = true
 tempfile.workspace = true
 

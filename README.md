@@ -88,6 +88,12 @@ Ely and `gpui-router` are pinned to Git revisions. The linked router README
 describes version 0.7, which was not published to crates.io when bootstrapped.
 Ely, the router, and the application all resolve to `gpui-pre` 0.3.8.
 
+GPUI Kit is pinned to 0.7.1, which shares that GPUI version. The application
+uses Kit's platform entry point and window root, with Ely's assets loaded
+before Kit's assets. Both libraries are initialized at startup; theme and
+locale changes update both. Ely's root `FocusScope` and inspector remain
+installed. See [Ely's interoperability guide](https://elygpui.com/docs/gpui-kit/).
+
 ```sh
 cargo fmt --check
 cargo check --locked

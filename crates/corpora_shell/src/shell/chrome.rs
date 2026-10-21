@@ -13,6 +13,7 @@ use gpui_router::{Outlet, use_location, use_navigate};
 use super::{EMPTY_TAB_PREFIX, Workspace};
 use crate::{navigation, pages, routes};
 
+mod brand;
 mod frame;
 mod notifications;
 mod sidebar;
@@ -20,6 +21,7 @@ mod style_chrome;
 mod tabs;
 mod workspace_surface;
 
+pub use brand::{logo, logo_image, register_brand_fonts};
 pub use frame::frame;
 use sidebar::sidebar;
 pub(super) use style_chrome::style_chrome;

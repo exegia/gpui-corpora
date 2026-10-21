@@ -1,6 +1,6 @@
 use gpui::{
-    AnyWindowHandle, App, AppContext as _, Bounds, Global, Pixels, Size, TitlebarOptions,
-    WindowBounds, WindowHandle, WindowKind, WindowOptions, point, px, size,
+    AnyWindowHandle, App, AppContext as _, Bounds, Entity, Global, Pixels, Size, TitlebarOptions,
+    WindowBounds, WindowKind, WindowOptions, point, px, size,
 };
 
 use crate::shell::Workspace;
