@@ -18,6 +18,7 @@ mod a_burst_of_updates_lands_as_the_final_value;
 mod a_failed_write_is_not_retried_until_the_next_mutation;
 mod an_unchanged_update_skips_the_write_entirely;
 mod clean_state;
+mod clicked_notification_read_state_persists;
 mod commit_flush_failure_keeps_the_state_dirty_for_retry;
 mod commit_flush_remarks_dirty_when_config_changed_midflight;
 mod commit_flush_success_commits_the_written_bytes;

@@ -34,16 +34,7 @@ pub fn frame(
     let notifications = notifications::notifications(workspace.clone(), cx);
     // Ely TitleBar already uses its drag_region (the WindowDragRegion equivalent).
     let titlebar = TitleBar::new("titlebar")
-        .child(
-            IconButton::new("back", IconName::ArrowLeft)
-                .tooltip("Back")
-                .on_click(|_, window, cx| use_navigate(window, cx).back()),
-        )
-        .child(
-            IconButton::new("forward", IconName::ArrowRight)
-                .tooltip("Forward")
-                .on_click(|_, window, cx| use_navigate(window, cx).forward()),
-        )
+        .child(brand::brand(cx))
         .child(tabs)
         .action(
             IconButton::new("new-workspace-tab", IconName::Plus)
@@ -132,7 +123,13 @@ pub fn frame(
     } else {
         match error_view {
             Some(view) => div().p_8().child(view).into_any_element(),
-            None => div().p_8().child(outlet).into_any_element(),
+            None => div()
+                .p_8()
+                .when(matches!(path.as_str(), "/explore" | "/projects"), |page| {
+                    page.h_full()
+                })
+                .child(outlet)
+                .into_any_element(),
         }
     };
     let body = style_chrome(

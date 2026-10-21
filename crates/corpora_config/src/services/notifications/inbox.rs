@@ -8,6 +8,7 @@ use crate::{
 mod clear_all;
 mod initialize;
 mod mark_all_read;
+mod mark_read;
 mod max_inbox_items;
 mod notification_attempt_record;
 mod notification_inbox_item;
@@ -21,6 +22,7 @@ mod unread_count;
 pub use clear_all::clear_all;
 pub use initialize::initialize;
 pub use mark_all_read::mark_all_read;
+pub use mark_read::mark_read;
 use max_inbox_items::MAX_INBOX_ITEMS;
 pub use notification_attempt_record::NotificationAttemptRecord;
 pub use notification_inbox_item::NotificationInboxItem;

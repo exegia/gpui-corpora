@@ -11,10 +11,14 @@ pub fn bootstrap() {
     let startup_deep_link = preflight.initial_deep_link;
 
     // `run` blocks for the whole app lifetime, so the stack frame keeps the App alive.
-    gpui_platform::application()
-        .with_assets(Assets)
+    gpui_kit::application()
+        .with_assets(Assets::before(gpui_kit::assets::Assets))
         .run(move |cx: &mut App| {
+            gpui_kit::init(cx);
             ely_gpui_component::init(cx).expect("Ely failed to start");
+            corpora_shell::shell::register_brand_fonts(cx).expect("Caudex failed to load");
+            #[cfg(debug_assertions)]
+            ely_gpui_component::tooling::install_inspector(cx);
             gpui_router::init(cx);
             crate::app::init(cx);
             crate::app::menus::init("Corpora", cx);
