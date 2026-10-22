@@ -81,15 +81,21 @@ would register duplicate GPUI actions. Feedback follows route changes.
 ## Window
 
 The Ely title bar supplies native macOS traffic-light spacing and its built-in
-`drag_region` for dragging and double-click zoom. The activity rail navigates
-within the selected tab. Each tab owns its route, retained pages, scroll position,
-sidebar visibility, and inspector visibility and width. Closing the last tab
-leaves an empty window; use New tab or a navigation control to open another.
+`drag_region` for dragging and double-click zoom. The tab bar lists only
+workspace tabs, with the New tab button after the last one. Route pages share
+one view outside the tab bar, which the activity rail and sidebar navigate. Each
+tab, and the route view, owns its retained pages, scroll position, sidebar
+visibility, and inspector visibility and width. Closing the active tab shows its
+neighbor, else the route view; with neither, the window is empty.
 
-The sidebar has a fixed gap beside the workspace; the inspector has a draggable
-splitter. All three panes share the same fill and inset shadows. The title-bar controls
-animate their visibility and respect reduced motion. Use Ctrl+B for the sidebar
-and Ctrl+Shift+B for the inspector (Cmd on macOS).
+`routes::panes` sets which panes each page offers: sidebar, inspector, a second
+content pane, and a bottom panel. Route pages keep the sidebar and inspector;
+workspace tabs get all four. The sidebar has a fixed gap beside the workspace;
+the inspector, second pane, and bottom panel have draggable splitters. All panes
+share the same fill and inset shadows and round every corner except where they
+meet the window's right edge. The title-bar controls animate their visibility
+and respect reduced motion. Use Ctrl+B for the sidebar and Ctrl+Shift+B for the
+inspector (Cmd on macOS).
 
 The activity dock starts closed and uses Ely's `Dock` with a movable activity
 panel. A splash window precedes the workspace, which briefly shows `Skeleton`
