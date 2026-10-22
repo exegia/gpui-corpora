@@ -1,6 +1,7 @@
 mod inspector;
 mod main;
 mod sidebar;
+mod surface_style;
 mod window_background;
 
 pub use inspector::inspector;

@@ -9,7 +9,10 @@ pub fn frame(
     cx: &mut App,
 ) -> impl IntoElement + use<> {
     let path = use_location(cx).pathname.to_string();
-    let selected = if path.starts_with(EMPTY_TAB_PREFIX) {
+    let has_tab = workspace
+        .upgrade()
+        .is_some_and(|owner| owner.read(cx).tabs.active().is_some());
+    let selected = if !has_tab || path.starts_with(EMPTY_TAB_PREFIX) {
         ""
     } else {
         routes::section(&path)
@@ -33,16 +36,18 @@ pub fn frame(
     // Ely TitleBar already uses its drag_region (the WindowDragRegion equivalent).
     let (sidebar_visible, inspector_visible, scroll) = workspace
         .upgrade()
-        .map(|owner| {
+        .and_then(|owner| {
             let owner = owner.read(cx);
-            let tab = owner.tabs.active().expect("workspace has a tab");
-            (
+            let tab = owner.tabs.active()?;
+            Some((
                 tab.state.sidebar_visible,
                 tab.state.inspector_visible,
                 tab.state.scroll.clone(),
-            )
+            ))
         })
         .unwrap_or_default();
+    let navigation_owner = workspace.clone();
+    let settings_owner = workspace.clone();
     let titlebar = TitleBar::new("titlebar")
         .child(brand::brand(cx))
         .child(tabs)
@@ -57,8 +62,8 @@ pub fn frame(
                         .ok();
                 }),
         )
-        .action(panels::toggle(false, sidebar_visible))
-        .action(panels::toggle(true, inspector_visible))
+        .action(panels::toggle(false, sidebar_visible).disabled(!has_tab))
+        .action(panels::toggle(true, inspector_visible).disabled(!has_tab))
         .action(notifications)
         .action(
             IconButton::new("open-palette", IconName::Search)
@@ -75,7 +80,11 @@ pub fn frame(
         .action(
             IconButton::new("settings", IconName::Settings)
                 .tooltip("Settings")
-                .on_click(|_, window, cx| use_navigate(window, cx).push(navigation::SETTINGS)),
+                .on_click(move |_, _, cx| {
+                    settings_owner
+                        .update(cx, |state, cx| state.navigate(navigation::SETTINGS, cx))
+                        .ok();
+                }),
         );
     let titlebar = style_chrome(
         titlebar,
@@ -105,7 +114,11 @@ pub fn frame(
             "Profile",
         ))
         .selected(selected)
-        .on_select(|path, window, cx| use_navigate(window, cx).push(path.clone()));
+        .on_select(move |path, _, cx| {
+            navigation_owner
+                .update(cx, |state, cx| state.navigate(path.to_string(), cx))
+                .ok();
+        });
     let activity = style_chrome(
         activity,
         StyleRefinement::default()
@@ -143,24 +156,19 @@ pub fn frame(
                 .into_any_element(),
         }
     };
-    let body = style_chrome(
-        Well::new().flex_1().min_w_0().h_full().child(
-            div()
-                .id("route-content")
-                .size_full()
-                .overflow_y_scroll()
-                .track_scroll(&scroll)
-                .child(crate::shell::dev_target(
-                    "route-page",
-                    "Current page",
-                    content,
-                )),
-        ),
-        workspace_surface::style(cx.theme().is_dark()),
-        window,
-        cx,
+    let body = corpora_ui::ui::layout::main(
+        cx.theme().is_dark(),
+        div()
+            .id("route-content")
+            .size_full()
+            .overflow_y_scroll()
+            .track_scroll(&scroll)
+            .child(crate::shell::dev_target(
+                "route-page",
+                "Current page",
+                content,
+            )),
     );
-    let body = corpora_ui::ui::layout::main(cx.theme().is_dark(), body);
     let body = panels::layout(workspace, body, window, cx);
     div()
         .border_0()

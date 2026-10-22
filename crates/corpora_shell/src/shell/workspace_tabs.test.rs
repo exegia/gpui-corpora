@@ -114,3 +114,16 @@ fn invalid_selection_preserves_the_current_tab() {
     assert_eq!(tabs.close("missing"), None);
     assert_eq!(tabs.active_id(), Some(first.as_str()));
 }
+
+#[test]
+fn closing_the_only_tab_drops_its_workspace_and_leaves_no_replacement() {
+    let mut tabs = WorkspaceTabs::default();
+    let state = Rc::new(());
+    let id = tabs.new_empty(state.clone());
+    tabs.close(&id);
+    assert!(tabs.entries().is_empty());
+    assert!(tabs.active_id().is_none());
+    assert_eq!(Rc::strong_count(&state), 1);
+    assert_eq!(tabs.close(&id), None);
+    assert!(tabs.entries().is_empty());
+}

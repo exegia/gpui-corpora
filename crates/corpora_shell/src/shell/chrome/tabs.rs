@@ -67,11 +67,11 @@ pub(super) fn tabs(
             let close = IconButton::new(format!("close-tab-{}", tab.id), IconName::X)
                 .size(ControlSize::Sm)
                 .tooltip(format!("Close {label}"))
-                .on_click(move |_, window, cx| {
+                .on_click(move |_, _, cx| {
                     cx.stop_propagation();
                     close_owner
                         .update(cx, |state, cx| {
-                            state.close_tab(&close_id, window, cx);
+                            state.close_tab(&close_id, cx);
                         })
                         .ok();
                 });

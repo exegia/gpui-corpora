@@ -59,10 +59,11 @@ pub(super) fn notifications(workspace: WeakEntity<Workspace>, cx: &App) -> Popov
             div()
                 .w(rems(24.0).to_pixels(rem).min(size.width - margin))
                 .h(rems(38.0).to_pixels(rem).min(size.height - margin))
-                .children(
+                .children(workspace.upgrade().and_then(|workspace| {
                     workspace
-                        .upgrade()
-                        .map(|workspace| workspace.read(cx).pages().notifications.clone()),
-                )
+                        .read(cx)
+                        .pages()
+                        .map(|pages| pages.notifications.clone())
+                }))
         })
 }

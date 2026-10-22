@@ -67,12 +67,9 @@ pub(super) fn layout(
     let Some(owner) = workspace.upgrade() else {
         return body.into_any_element();
     };
-    let tab = owner
-        .read(cx)
-        .tabs
-        .active()
-        .expect("workspace has a tab")
-        .clone();
+    let Some(tab) = owner.read(cx).tabs.active().cloned() else {
+        return div().flex_1().min_w_0().h_full().into_any_element();
+    };
     let state = &tab.state;
     let motion = Theme::global(cx).motion_tokens();
     let policy = Transition::new(motion.duration_normal).easing(motion.easing_move.clone());

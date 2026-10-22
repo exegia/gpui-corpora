@@ -159,24 +159,12 @@ impl Workspace {
         cx.notify();
     }
 
-    pub(crate) fn tab(&self) -> &super::tab_workspace::TabWorkspace {
-        &self
-            .tabs
-            .active()
-            .expect("workspace has an active tab")
-            .state
+    fn tab_mut(&mut self) -> Option<&mut super::tab_workspace::TabWorkspace> {
+        self.tabs.active_mut().map(|tab| &mut tab.state)
     }
 
-    fn tab_mut(&mut self) -> &mut super::tab_workspace::TabWorkspace {
-        &mut self
-            .tabs
-            .active_mut()
-            .expect("workspace has an active tab")
-            .state
-    }
-
-    pub(crate) fn pages(&self) -> &Pages {
-        &self.tab().pages
+    pub(crate) fn pages(&self) -> Option<&Pages> {
+        self.tabs.active().map(|tab| &tab.state.pages)
     }
 
     pub(crate) fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -185,10 +173,11 @@ impl Workspace {
         self.navigate(path, cx);
     }
 
-    pub(crate) fn close_tab(&mut self, id: &str, window: &mut Window, cx: &mut Context<Self>) {
+    pub(crate) fn close_tab(&mut self, id: &str, cx: &mut Context<Self>) {
         let path = self.tabs.close(id);
         if self.tabs.entries().is_empty() {
-            self.new_tab(window, cx);
+            self.pending_path = None;
+            self.routing_to = None;
         } else if let Some(path) = path {
             self.navigate(path, cx);
         }
@@ -269,13 +258,14 @@ impl Workspace {
     /// The error page while the boundary is up, after taking any render
     /// panic recorded since the last frame.
     pub(crate) fn error_view(&mut self, cx: &mut Context<Self>) -> Option<AnyView> {
+        let tab = self.tab_mut()?;
         if crate::lifecycle::take_render_panic() {
             tracing::warn!(target: "corpora::workspace", "render panic detected; activating error boundary");
             let summary = crate::lifecycle::last_panic_summary()
                 .unwrap_or_else(|| crate::i18n::localize("render_error_unknown"));
-            self.tab_mut().error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+            tab.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
         }
-        self.tab_mut().error_page.clone().map(Into::into)
+        tab.error_page.clone().map(Into::into)
     }
 
     /// Persist the routed path once it changes; leaving a path also clears
@@ -286,6 +276,9 @@ impl Workspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.tabs.active().is_none() {
+            return;
+        }
         #[cfg(not(debug_assertions))]
         let _ = window;
         if self
@@ -307,7 +300,9 @@ impl Workspace {
                 overlay.set_route(&format!("gpui://corpora{path}"), window, cx)
             });
         }
-        self.tab_mut().error_page = None;
+        if let Some(tab) = self.tab_mut() {
+            tab.error_page = None;
+        }
         let path = path.to_string();
         crate::app_state::update_config(cx, |config| config.active_path = path);
         cx.notify();
@@ -348,7 +343,30 @@ impl Render for Workspace {
         gpui_agentation::begin_frame(window, cx);
         let started = std::time::Instant::now();
         if let Some(path) = self.pending_path.take() {
-            window.defer(cx, move |window, cx| use_navigate(window, cx).push(path));
+            let owner = cx.entity().downgrade();
+            window.defer(cx, move |window, cx| {
+                let navigate = owner
+                    .update(cx, |this, cx| {
+                        if this.routing_to.as_deref() != Some(path.as_str()) {
+                            return false;
+                        }
+                        if this.tabs.active().is_none() {
+                            let state = super::tab_workspace::TabWorkspace::new(
+                                cx.entity().downgrade(),
+                                window,
+                                cx,
+                            );
+                            this.tabs.new_empty(state);
+                            this.tabs.navigated(&path);
+                            cx.notify();
+                        }
+                        true
+                    })
+                    .unwrap_or(false);
+                if navigate {
+                    use_navigate(window, cx).push(path);
+                }
+            });
         }
         let body = if self.dock_visible {
             self.dock.clone().into_any_element()
@@ -405,12 +423,16 @@ impl Render for Workspace {
                 cx.listener(|this, _: &crate::app::ToggleSearch, _, cx| this.toggle_palette(cx)),
             )
             .on_action(cx.listener(|this, _: &ReloadCurrentPage, _, cx| {
-                this.tab_mut().error_page = None;
+                if let Some(tab) = this.tab_mut() {
+                    tab.error_page = None;
+                }
                 cx.notify();
             }))
             .on_action(cx.listener(|this, action: &TriggerRenderError, _, cx| {
                 let summary = action.message.clone();
-                this.tab_mut().error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+                if let Some(tab) = this.tab_mut() {
+                    tab.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+                }
                 cx.notify();
             }))
             .child(background)

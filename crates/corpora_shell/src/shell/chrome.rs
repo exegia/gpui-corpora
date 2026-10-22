@@ -1,7 +1,6 @@
 use corpora_ui::ely::theme::ActiveTheme;
 use corpora_ui::ely::{
     buttons::{Button, ButtonVariant, IconButton},
-    layout::Well,
     motion::Skeleton,
     primitives::IconName,
     shell::{ActivityBar, ActivityItem, TitleBar},
@@ -18,7 +17,6 @@ mod notifications;
 mod panels;
 mod style_chrome;
 mod tabs;
-mod workspace_surface;
 
 pub use brand::{logo, logo_image, register_brand_fonts};
 pub use frame::frame;
