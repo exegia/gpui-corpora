@@ -1685,6 +1685,7 @@ version = "0.1.0"
 dependencies = [
  "ely-gpui-component",
  "gpui-agentation",
+ "gpui-kit",
  "gpui-pre",
  "tracing",
 ]

@@ -90,7 +90,6 @@ impl RenderOnce for ThemePicker {
                     .map(|(index, &(id, mode, label, image))| {
                         let selected = self.selected == mode;
                         let focus = handles[index].clone();
-                        let focused = focus.is_focused(window);
                         let previous =
                             (options[(index + 2) % 3].1, handles[(index + 2) % 3].clone());
                         let next = (options[(index + 1) % 3].1, handles[(index + 1) % 3].clone());
@@ -133,16 +132,14 @@ impl RenderOnce for ThemePicker {
                                     .id(SharedString::from(format!("{id}-preview")))
                                     .w_full()
                                     .border_2()
-                                    .border_color(if focused {
-                                        colors.focus
-                                    } else if selected {
+                                    .border_color(if selected {
                                         colors.accent
                                     } else {
                                         gpui::transparent_black()
                                     })
                                     .rounded(theme.radius(Radius::Xl))
                                     .p_0p5()
-                                    .when(!selected && !focused, |preview| {
+                                    .when(!selected, |preview| {
                                         preview
                                             .hover(|style| style.border_color(colors.border_strong))
                                     })

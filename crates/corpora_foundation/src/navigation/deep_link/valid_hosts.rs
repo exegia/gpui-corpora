@@ -4,6 +4,7 @@ use super::*;
 /// Top-level sections a deep link may open. `home` maps to `/`.
 pub(crate) const VALID_HOSTS: &[&str] = &[
     "home",
+    "ui",
     "explore",
     "projects",
     "settings",

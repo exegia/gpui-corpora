@@ -33,6 +33,10 @@ rust-embed.workspace = true
 serde.workspace = true
 tracing.workspace = true
 
+[dev-dependencies]
+gpui-agentation = { workspace = true, features = ["test-support"] }
+gpui-kit = { workspace = true, features = ["test-support"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 global-hotkey.workspace = true
 

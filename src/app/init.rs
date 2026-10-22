@@ -109,6 +109,7 @@ pub fn init(cx: &mut App) {
     let appearance = cx.window_appearance();
     Theme::set_mode_now(persisted.theme.resolve(appearance), cx);
     gpui_kit::component::Theme::change(persisted.theme.kit_mode(appearance), None, cx);
+    corpora_ui::styles::tokens::disable_focus_outlines(cx);
 
     cx.on_action(|switch: &SwitchThemeMode, cx| {
         set_theme_mode(switch.0, cx);

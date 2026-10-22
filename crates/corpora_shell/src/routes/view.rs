@@ -22,6 +22,17 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
             .path("/")
             .element(move |window, cx| shell::frame(frame.clone(), Outlet::new(), window, cx))
             .children([
+                Route::new().path("ui").children([
+                    Route::new()
+                        .index()
+                        .element(page(|p| p.ui.clone().into_any_element())),
+                    Route::new()
+                        .path("breadcrumb")
+                        .element(page(|p| p.ui.clone().into_any_element())),
+                    Route::new()
+                        .path("button")
+                        .element(page(|p| p.button.clone().into_any_element())),
+                ]),
                 Route::new().index().element(|_, _| pages::home()),
                 Route::new()
                     .path("tabs/new/:tabId")
