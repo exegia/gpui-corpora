@@ -46,6 +46,14 @@ impl Default for MacosClassic {
     }
 }
 
+/// Removes Kit focus outlines after initialization or an appearance change.
+pub fn disable_focus_outlines(cx: &mut App) {
+    gpui_kit::component::Theme::update(cx, |theme| {
+        theme.focus_ring = false;
+        theme.ring = gpui::transparent_black();
+    });
+}
+
 fn hex(value: u32) -> Hsla {
     rgb(value).into()
 }
@@ -85,7 +93,7 @@ fn light() -> Palette {
         accent_hover: accent.mix(&fg, 0.15),
         // Tailwind amber-950; white text is unreadable on amber.
         on_accent: hex(0x461901),
-        focus: accent,
+        focus: gpui::transparent_black(),
         // Tailwind amber-700: amber-500 text is under 3:1 on the light background.
         link: hex(0xbb4d00),
         selection: hexa(0xfe9a0033),
@@ -142,7 +150,7 @@ fn dark() -> Palette {
         accent_hover: accent.mix(&fg, 0.15),
         // Tailwind amber-950; white text is unreadable on amber.
         on_accent: hex(0x461901),
-        focus: accent,
+        focus: gpui::transparent_black(),
         link: accent,
         // Tailwind amber-800, which keeps the light text over it readable.
         selection: hex(0x973c00),

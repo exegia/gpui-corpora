@@ -32,3 +32,26 @@ fn unmapped_fields_keep_ely_values() {
     assert_eq!(theme.dark.chart, ely.chart);
     assert_eq!(theme.dark.tooltip_bg, ely.tooltip_bg);
 }
+
+#[test]
+fn neither_palette_paints_an_accent_focus_outline() {
+    let theme = MacosClassic::new();
+    assert_eq!((theme.light.focus.a, theme.dark.focus.a), (0.0, 0.0));
+}
+
+#[gpui::test]
+fn kit_focus_policy_survives_repeated_appearance_changes(cx: &mut gpui::TestAppContext) {
+    cx.update(|cx| {
+        gpui_kit::init(cx);
+        for mode in [
+            gpui_kit::component::ThemeMode::Light,
+            gpui_kit::component::ThemeMode::Dark,
+            gpui_kit::component::ThemeMode::Light,
+        ] {
+            gpui_kit::component::Theme::change(mode, None, cx);
+            disable_focus_outlines(cx);
+            let theme = gpui_kit::component::Theme::global(cx);
+            assert!(!theme.focus_ring && theme.ring.a == 0.0);
+        }
+    });
+}

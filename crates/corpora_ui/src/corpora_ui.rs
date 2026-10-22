@@ -10,4 +10,6 @@ pub use gpui_agentation::ely;
 pub mod styles {
     pub mod tokens;
 }
+pub mod atoms;
+pub mod composed;
 pub mod ui;
