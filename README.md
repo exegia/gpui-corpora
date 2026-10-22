@@ -83,10 +83,11 @@ would register duplicate GPUI actions. Feedback follows route changes.
 The Ely title bar supplies native macOS traffic-light spacing and its built-in
 `drag_region` for dragging and double-click zoom. The activity rail navigates
 within the selected tab. Each tab owns its route, retained pages, scroll position,
-sidebar visibility, and inspector visibility and width.
+sidebar visibility, and inspector visibility and width. Closing the last tab
+leaves an empty window; use New tab or a navigation control to open another.
 
 The sidebar has a fixed gap beside the workspace; the inspector has a draggable
-splitter. Both panels use the shared window background. The title-bar controls
+splitter. All three panes share the same fill and inset shadows. The title-bar controls
 animate their visibility and respect reduced motion. Use Ctrl+B for the sidebar
 and Ctrl+Shift+B for the inspector (Cmd on macOS).
 
