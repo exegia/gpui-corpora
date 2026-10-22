@@ -162,6 +162,7 @@ pub(super) fn layout(
                 ("/", "Home", IconName::House),
                 ("/explore", "Explore", IconName::Compass),
                 ("/projects", "Projects", IconName::Folder),
+                ("/ui", "UI", IconName::LayoutGrid),
             ]
             .into_iter()
             .map(|(path, label, icon)| {

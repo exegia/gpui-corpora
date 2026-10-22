@@ -8,6 +8,7 @@ use crate::{
 
 mod panes;
 mod section;
+pub mod ui;
 mod view;
 
 pub use panes::{Panes, panes};
