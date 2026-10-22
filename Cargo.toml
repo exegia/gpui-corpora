@@ -5,7 +5,7 @@ members = [
     "crates/corpora_foundation",
     "crates/corpora_persistence",
     "crates/corpora_platform",
-    "crates/corpora_runtime_services",
+    "crates/corpora_runtime",
     "crates/corpora_services",
     "crates/corpora_shell",
     "crates/corpora_ui",
@@ -43,22 +43,31 @@ corpora_config = { path = "crates/corpora_config" }
 corpora_foundation = { path = "crates/corpora_foundation" }
 corpora_persistence = { path = "crates/corpora_persistence" }
 corpora_platform = { path = "crates/corpora_platform" }
-corpora_runtime_services = { path = "crates/corpora_runtime_services" }
+corpora_runtime = { path = "crates/corpora_runtime" }
 corpora_services = { path = "crates/corpora_services" }
 corpora_shell = { path = "crates/corpora_shell" }
 corpora_ui = { path = "crates/corpora_ui" }
-gpui-agentation = { version = "=0.3.0", default-features = false, features = ["native"] }
+gpui-agentation = { version = "=0.3.0", default-features = false, features = [
+    "native",
+] }
 
 ely-gpui-component = { git = "https://git.zacharyzhang.com/ZacharyZhang-NY/Ely-GPUI-Components", rev = "da3fdcaf39f2fa85ce1dd9cad07c3c81cf1dd721" }
 # Ely pins gpui-pre =0.3.8; any other GPUI source is a different, type-incompatible crate.
-gpui = { package = "gpui-pre", version = "=0.3.8", default-features = false, features = ["stacker"] }
-gpui-router = { git = "https://github.com/justjavac/gpui-router", rev = "e2ec6ea039f05cb0aabd46929fd0883da1bfd93e", default-features = false, features = ["gpui-pre"] }
+gpui = { package = "gpui-pre", version = "=0.3.8", default-features = false, features = [
+    "stacker",
+] }
+gpui-router = { git = "https://github.com/justjavac/gpui-router", rev = "e2ec6ea039f05cb0aabd46929fd0883da1bfd93e", default-features = false, features = [
+    "gpui-pre",
+] }
 gpui-kit = "=0.7.1"
 
 anyhow = "1"
 arboard = { version = "3.6.1", features = ["image-data"] }
 # `async-io`, not tokio: notify-rust forces zbus/async-io and zbus forbids both.
-ashpd = { version = "0.13", default-features = false, features = ["async-io", "notification"] }
+ashpd = { version = "0.13", default-features = false, features = [
+    "async-io",
+    "notification",
+] }
 async-trait = "0.1"
 atomic-write-file = "0.3.0"
 base64 = "0.22"
@@ -80,15 +89,34 @@ network-interface = "2.0.3"
 notify = "8.2.0"
 notify-rust = "4.17.0"
 objc2 = { version = "0.6", features = ["exception"] }
-objc2-foundation = { version = "0.3.0", default-features = false, features = ["NSBundle", "NSError", "NSString", "std"] }
-objc2-user-notifications = { version = "0.3.0", default-features = false, features = ["UNNotificationSettings", "UNUserNotificationCenter", "block2", "std"] }
+objc2-foundation = { version = "0.3.0", default-features = false, features = [
+    "NSBundle",
+    "NSError",
+    "NSString",
+    "std",
+] }
+objc2-user-notifications = { version = "0.3.0", default-features = false, features = [
+    "UNNotificationSettings",
+    "UNUserNotificationCenter",
+    "block2",
+    "std",
+] }
 open = "5.3.2"
 opentelemetry = "0.24.0"
-opentelemetry-otlp = { version = "0.17.0", features = ["http-proto", "reqwest-client"] }
+opentelemetry-otlp = { version = "0.17.0", features = [
+    "http-proto",
+    "reqwest-client",
+] }
 opentelemetry_sdk = { version = "0.24.1", features = ["rt-tokio", "trace"] }
 percent-encoding = "2"
 quick-xml = "0.37"
-reqwest = { version = "0.12.24", default-features = false, features = ["cookies", "json", "multipart", "rustls-tls", "stream"] }
+reqwest = { version = "0.12.24", default-features = false, features = [
+    "cookies",
+    "json",
+    "multipart",
+    "rustls-tls",
+    "stream",
+] }
 rfd = "0.15.4"
 rusqlite = { version = "0.32.1", features = ["bundled"] }
 rust-embed = "8"
@@ -101,12 +129,24 @@ single-instance = "0.3.3"
 sys-locale = "0.3"
 tempfile = "3.27.0"
 thiserror = "2.0.18"
-tokio = { version = "1", features = ["io-util", "net", "rt", "rt-multi-thread", "sync", "time"] }
+tokio = { version = "1", features = [
+    "io-util",
+    "net",
+    "rt",
+    "rt-multi-thread",
+    "sync",
+    "time",
+] }
 tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
 tracing = "0.1"
 tracing-appender = "0.2"
 # tracing-log forwards Ely's `log` records into the tracing subscriber.
-tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "registry", "tracing-log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "env-filter",
+    "fmt",
+    "registry",
+    "tracing-log",
+] }
 undo = "0.52.0"
 url = "2.5.8"
 # macOS notification backend only; Windows sends through corpora_config's win_toast.
@@ -141,7 +181,7 @@ workspace = true
 
 [features]
 # OTLP export over HTTP/Protobuf for the telemetry module.
-otlp = ["corpora_runtime_services/otlp"]
+otlp = ["corpora_runtime/otlp"]
 websocket = ["corpora_platform/websocket"]
 # XDG Desktop Portal notification backend for Flatpak/Snap runs.
 notifications-portal = ["corpora_config/notifications-portal"]
@@ -151,7 +191,7 @@ corpora_config.workspace = true
 corpora_foundation.workspace = true
 corpora_persistence.workspace = true
 corpora_platform.workspace = true
-corpora_runtime_services.workspace = true
+corpora_runtime.workspace = true
 corpora_services.workspace = true
 corpora_shell.workspace = true
 corpora_ui.workspace = true

@@ -1525,7 +1525,7 @@ dependencies = [
  "block2 0.6.2",
  "corpora_foundation",
  "corpora_platform",
- "corpora_runtime_services",
+ "corpora_runtime",
  "corpora_ui",
  "futures-util",
  "gpui-kit",
@@ -1597,7 +1597,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "corpora_runtime_services"
+name = "corpora_runtime"
 version = "0.1.0"
 dependencies = [
  "corpora_foundation",
@@ -1633,7 +1633,7 @@ dependencies = [
  "corpora_foundation",
  "corpora_persistence",
  "corpora_platform",
- "corpora_runtime_services",
+ "corpora_runtime",
  "ed25519-dalek",
  "futures-util",
  "gpui-pre",
@@ -1663,7 +1663,7 @@ dependencies = [
  "corpora_config",
  "corpora_foundation",
  "corpora_platform",
- "corpora_runtime_services",
+ "corpora_runtime",
  "corpora_services",
  "corpora_ui",
  "flume 0.11.1",
@@ -3224,7 +3224,7 @@ dependencies = [
  "corpora_foundation",
  "corpora_persistence",
  "corpora_platform",
- "corpora_runtime_services",
+ "corpora_runtime",
  "corpora_services",
  "corpora_shell",
  "corpora_ui",

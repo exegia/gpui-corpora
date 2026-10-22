@@ -19,7 +19,7 @@ default = []
 corpora_config.workspace = true
 corpora_foundation.workspace = true
 corpora_platform.workspace = true
-corpora_runtime_services.workspace = true
+corpora_runtime.workspace = true
 corpora_services.workspace = true
 corpora_ui.workspace = true
 

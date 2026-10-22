@@ -2,6 +2,8 @@
 com.corpora.app.instance
 .idea/
 .DS_Store
+**/.DS_Store
+crates/.DS_Store
 .agents/
 .claude/
 .github/aw/logs/
@@ -10,3 +12,4 @@ com.corpora.app.instance
 !.env.example
 *.local.json
 *.local.toml
+**/__pycache__

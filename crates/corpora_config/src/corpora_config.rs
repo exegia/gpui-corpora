@@ -10,7 +10,7 @@ pub(crate) use corpora_foundation::{errors, foundation, ids, navigation, time};
 #[allow(unused_imports)]
 pub(crate) use corpora_platform::{capabilities, events, ipc, paths, runtime, single_instance};
 #[allow(unused_imports)]
-pub(crate) use corpora_runtime_services::{
+pub(crate) use corpora_runtime::{
     accessibility, connectivity, i18n, secure_storage, session, streaming, tasks, telemetry,
     tokio_runtime,
 };
@@ -37,7 +37,7 @@ pub mod platform {
 
 pub mod services {
     #[allow(unused_imports)]
-    pub(crate) use corpora_runtime_services::services::*;
+    pub(crate) use corpora_runtime::services::*;
 
     pub mod notifications;
     pub mod undo_stack;
