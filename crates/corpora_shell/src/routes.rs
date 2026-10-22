@@ -6,8 +6,10 @@ use crate::{
     shell::{self, Workspace},
 };
 
+mod panes;
 mod section;
 mod view;
 
+pub use panes::{Panes, panes};
 pub use section::section;
 pub use view::view;

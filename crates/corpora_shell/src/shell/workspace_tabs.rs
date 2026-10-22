@@ -1,6 +1,5 @@
-use crate::navigation;
-
 pub(super) const EMPTY_TAB_PREFIX: &str = "/tabs/new/";
+const ROUTE_VIEW: &str = "route";
 
 #[derive(Clone, Debug)]
 pub(crate) struct WorkspaceTab<T> {
@@ -10,8 +9,11 @@ pub(crate) struct WorkspaceTab<T> {
     pub state: T,
 }
 
+/// Workspace tabs, plus the one view all route pages share. The route view is
+/// never listed in the tab bar.
 pub(crate) struct WorkspaceTabs<T> {
     entries: Vec<WorkspaceTab<T>>,
+    route: Option<WorkspaceTab<T>>,
     active: Option<String>,
     next_empty_id: u64,
 }
@@ -20,10 +22,15 @@ impl<T> Default for WorkspaceTabs<T> {
     fn default() -> Self {
         Self {
             entries: Vec::new(),
+            route: None,
             active: None,
             next_empty_id: 0,
         }
     }
+}
+
+fn is_tab(path: &str) -> bool {
+    path.starts_with(EMPTY_TAB_PREFIX)
 }
 
 impl<T> WorkspaceTabs<T> {
@@ -35,41 +42,74 @@ impl<T> WorkspaceTabs<T> {
         self.active.as_deref()
     }
 
+    /// The active tab, or the route view while a route page shows.
     pub(crate) fn active(&self) -> Option<&WorkspaceTab<T>> {
-        self.entries
+        let active = self.active.as_deref()?;
+        self.route
             .iter()
-            .find(|tab| Some(tab.id.as_str()) == self.active_id())
+            .chain(&self.entries)
+            .find(|view| view.id == active)
     }
 
     pub(crate) fn active_mut(&mut self) -> Option<&mut WorkspaceTab<T>> {
-        let active = self.active.as_deref();
-        self.entries
+        let active = self.active.as_deref()?;
+        self.route
             .iter_mut()
-            .find(|tab| Some(tab.id.as_str()) == active)
+            .chain(&mut self.entries)
+            .find(|view| view.id == active)
     }
 
-    pub(crate) fn navigated(&mut self, path: &str) {
-        if let Some(tab) = self.active_mut() {
-            tab.path = path.to_string();
+    /// Activates the view for `path`: its tab for a tab path, else the route view.
+    /// Returns false when that view does not exist yet; create it with `open`.
+    pub(crate) fn show(&mut self, path: &str) -> bool {
+        if is_tab(path) {
+            return self.select(path).is_some();
         }
+        let Some(route) = &mut self.route else {
+            return false;
+        };
+        route.path = path.to_string();
+        self.active = Some(route.id.clone());
+        true
     }
 
-    pub(crate) fn restore(&mut self, path: &str, state: T) {
-        self.next_empty_id = path
+    /// Creates the view `show` could not find for `path` and activates it.
+    pub(crate) fn open(&mut self, path: &str, state: T) {
+        if !is_tab(path) {
+            self.route = Some(WorkspaceTab {
+                id: ROUTE_VIEW.to_string(),
+                number: 0,
+                path: path.to_string(),
+                state,
+            });
+            self.active = Some(ROUTE_VIEW.to_string());
+            return;
+        }
+        let number = path
             .strip_prefix(EMPTY_TAB_PREFIX)
             .and_then(|id| id.parse::<u64>().ok())
-            .unwrap_or(1)
-            .saturating_sub(1);
-        self.new_empty(state);
-        self.navigated(path);
+            .unwrap_or(self.next_empty_id + 1);
+        self.next_empty_id = self.next_empty_id.max(number);
+        self.push(number, state);
+    }
+
+    /// Records where the route view's router went; tabs keep their own path.
+    pub(crate) fn navigated(&mut self, path: &str) {
+        if let Some(route) = self.active_mut().filter(|view| view.id == ROUTE_VIEW) {
+            route.path = path.to_string();
+        }
     }
 
     pub(crate) fn new_empty(&mut self, state: T) -> String {
         self.next_empty_id += 1;
-        let id = format!("{EMPTY_TAB_PREFIX}{}", self.next_empty_id);
+        self.push(self.next_empty_id, state)
+    }
+
+    fn push(&mut self, number: u64, state: T) -> String {
+        let id = format!("{EMPTY_TAB_PREFIX}{number}");
         self.entries.push(WorkspaceTab {
             id: id.clone(),
-            number: self.next_empty_id,
+            number,
             path: id.clone(),
             state,
         });
@@ -83,6 +123,8 @@ impl<T> WorkspaceTabs<T> {
         Some(tab.path.clone())
     }
 
+    /// Closes a tab. Closing the active one shows its neighbor, else the route
+    /// view, and returns that path; with neither left the window is empty.
     pub(crate) fn close(&mut self, id: &str) -> Option<String> {
         let index = self.entries.iter().position(|tab| tab.id == id)?;
         self.entries.remove(index);
@@ -91,12 +133,10 @@ impl<T> WorkspaceTabs<T> {
         }
         let next = self
             .entries
-            .get(index.min(self.entries.len().saturating_sub(1)));
-        self.active = next.map(|tab| tab.id.clone());
-        Some(
-            next.map(|tab| tab.path.clone())
-                .unwrap_or_else(|| navigation::HOME.to_string()),
-        )
+            .get(index.min(self.entries.len().saturating_sub(1)))
+            .or(self.route.as_ref());
+        self.active = next.map(|view| view.id.clone());
+        next.map(|view| view.path.clone())
     }
 }
 

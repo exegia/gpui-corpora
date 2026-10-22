@@ -21,6 +21,7 @@ pub(super) fn tabs(
     let close_top = (cx.theme().control_height(ControlSize::Md) - close_side) * 0.5;
     let tab_min = cx.theme().tab_width().0;
     let text_size = cx.theme().text_size(TextSize::Sm);
+    let new_tab_owner = workspace.clone();
     div()
         .id("workspace-tabs")
         .flex()
@@ -34,13 +35,9 @@ pub(super) fn tabs(
             let select_id = tab.id.clone();
             let close_owner = workspace.clone();
             let close_id = tab.id.clone();
-            let label = if tab.path.starts_with(EMPTY_TAB_PREFIX) {
-                format!("New tab {}", tab.number)
-            } else {
-                super::panels::route_title(&tab.path).to_string()
-            };
+            let label = format!("New tab {}", tab.number);
             let button = Button::new(format!("select-tab-{}", tab.id), label.clone())
-                .icon(IconName::File)
+                .icon(IconName::AppWindow)
                 .variant(if selected {
                     ButtonVariant::Secondary
                 } else {
@@ -97,4 +94,13 @@ pub(super) fn tabs(
                         .child(close),
                 )
         }))
+        .child(
+            IconButton::new("new-workspace-tab", IconName::Plus)
+                .tooltip("New tab")
+                .on_click(move |_, window, cx| {
+                    new_tab_owner
+                        .update(cx, |state, cx| state.new_tab(window, cx))
+                        .ok();
+                }),
+        )
 }

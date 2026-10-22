@@ -1,26 +1,14 @@
 use super::*;
+use corpora_ui::ui::layout;
 use gpui_kit::{
-    base::{StyledExt, Transition, transition},
+    base::{ResizeHandleRenderer, StyledExt, Transition, transition},
     component::{
         Theme,
-        resizable::{h_resizable, resizable_panel},
+        resizable::{h_resizable, resizable_panel, resize_handle_appearance, v_resizable},
     },
 };
 
 use crate::shell::tab_workspace::{ToggleInspector, ToggleSidebar};
-
-pub(super) fn route_title(path: &str) -> &'static str {
-    match path.split('/').nth(1).unwrap_or_default() {
-        "explore" => "Explore",
-        "projects" => "Projects",
-        "settings" => "Settings",
-        "profile" => "Profile",
-        "notifications" => "Notifications",
-        "diagnostics" => "Diagnostics",
-        "about" => "About",
-        _ => "Home",
-    }
-}
 
 pub(super) fn toggle(inspector: bool, visible: bool) -> IconButton {
     let (id, icon, name, shortcut) = if inspector {
@@ -58,31 +46,74 @@ pub(super) fn toggle(inspector: bool, visible: bool) -> IconButton {
         })
 }
 
+/// Half the gap between split panes. Each side pads by this much so the
+/// splitter, which sits on the panel boundary, lands in the gap's center.
+const HALF_GAP: f32 = 0.25;
+
+/// Kit's splitter with its resting hairline hidden; the pill still shows on hover and drag.
+fn splitter() -> ResizeHandleRenderer {
+    let kit = resize_handle_appearance();
+    std::rc::Rc::new(move |handle, window, cx| {
+        let mut line = kit(handle, window, cx)?;
+        if let Some(line) = line.downcast_mut::<gpui::Div>() {
+            line.style()
+                .refine(&StyleRefinement::default().bg(gpui::transparent_black()));
+        }
+        Some(line)
+    })
+}
+
+/// A pane's title over a muted line, for panes with nothing to show yet.
+fn placeholder(title: &'static str, detail: &'static str, cx: &App) -> gpui::Div {
+    div()
+        .size_full()
+        .p_3()
+        .flex()
+        .flex_col()
+        .gap_3()
+        .child(div().text_sm().font_semibold().child(title))
+        .child(
+            div()
+                .text_sm()
+                .text_color(cx.theme().colors.fg_muted)
+                .child(detail),
+        )
+}
+
+/// Lays the active view's panes around `content`, as its route's `Panes` allow.
 pub(super) fn layout(
     workspace: WeakEntity<Workspace>,
-    body: impl IntoElement,
+    content: impl IntoElement,
     window: &mut Window,
     cx: &mut App,
 ) -> gpui::AnyElement {
+    let dark = cx.theme().is_dark();
     let Some(owner) = workspace.upgrade() else {
-        return body.into_any_element();
+        return layout::main(dark, content)
+            .flush_right(true)
+            .into_any_element();
     };
     let Some(tab) = owner.read(cx).tabs.active().cloned() else {
         return div().flex_1().min_w_0().h_full().into_any_element();
     };
     let state = &tab.state;
+    let panes = routes::panes(&tab.path);
     let motion = Theme::global(cx).motion_tokens();
     let policy = Transition::new(motion.duration_normal).easing(motion.easing_move.clone());
     let sidebar = transition(
         format!("{}-sidebar", tab.id),
-        if state.sidebar_visible { 1.0_f32 } else { 0.0 },
+        if panes.sidebar && state.sidebar_visible {
+            1.0_f32
+        } else {
+            0.0
+        },
         policy.clone(),
         window,
         cx,
     );
     let inspector = transition(
         format!("{}-inspector", tab.id),
-        if state.inspector_visible {
+        if panes.inspector && state.inspector_visible {
             1.0_f32
         } else {
             0.0
@@ -92,7 +123,6 @@ pub(super) fn layout(
         cx,
     );
     let rem = window.rem_size();
-    let dark = cx.theme().is_dark();
     // Reserve the central viewport even when the window is narrow or zoomed in.
     let sidebar_width = rems(16.0)
         .to_pixels(rem)
@@ -135,6 +165,7 @@ pub(super) fn layout(
             ]
             .into_iter()
             .map(|(path, label, icon)| {
+                let owner = workspace.clone();
                 Button::new(format!("sidebar-{label}"), label)
                     .icon(icon)
                     .variant(if selected == path {
@@ -142,7 +173,9 @@ pub(super) fn layout(
                     } else {
                         ButtonVariant::Ghost
                     })
-                    .on_click(move |_, window, cx| use_navigate(window, cx).push(path))
+                    .on_click(move |_, _, cx| {
+                        owner.update(cx, |state, cx| state.navigate(path, cx)).ok();
+                    })
             }),
         );
     let inspector_content = div()
@@ -150,19 +183,51 @@ pub(super) fn layout(
         .size_full()
         .overflow_y_scroll()
         .track_scroll(&state.inspector_scroll)
-        .p_3()
-        .flex()
-        .flex_col()
-        .gap_3()
-        .child(div().text_sm().font_semibold().child("Inspector"))
-        .child(
-            div()
-                .text_sm()
-                .text_color(cx.theme().colors.fg_muted)
-                .child("No selection"),
-        );
+        .child(placeholder("Inspector", "No selection", cx));
+    // Only panes that meet the window's right edge keep square right corners.
+    let flush = inspector == 0.0;
+    let primary = layout::main(dark, content).flush_right(flush && !panes.split);
+    let top = if panes.split {
+        h_resizable(format!("{}-content-split", tab.id))
+            .with_state(&state.content_split)
+            .with_handle_appearance(splitter())
+            .child(resizable_panel().pr(rems(HALF_GAP)).child(primary))
+            .child(
+                resizable_panel()
+                    .pl(rems(HALF_GAP))
+                    .child(crate::shell::dev_target(
+                        "tab-split-pane",
+                        "Tab split pane",
+                        layout::main(dark, placeholder("Split view", "Nothing open", cx))
+                            .flush_right(flush),
+                    )),
+            )
+            .into_any_element()
+    } else {
+        primary.into_any_element()
+    };
+    let center = if panes.dock {
+        v_resizable(format!("{}-dock-split", tab.id))
+            .with_state(&state.dock_split)
+            .with_handle_appearance(splitter())
+            .child(resizable_panel().pb(rems(HALF_GAP)).child(top))
+            .child(
+                resizable_panel()
+                    .pt(rems(HALF_GAP))
+                    .child(crate::shell::dev_target(
+                        "tab-bottom-panel",
+                        "Tab bottom panel",
+                        layout::main(dark, placeholder("Activity", "No workspace events", cx))
+                            .flush_right(flush),
+                    )),
+            )
+            .into_any_element()
+    } else {
+        top
+    };
     let split = h_resizable(format!("{}-split", tab.id))
         .with_state(&state.split)
+        .with_handle_appearance(splitter())
         .on_resize(move |split, window, cx| {
             if let Some(width) = split.read(cx).sizes().get(1).copied() {
                 workspace
@@ -178,7 +243,8 @@ pub(super) fn layout(
         .child(
             resizable_panel()
                 .size_range(gpui::px(0.0)..gpui::Pixels::MAX)
-                .child(body),
+                .pr(rems(HALF_GAP * inspector))
+                .child(center),
         )
         .child(
             resizable_panel()
@@ -186,12 +252,12 @@ pub(super) fn layout(
                 .flex_none()
                 .size(inspector_width)
                 .size_range(range)
-                .pl(rems(0.5 * inspector))
+                .pl(rems(HALF_GAP * inspector))
                 .overflow_hidden()
                 .child(crate::shell::dev_target(
                     "tab-inspector",
                     "Tab inspector",
-                    corpora_ui::ui::layout::inspector(dark, inspector_content),
+                    layout::inspector(dark, inspector_content),
                 )),
         );
     div()
@@ -210,7 +276,7 @@ pub(super) fn layout(
                     .child(crate::shell::dev_target(
                         "tab-sidebar",
                         "Tab sidebar",
-                        corpora_ui::ui::layout::sidebar(dark, sidebar_content),
+                        layout::sidebar(dark, sidebar_content),
                     )),
             )
         })

@@ -2,6 +2,7 @@ use super::*;
 use gpui::ScrollHandle;
 use gpui_kit::component::resizable::ResizableState;
 
+/// Pane state for one workspace tab, or for the view route pages share.
 #[derive(Clone)]
 pub(crate) struct TabWorkspace {
     pub pages: Pages,
@@ -10,6 +11,8 @@ pub(crate) struct TabWorkspace {
     pub inspector_visible: bool,
     pub inspector_width: gpui::Rems,
     pub split: Entity<ResizableState>,
+    pub content_split: Entity<ResizableState>,
+    pub dock_split: Entity<ResizableState>,
     pub scroll: ScrollHandle,
     pub sidebar_scroll: ScrollHandle,
     pub inspector_scroll: ScrollHandle,
@@ -29,6 +32,8 @@ impl TabWorkspace {
             inspector_visible: true,
             inspector_width: gpui::rems(20.0),
             split: cx.new(|_| ResizableState::default()),
+            content_split: cx.new(|_| ResizableState::default()),
+            dock_split: cx.new(|_| ResizableState::default()),
             scroll: ScrollHandle::new(),
             sidebar_scroll: ScrollHandle::new(),
             inspector_scroll: ScrollHandle::new(),

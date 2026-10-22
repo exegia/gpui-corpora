@@ -81,7 +81,7 @@ impl Workspace {
         #[cfg(debug_assertions)]
         let annotations = super::dev_feedback::mount(&active_path, window, cx);
         let mut tabs = WorkspaceTabs::default();
-        tabs.restore(
+        tabs.open(
             &active_path,
             super::tab_workspace::TabWorkspace::new(this, window, cx),
         );
@@ -150,10 +150,11 @@ impl Workspace {
         })
     }
 
-    /// Navigate after the routes next render.
+    /// Navigate after the routes next render. A tab path selects its tab; any
+    /// other path shows in the route view.
     pub fn navigate(&mut self, path: impl Into<String>, cx: &mut Context<Self>) {
         let path = path.into();
-        self.tabs.navigated(&path);
+        self.tabs.show(&path);
         self.routing_to = Some(path.clone());
         self.pending_path = Some(path);
         cx.notify();
@@ -174,12 +175,11 @@ impl Workspace {
     }
 
     pub(crate) fn close_tab(&mut self, id: &str, cx: &mut Context<Self>) {
-        let path = self.tabs.close(id);
-        if self.tabs.entries().is_empty() {
+        if let Some(path) = self.tabs.close(id) {
+            self.navigate(path, cx);
+        } else if self.tabs.active().is_none() {
             self.pending_path = None;
             self.routing_to = None;
-        } else if let Some(path) = path {
-            self.navigate(path, cx);
         }
         cx.notify();
     }
@@ -350,14 +350,13 @@ impl Render for Workspace {
                         if this.routing_to.as_deref() != Some(path.as_str()) {
                             return false;
                         }
-                        if this.tabs.active().is_none() {
+                        if !this.tabs.show(&path) {
                             let state = super::tab_workspace::TabWorkspace::new(
                                 cx.entity().downgrade(),
                                 window,
                                 cx,
                             );
-                            this.tabs.new_empty(state);
-                            this.tabs.navigated(&path);
+                            this.tabs.open(&path, state);
                             cx.notify();
                         }
                         true

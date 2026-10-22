@@ -39,7 +39,7 @@ pub fn register_brand_fonts(cx: &App) -> anyhow::Result<()> {
 
 pub(super) fn brand(cx: &App) -> impl IntoElement + use<> {
     let theme = cx.theme();
-    let image = logo(cx).size(px(20.0)).object_fit(ObjectFit::Contain);
+    let image = logo(cx).size(px(18.0)).object_fit(ObjectFit::Contain);
     div()
         .flex()
         .flex_none()
@@ -51,7 +51,7 @@ pub(super) fn brand(cx: &App) -> impl IntoElement + use<> {
         .child(
             div()
                 .font_family("Caudex")
-                .text_size(theme.text_size(TextSize::Lg) * 1.2)
+                .text_size(theme.text_size(TextSize::Lg) * 1.1)
                 .font_medium()
                 .child("Corpora"),
         )

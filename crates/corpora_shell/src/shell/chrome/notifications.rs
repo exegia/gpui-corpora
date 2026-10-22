@@ -1,11 +1,16 @@
 use corpora_ui::ely::buttons::IconButton;
-use corpora_ui::ely::data_display::CountBadge;
+use corpora_ui::ely::theme::{ControlSize, TextSize};
+use gpui::{FontWeight, rgb, white};
 use gpui_kit::{Anchor, base::Selectable, component::popover::Popover, px};
 
 use super::*;
 
+/// Unread counts above this read as `99+`.
+const MAX_UNREAD: usize = 99;
+
 /// The bell with its unread count. Kit's `Popover` marks it selected while open,
-/// which Ely's `IconButton` has no state for, so this owns that flag.
+/// which Ely's `IconButton` has no state for, so this owns that flag. Ely's
+/// `CountBadge` fixes its fill to the accent, so the count pill is drawn here.
 #[derive(IntoElement)]
 struct NotificationsTrigger {
     unread: usize,
@@ -24,17 +29,53 @@ impl Selectable for NotificationsTrigger {
 }
 
 impl RenderOnce for NotificationsTrigger {
-    fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
+    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let theme = cx.theme();
         let variant = if self.selected {
             ButtonVariant::Subtle
         } else {
             ButtonVariant::Ghost
         };
-        CountBadge::new("notifications-unread", self.unread).over(
-            IconButton::new("open-notifications", IconName::Bell)
-                .variant(variant)
-                .tooltip(format!("Notifications ({} unread)", self.unread)),
-        )
+        // Tailwind rose-500 in dark mode, rose-700 in light mode.
+        let fill = if theme.is_dark() {
+            rgb(0xff2056)
+        } else {
+            rgb(0xc70036)
+        };
+        let height = theme.control_height(ControlSize::Sm) * 0.67;
+        let count = if self.unread > MAX_UNREAD {
+            format!("{MAX_UNREAD}+")
+        } else {
+            self.unread.to_string()
+        };
+        // One step below Ely's smallest size, which Ely's rolling digits cannot go under.
+        let text_size = theme.text_size(TextSize::Xs) * (10.0 / 11.0);
+        let pill = div()
+            .flex()
+            .items_center()
+            .justify_center()
+            .min_w(height)
+            .h(height)
+            .px_1()
+            .rounded_full()
+            .bg(fill)
+            .text_color(white())
+            .text_size(text_size)
+            .font_weight(FontWeight::MEDIUM)
+            .child(count);
+        div()
+            .relative()
+            .flex_none()
+            .child(round(
+                IconButton::new("open-notifications", IconName::Bell)
+                    .variant(variant)
+                    .tooltip(format!("Notifications ({} unread)", self.unread)),
+                window,
+                cx,
+            ))
+            .when(self.unread > 0, |bell| {
+                bell.child(div().absolute().top_neg_1().right_neg_1().child(pill))
+            })
     }
 }
 
