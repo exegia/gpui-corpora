@@ -100,6 +100,7 @@ fn light() -> Palette {
         success: hex(0x319a00),
         warning: hex(0xb59a00),
         danger: hex(0xd21f07),
+        danger_subtle: hex(0xba3e38).opacity(0.2),
         info: hex(0xbb4d00),
         // Tailwind amber-100.
         info_subtle: hex(0xfef3c6),
@@ -160,7 +161,7 @@ fn dark() -> Palette {
         info: accent,
         success_subtle: hex(0x0c4619),
         warning_subtle: hex(0x3a310e),
-        danger_subtle: hex(0x46190c),
+        danger_subtle: hex(0xff5257),
         // Tailwind amber-900.
         info_subtle: hex(0x7b3306),
         glass: hexa(0x131313b8),

@@ -1,65 +1,9 @@
 use gpui::{Hsla, hsla, transparent_black};
-
 use crate::ely::theme::{Mix, Theme};
 
 /// Native tint and edge-lighting finishes. Live backdrop refraction is unavailable.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum GlassFinish {
-    Clear,
-    Frosted,
-    Subtle,
-    Liquid,
-    #[default]
-    LiquidRefract,
-}
 
-impl GlassFinish {
-    pub const ALL: [Self; 5] = [
-        Self::LiquidRefract,
-        Self::Liquid,
-        Self::Frosted,
-        Self::Clear,
-        Self::Subtle,
-    ];
-
-    pub fn name(self) -> &'static str {
-        match self {
-            Self::Clear => "clear",
-            Self::Frosted => "frosted",
-            Self::Subtle => "subtle",
-            Self::Liquid => "liquid",
-            Self::LiquidRefract => "liquid-refract",
-        }
-    }
-
-    fn tint(self, dark: bool) -> Hsla {
-        let (lightness, alpha) = match (self, dark) {
-            (Self::Clear, true) => (0., 0.25),
-            (Self::Frosted, true) => (0., 0.35),
-            (Self::Subtle, true) => (1., 0.06),
-            (Self::Liquid | Self::LiquidRefract, true) => (1., 0.04),
-            (Self::Clear, false) => (1., 0.25),
-            (Self::Frosted, false) => (1., 0.55),
-            (Self::Subtle, false) => (1., 0.30),
-            (Self::Liquid, false) => (1., 0.10),
-            (Self::LiquidRefract, false) => (1., 0.08),
-        };
-        hsla(0., 0., lightness, alpha)
-    }
-
-    pub(super) fn edge(self) -> f32 {
-        match self {
-            Self::Subtle => 0.12,
-            Self::Frosted => 0.20,
-            Self::Clear => 0.30,
-            Self::Liquid => 0.40,
-            Self::LiquidRefract => 0.55,
-        }
-    }
-}
-
-/// Visual variants; a glass finish is accepted only by the glass variant.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ButtonVariant {
     #[default]
     Default,
@@ -68,20 +12,18 @@ pub enum ButtonVariant {
     Outline,
     Secondary,
     Ghost,
-    Link,
-    Glass(GlassFinish),
+    Link
 }
 
 impl ButtonVariant {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 7] = [
         Self::Default,
         Self::Secondary,
         Self::Outline,
         Self::Destructive,
         Self::DestructiveOutline,
         Self::Ghost,
-        Self::Link,
-        Self::Glass(GlassFinish::LiquidRefract),
+        Self::Link
     ];
 
     pub fn name(self) -> &'static str {
@@ -92,8 +34,7 @@ impl ButtonVariant {
             Self::Outline => "outline",
             Self::Secondary => "secondary",
             Self::Ghost => "ghost",
-            Self::Link => "link",
-            Self::Glass(_) => "glass",
+            Self::Link => "link"
         }
     }
 
@@ -109,10 +50,10 @@ impl ButtonVariant {
                     (c.danger, hsla(0., 0., 1., 1.))
                 };
                 (
-                    base.opacity(if engaged { 0.9 } else { 1. }),
+                    base.opacity(if engaged { 0.9 } else { 1. }), // background
                     foreground,
-                    base,
-                    base.opacity(0.24),
+                    base, // border
+                    base.opacity(0.24), // shadow
                     hsla(
                         0.,
                         0.,
@@ -130,7 +71,7 @@ impl ButtonVariant {
                 };
                 let bg = if engaged {
                     if destructive {
-                        c.danger.opacity(0.04)
+                        c.danger.opacity(0.5)
                     } else if theme.is_dark() {
                         c.border.opacity(0.64)
                     } else {
@@ -140,20 +81,20 @@ impl ButtonVariant {
                     base
                 };
                 (
-                    bg,
-                    if destructive { c.danger } else { c.fg },
+                    bg, // background
+                    if destructive { c.danger } else { c.fg }, // foreground
                     if destructive && engaged {
-                        c.danger.opacity(0.32)
+                        c.danger_subtle.lighten(0.5)
                     } else {
-                        c.border
-                    },
-                    c.shadow.opacity(0.05),
+                        c.border.lighten(0.6)
+                    }, // border
+                    c.shadow.opacity(0.5), // shadow
                     hsla(
                         0.,
                         0.,
                         if theme.is_dark() { 1. } else { 0. },
                         if theme.is_dark() { 0.06 } else { 0.04 },
-                    ),
+                    ), // bevel
                 )
             }
             Self::Secondary => (
@@ -163,21 +104,20 @@ impl ButtonVariant {
                     0.9
                 } else {
                     1.
-                }),
-                c.fg,
-                clear,
-                clear,
-                clear,
+                }), // background
+                c.fg, // foreground
+                c.sunken, // border
+                clear, // shadow
+                clear, // bevel
             ),
             Self::Ghost => (
-                if engaged { c.hover } else { clear },
-                c.fg,
-                clear,
-                clear,
-                clear,
+                if engaged { c.hover } else { clear }, // background
+                c.fg, // foreground
+                clear, // border
+                clear, // shadow
+                clear, // bevel
             ),
-            Self::Link => (clear, c.fg, clear, clear, clear),
-            Self::Glass(finish) => (finish.tint(theme.is_dark()), c.fg, clear, clear, clear),
+            Self::Link => (clear, c.fg, clear, clear, clear)
         };
         Colors {
             background,
@@ -201,11 +141,11 @@ pub(super) struct Colors {
 impl gpui_kit::base::motion::Interpolate for Colors {
     fn interpolate(&self, target: &Self, progress: f32) -> Self {
         Self {
-            background: self.background.mix(&target.background, progress),
-            foreground: self.foreground.mix(&target.foreground, progress),
-            border: self.border.mix(&target.border, progress),
-            shadow: self.shadow.mix(&target.shadow, progress),
-            bevel: self.bevel.mix(&target.bevel, progress),
+            background: self.background.mix(target.background, progress),
+            foreground: self.foreground.mix(target.foreground, progress),
+            border: self.border.mix(target.border, progress),
+            shadow: self.shadow.mix(target.shadow, progress),
+            bevel: self.bevel.mix(target.bevel, progress),
         }
     }
 }

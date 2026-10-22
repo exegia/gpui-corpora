@@ -4,28 +4,29 @@ mod appearance;
 mod semantics;
 mod size;
 
-pub use appearance::{ButtonVariant, GlassFinish};
+pub use appearance::{ButtonVariant};
 pub use size::ButtonSize;
 
 use std::time::Duration;
 
 use gpui::{
-    AnyElement, App, BoxShadow, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton,
-    ParentElement, RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div,
-    linear_color_stop, linear_gradient, point, prelude::*, px, relative, rems,
+    AnyElement, App, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton,
+    ParentElement, RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div, prelude::*, relative, rems
 };
 use gpui_kit::{
     base::{
-        Button as NativeButton, StyledExt, TestSupportExt,
+        Button as NativeButton, TestSupportExt,
         animation::cubic_bezier,
         motion::{Transition, transition},
     },
     component::{Sizable, Size, spinner::Spinner},
 };
 
-use crate::ely::{
-    primitives::IconName,
-    theme::{ActiveTheme, Radius},
+use crate::{
+    ely::{
+        primitives::IconName,
+        theme::{ActiveTheme,  Radius},
+    },
 };
 
 #[derive(Default)]
@@ -143,6 +144,12 @@ impl RenderOnce for Button {
         let compact = window.viewport_size().width >= window.rem_size() * 40.;
         let metrics = self.size.metrics(compact);
         let inline_link = self.variant == ButtonVariant::Link && !self.size.is_icon();
+        let has_background = matches!(
+            self.variant,
+            ButtonVariant::Default
+                | ButtonVariant::Destructive
+                | ButtonVariant::Secondary
+        );
         let colors = transition(
             (self.id.clone(), "colors"),
             self.variant.colors(cx.theme(), hovered, pressed),
@@ -186,62 +193,9 @@ impl RenderOnce for Button {
             window,
             cx,
         );
-        let radius = cx.theme().radius(Radius::Lg) * 0.8;
+        let radius = cx.theme().radius(Radius::Lg) * 1.2;
+        let is_dark = cx.theme().is_dark();
         let rem = window.rem_size();
-        let face = div()
-            .id((self.id.clone(), "face"))
-            .test_support()
-            .absolute()
-            .inset(relative((1. - scale) * 0.5))
-            .rounded(radius)
-            .overflow_hidden()
-            .bg(colors.background)
-            .when(
-                !inline_link && !matches!(self.variant, ButtonVariant::Glass(_)),
-                |face| face.border_1().border_color(colors.border),
-            )
-            .when(!inert, |face| {
-                face.shadow(vec![BoxShadow {
-                    color: colors.shadow,
-                    offset: point(px(0.), rem / 16.),
-                    blur_radius: rem / 8.,
-                    spread_radius: px(0.),
-                    inset: false,
-                }])
-            })
-            .when(!inline_link && colors.bevel.a > 0., |face| {
-                face.child(
-                    div()
-                        .absolute()
-                        .left_0()
-                        .right_0()
-                        .top_0()
-                        .h(px(1.))
-                        .rounded(radius)
-                        .bg(colors.bevel),
-                )
-            })
-            .when_some(
-                match self.variant {
-                    ButtonVariant::Glass(finish) => Some(finish),
-                    _ => None,
-                },
-                |face, finish| {
-                    // GPUI has no backdrop filter; preserve the source tint and a lit material edge.
-                    face.border_1()
-                        .border_color(gpui::white().opacity(finish.edge() * 0.4))
-                        .bg(linear_gradient(
-                            160.,
-                            linear_color_stop(
-                                colors
-                                    .background
-                                    .blend(gpui::white().opacity(finish.edge() * 0.18)),
-                                0.,
-                            ),
-                            linear_color_stop(colors.background, 1.),
-                        ))
-                },
-            );
         let icon_scale = transition(
             (self.id.clone(), "icon-hover"),
             if hovered && !self.size.is_icon() && !cx.reduce_motion() {
@@ -291,12 +245,14 @@ impl RenderOnce for Button {
             .h(rems(height))
             .px(rems(padding))
             .gap(rems(metrics.gap / 16.))
+            .bg(colors.background)
             .rounded(radius)
-            .border_0()
-            .when(
-                !inline_link && !matches!(self.variant, ButtonVariant::Glass(_)),
-                |button| button.border_1().border_color(gpui::transparent_black()),
-            )
+            .border_1()
+            .border_color(colors.border)
+            // .when(
+            //     !inline_link && matches!(self.variant, ButtonVariant::Outline | ButtonVariant::DestructiveOutline),
+            //     |button| button.border_1().border_color(gpui::transparent_black()),
+            // )
             .text_size(rems(metrics.font / 16.))
             .font_weight(gpui::FontWeight::MEDIUM)
             .text_color(colors.foreground)
@@ -313,7 +269,8 @@ impl RenderOnce for Button {
             })
             .when(!inert, |button| button.cursor_pointer())
             .when(self.href.is_some(), |button| button.role(Role::Link))
-            .child(face)
+            // .child(face)
+
             .when(!self.size.is_icon(), |button| {
                 button.child(
                     div()
@@ -344,12 +301,15 @@ impl RenderOnce for Button {
                         self.variant == ButtonVariant::Link && (hovered || pressed),
                         |content| content.underline(),
                     )
+
                     .children(content),
             )
             .when(self.size.is_icon() && self.loading, |button| {
                 button.child(div().absolute().child(spinner()))
-            })
-            .refine_style(&self.style);
+            });
+
+             // .refine_style(&self.style);
+
         if !inert {
             let down = state.clone();
             let up = state.clone();

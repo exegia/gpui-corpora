@@ -1,8 +1,7 @@
 use std::{cell::Cell, rc::Rc};
 
 use gpui::{
-    AppContext, Bounds, Context, Element, InputEvent, Render, TestAppContext, WindowBounds,
-    WindowOptions, size,
+    AppContext, Bounds, Context, Element, InputEvent, Render, TestAppContext, WindowBounds, WindowOptions, px, size,
 };
 use gpui_kit::test::TestWindowExt;
 
@@ -44,7 +43,7 @@ fn setup(
 ) -> (gpui::AnyWindowHandle, gpui::Entity<Harness>) {
     cx.update(|cx| {
         gpui_kit::init(cx);
-        crate::ely::init_for_tests(cx);
+        gpui_agentation::ely::init_for_tests(cx);
         cx.set_reduce_motion(reduced);
     });
     cx.update(|cx| {
@@ -323,30 +322,6 @@ fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppC
         );
     })
     .unwrap();
-}
-
-#[gpui::test]
-fn every_glass_finish_renders_in_light_and_dark_modes(cx: &mut TestAppContext) {
-    let (handle, view) = setup(cx, 960., true);
-    for mode in [
-        crate::ely::theme::Mode::Light,
-        crate::ely::theme::Mode::Dark,
-    ] {
-        cx.update(|cx| crate::ely::theme::Theme::set_mode_now(mode, cx));
-        for finish in GlassFinish::ALL {
-            cx.update_window(handle, |_, window, cx| {
-                view.update(cx, |view, cx| {
-                    view.variant = ButtonVariant::Glass(finish);
-                    cx.notify();
-                });
-                window.render_frame(cx);
-                assert_eq!(window.find("target").bounds().size.height, px(32.));
-                window.click("target", cx);
-            })
-            .unwrap();
-        }
-    }
-    assert_eq!(view.read_with(cx, |view, _| view.clicks.get()), 10);
 }
 
 #[gpui::test]

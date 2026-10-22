@@ -119,7 +119,7 @@ fn setup(
 ) -> (gpui::AnyWindowHandle, Rc<Cell<usize>>, Rc<Cell<usize>>) {
     cx.update(|cx| {
         gpui_kit::init(cx);
-        crate::ely::init_for_tests(cx);
+        gpui_agentation::ely::init_for_tests(cx);
         cx.set_reduce_motion(reduce_motion);
     });
     let clicks = Rc::new(Cell::new(0));
