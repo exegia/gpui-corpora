@@ -66,7 +66,8 @@ fn ansi(mut ansi: [Hsla; 16], base: [u32; 6]) -> [Hsla; 16] {
 fn light() -> Palette {
     let ely = Palette::light(false);
     let fg = hex(0x000000);
-    let accent = hex(0x0060de);
+    // Tailwind amber-500, oklch(76.9% 0.188 70.08).
+    let accent = hex(0xfe9a00);
     Palette {
         bg: hex(0xf9f9f9),
         surface: hex(0xfefefe),
@@ -82,14 +83,18 @@ fn light() -> Palette {
         accent,
         // The source has no hover shade for its primary color.
         accent_hover: accent.mix(&fg, 0.15),
-        on_accent: hex(0xffffff),
-        focus: hex(0x0060de),
-        link: hex(0x0060de),
-        selection: hexa(0x0060de33),
+        // Tailwind amber-950; white text is unreadable on amber.
+        on_accent: hex(0x461901),
+        focus: accent,
+        // Tailwind amber-700: amber-500 text is under 3:1 on the light background.
+        link: hex(0xbb4d00),
+        selection: hexa(0xfe9a0033),
         success: hex(0x319a00),
         warning: hex(0xb59a00),
         danger: hex(0xd21f07),
-        info: hex(0x0060de),
+        info: hex(0xbb4d00),
+        // Tailwind amber-100.
+        info_subtle: hex(0xfef3c6),
         glass: hexa(0xf9f9f9b8),
         ansi: ansi(
             ely.ansi,
@@ -118,7 +123,8 @@ fn dark() -> Palette {
     let ely = Palette::dark(false);
     let fg = hex(0xdedede);
     let editor_fg = hex(0xcaccca);
-    let accent = hex(0x077cfd);
+    // Tailwind amber-300, oklch(87.9% 0.169 91.605).
+    let accent = hex(0xffd230);
     Palette {
         bg: hex(0x131313),
         surface: hex(0x1c1c1e),
@@ -134,18 +140,21 @@ fn dark() -> Palette {
         accent,
         // The source has no hover shade for its primary color.
         accent_hover: accent.mix(&fg, 0.15),
-        on_accent: hex(0xf2f9ff),
-        focus: hex(0x077cfd),
-        link: hex(0x419cff),
-        selection: hex(0x3f638b),
+        // Tailwind amber-950; white text is unreadable on amber.
+        on_accent: hex(0x461901),
+        focus: accent,
+        link: accent,
+        // Tailwind amber-800, which keeps the light text over it readable.
+        selection: hex(0x973c00),
         success: hex(0x30d158),
         warning: hex(0xffc600),
         danger: hex(0xff5257),
-        info: hex(0x419cff),
+        info: accent,
         success_subtle: hex(0x0c4619),
         warning_subtle: hex(0x3a310e),
         danger_subtle: hex(0x46190c),
-        info_subtle: hex(0x0059d1),
+        // Tailwind amber-900.
+        info_subtle: hex(0x7b3306),
         glass: hexa(0x131313b8),
         ansi: ansi(
             ely.ansi,

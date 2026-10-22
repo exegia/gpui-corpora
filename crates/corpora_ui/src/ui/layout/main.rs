@@ -2,18 +2,28 @@ use gpui::{AnyElement, App, Div, IntoElement, RenderOnce, Window, prelude::*};
 
 use crate::ely::layout::Well;
 
-/// A workspace pane with the shared fill and inset shadows.
-pub fn main(dark: bool, content: impl IntoElement) -> impl IntoElement {
+/// A workspace pane with the shared fill and inset shadows, rounded on every corner.
+pub fn main(dark: bool, content: impl IntoElement) -> Surface {
     Surface {
         dark,
+        flush_right: false,
         content: content.into_any_element(),
     }
 }
 
 #[derive(IntoElement)]
-struct Surface {
+pub struct Surface {
     dark: bool,
+    flush_right: bool,
     content: AnyElement,
+}
+
+impl Surface {
+    /// Squares the right corners, for a pane that meets the window's right edge.
+    pub fn flush_right(mut self, flush: bool) -> Self {
+        self.flush_right = flush;
+        self
+    }
 }
 
 impl RenderOnce for Surface {
@@ -29,7 +39,7 @@ impl RenderOnce for Surface {
             .downcast_mut::<Div>()
             .expect("Ely Well renders a Div")
             .style()
-            .refine(&super::surface_style::style(self.dark));
+            .refine(&super::surface_style::style(self.dark, self.flush_right));
         surface
     }
 }

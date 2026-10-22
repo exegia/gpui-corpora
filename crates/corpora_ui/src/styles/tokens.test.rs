@@ -4,7 +4,8 @@ use super::*;
 fn palettes_carry_the_source_theme_colors() {
     let theme = MacosClassic::new();
     assert_eq!(theme.light.bg, hex(0xf9f9f9));
-    assert_eq!(theme.light.accent, hex(0x0060de));
+    assert_eq!(theme.light.accent, hex(0xfe9a00));
+    assert_eq!(theme.dark.accent, hex(0xffd230));
     assert_eq!(theme.dark.bg, hex(0x131313));
     assert_eq!(theme.dark.syntax.keyword, hex(0xc28b12));
 }
