@@ -3,8 +3,10 @@
 //! their `Scale`, so changing a base re-derives its shades.
 
 use crate::ely::theme::{Mode, Palette, Syntax, Theme};
-use crate::styles::utils::{Scale, Spread, convert};
+use crate::styles::utils::{ColorExt, Scale, Spread, convert};
 use gpui::{App, Hsla, rgb};
+use gpui_kit::component::{Colorize, black};
+
 
 #[cfg(test)]
 #[path = "tokens.test.rs"]
@@ -70,12 +72,12 @@ fn ansi(mut ansi: [Hsla; 16], base: [u32; 6]) -> [Hsla; 16] {
     ansi
 }
 
-fn light() -> Palette {
+pub fn light() -> Palette {
     let ely = Palette::light(false);
-    let bg = hex(0xf9f9f9);
-    let fg = hex(0x000000);
-    // Tailwind amber-500, oklch(76.9% 0.188 70.08).
-    let accent = hex(0xfe9a00);
+    let bg = hex(0xf8fafc);
+    let fg = hex(0x020617);
+    // Tailwind amber-500, oklch(0.82 0.17 79).
+    let accent = hex(0xfeb500);
     let (success, warning, danger) = (hex(0x319a00), hex(0xb59a00), hex(0xd21f07));
     // Surfaces sit a few percent apart; text and accents need contrast-sized steps.
     let surfaces = Scale::new(bg, Spread::TIGHT);
@@ -132,26 +134,26 @@ fn light() -> Palette {
     }
 }
 
-fn dark() -> Palette {
+pub fn dark() -> Palette {
     let ely = Palette::dark(false);
-    let bg = hex(0x131313);
-    let fg = hex(0xdedede);
-    let editor_fg = hex(0xcaccca);
-    // Tailwind amber-300, oklch(87.9% 0.169 91.605).
-    let accent = hex(0xffd230);
+    let bg = hex(0x020617);
+    let fg = hex(0xf8fafc);
+    let editor_fg = hex(0xf1f5f9);
+    // Tailwind amber-300, oklch(0.849 0.135 79).
+    let accent = hex(0xfdc25d);
     let (success, warning, danger) = (hex(0x30d158), hex(0xffc600), hex(0xff5257));
     // Lower steps are lighter, so dark surfaces climb toward 100 and text dims toward 900.
     let surfaces = Scale::new(bg, Spread::TIGHT);
     let text = convert(fg);
     let amber = convert(accent);
     Palette {
-        bg,
+        bg: bg.mix_oklab(black(), 0.95),
         surface: surfaces[400],
         sunken: surfaces[300],
         overlay: surfaces[600],
-        hover: surfaces[200].alpha(0.6),
+        hover: surfaces[300].darken(0.15),
         active: surfaces[100],
-        border: surfaces[200],
+        border: surfaces[300],
         fg,
         fg_muted: text[700],
         fg_subtle: text[800],

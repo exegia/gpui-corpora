@@ -301,9 +301,7 @@ impl RenderOnce for Button {
             )
             .when(self.size.is_icon() && self.loading, |button| {
                 button.child(div().absolute().child(spinner()))
-            })
-
-         .refine_style(&self.style);
+            });
 
         if !inert {
             let down = state.clone();

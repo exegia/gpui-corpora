@@ -1,10 +1,9 @@
-use crate::ely::theme::{Mix, Theme};
+use crate::ely::theme::{Mix, Palette, Theme};
 use crate::styles::utils::ColorExt as _;
-use gpui::{Hsla, hsla, transparent_black};
+use gpui::{Hsla, transparent_black};
 
-/// Native tint and edge-lighting finishes. Live backdrop refraction is unavailable.
+/// A Button's visual treatment. Colors come from the active theme's semantic roles.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-
 pub enum ButtonVariant {
     #[default]
     Default,
@@ -39,93 +38,65 @@ impl ButtonVariant {
         }
     }
 
-    pub(super) fn colors(self, theme: &Theme, hover: bool, pressed: bool) -> Colors {
-        let c = &theme.colors;
-        let clear = transparent_black();
-        let engaged = hover || pressed;
-        let (background, foreground, border, shadow, bevel) = match self {
-            Self::Default | Self::Destructive => {
-                let (base, foreground) = if self == Self::Default {
-                    (c.accent, c.on_accent)
-                } else {
-                    (c.danger, hsla(0., 0., 1., 1.))
-                };
-                (
-                    base.darken(if engaged { 0.2 } else { 0.1 }), // background
-                    foreground,
-                    base,               // border
-                    base.opacity(0.24), // shadow
-                    hsla(
-                        0.,
-                        0.,
-                        if pressed { 0. } else { 1. },
-                        if pressed { 0.08 } else { 0.16 },
-                    ),
-                )
-            }
-            Self::Outline | Self::DestructiveOutline => {
-                let destructive = self == Self::DestructiveOutline;
-                let base = if theme.is_dark() {
-                    c.border.opacity(0.32)
-                } else {
-                    c.overlay
-                };
-                let bg = if engaged {
-                    if destructive {
-                        c.danger.opacity(0.5)
-                    } else if theme.is_dark() {
-                        c.border.opacity(0.64)
-                    } else {
-                        c.hover.opacity(0.5)
-                    }
-                } else {
-                    base
-                };
-                (
-                    bg,                                        // background
-                    if destructive { c.danger } else { c.fg }, // foreground
-                    if destructive && engaged {
-                        c.danger_subtle.lighten(0.5)
-                    } else {
-                        c.border.lighten(0.6)
-                    }, // border
-                    c.shadow.opacity(0.5),                     // shadow
-                    hsla(
-                        0.,
-                        0.,
-                        if theme.is_dark() { 1. } else { 0. },
-                        if theme.is_dark() { 0.06 } else { 0.04 },
-                    ), // bevel
-                )
-            }
-            Self::Secondary => (
-                c.sunken.opacity(if pressed {
-                    0.8
-                } else if hover {
-                    0.9
-                } else {
-                    1.
-                }), // background
-                c.fg,     // foreground
-                c.sunken, // border
-                clear,    // shadow
-                clear,    // bevel
-            ),
-            Self::Ghost => (
-                if engaged { c.hover } else { clear }, // background
-                c.fg,                                  // foreground
-                clear,                                 // border
-                clear,                                 // shadow
-                clear,                                 // bevel
-            ),
-            Self::Link => (clear, c.fg, clear, clear, clear),
+    /// The variant's colors in the active theme, adjusted for pointer state.
+    pub(super) fn colors(self, theme: &Theme, hovered: bool, pressed: bool) -> Colors {
+        let palette = &theme.colors;
+        let resting = if theme.is_dark() {
+            self.dark(palette)
+        } else {
+            self.light(palette)
         };
-        Colors {
-            background,
-            foreground,
-            border,
-            shadow: if pressed { clear } else { shadow },
-            bevel,
+        resting.engaged(hovered, pressed)
+    }
+
+    fn light(self, c: &Palette) -> Colors {
+        let base = Colors::base(c);
+        match self {
+            Self::Default | Self::Secondary | Self::Destructive => Colors {
+                background: c.accent,
+                foreground: c.accent.darken(1.0),
+                ..base
+            },
+            Self::Outline | Self::DestructiveOutline => Colors {
+                background: c.bg.lighten(0.5),
+                foreground: c.fg.darken(1.0),
+                ..base
+            },
+            Self::Ghost => Colors {
+                background: transparent_black(),
+                foreground: c.fg.darken(1.0),
+                ..base
+            },
+            Self::Link => Colors {
+                foreground: c.accent.darken(1.0),
+                ..base
+            },
+        }
+    }
+
+    fn dark(self, c: &Palette) -> Colors {
+        let base = Colors::base(c);
+        match self {
+            Self::Default | Self::Secondary => Colors {
+                background: c.accent,
+                foreground: c.accent.darken(0.9),
+                border: c.accent.lighten(0.1),
+                ..base
+            },
+            Self::Destructive => Colors {
+                background: c.accent,
+                foreground: c.accent.darken(0.9),
+                ..base
+            },
+            Self::Outline | Self::DestructiveOutline | Self::Ghost => Colors {
+                border: c.accent,
+                foreground: c.accent.darken(0.9),
+                ..base
+            },
+            Self::Link => Colors {
+                foreground: c.accent.darken(0.9),
+                ..base
+            },
         }
     }
 }
@@ -137,6 +108,34 @@ pub(super) struct Colors {
     pub border: Hsla,
     pub shadow: Hsla,
     pub bevel: Hsla,
+}
+
+impl Colors {
+    /// The colors every variant starts from before its own adjustments.
+    fn base(c: &Palette) -> Self {
+        Self {
+            background: c.bg.alpha(0.1),
+            foreground: c.fg,
+            border: c.bg.darken(0.2),
+            shadow: transparent_black(),
+            bevel: transparent_black(),
+        }
+    }
+
+    /// Hover fades the background slightly and a press fades it further.
+    fn engaged(self, hovered: bool, pressed: bool) -> Self {
+        let fade = if pressed {
+            0.8
+        } else if hovered {
+            0.9
+        } else {
+            1.0
+        };
+        Self {
+            background: self.background.opacity(fade),
+            ..self
+        }
+    }
 }
 
 impl gpui_kit::base::motion::Interpolate for Colors {
