@@ -37,6 +37,18 @@ bash scripts/macos-dev-app.sh
 
 Open the printed `.app` path to run the app. Repeat after each code change.
 
+### Starting Over
+
+`just clean` resets the checkout to first-run condition: `cargo clean`, the app's config/data/cache directories (settings, logs, crash reports), and gitignored junk like `__pycache__` and the single-instance lock. It prompts before touching app state and leaves `.env` and `*.local.*` alone.
+
+```sh
+just clean -n          # preview, delete nothing
+just clean build       # one scope: build | app | repo | cargo | all
+just clean-all         # also drops the shared ~/.cargo download caches
+```
+
+Run `scripts/clean.sh --help` for the full scope list.
+
 ## Code Style
 
 - Run `cargo fmt` before committing. All formatting decisions go through rustfmt.
@@ -89,9 +101,9 @@ Keep the subject line under 72 characters. Use the body for anything that needs 
 ## Pull Request Process
 
 1. **Fork** the repository and create a branch from `master`:
-   ```sh
-   git checkout -b feat/my-feature
-   ```
+    ```sh
+    git checkout -b feat/my-feature
+    ```
 2. **Commit** your changes with a conventional commit message.
 3. **Push** to your fork and open a pull request against `master`.
 4. Ensure `cargo fmt --check`, `cargo clippy`, and `cargo test` all pass locally before pushing.

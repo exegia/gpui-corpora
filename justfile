@@ -1,12 +1,20 @@
 default:
     @just --list
- 
+
 mac *args='':
     python3 scripts/dev.py {{args}}
 
 # Rebuild and restart after saved source changes.
 dev *args='':
     python3 scripts/dev.py {{args}}
+
+# Reset to a fresh install: cargo clean + app state + gitignored junk. Scopes: build|app|repo|cargo|all; -n previews.
+clean *args='':
+    ./scripts/clean.sh {{args}}
+
+# clean, plus the shared ~/.cargo download caches (refetched on next build).
+clean-all:
+    ./scripts/clean.sh all
 
 fmt:
     cargo sort-derives
