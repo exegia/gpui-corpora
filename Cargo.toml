@@ -108,6 +108,8 @@ opentelemetry-otlp = { version = "0.17.0", features = [
     "reqwest-client",
 ] }
 opentelemetry_sdk = { version = "0.24.1", features = ["rt-tokio", "trace"] }
+# Oklch color math for the theme scales.
+palette = { version = "0.7.7", default-features = false, features = ["std"] }
 percent-encoding = "2"
 quick-xml = "0.37"
 reqwest = { version = "0.12.24", default-features = false, features = [

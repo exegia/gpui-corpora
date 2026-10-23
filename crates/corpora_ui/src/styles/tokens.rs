@@ -1,7 +1,10 @@
 //! The macOS Classic theme (huacnlee/zed-theme-macos-classic) as Ely palettes.
+//! Each mode names a few base colors; the other semantic colors are steps on
+//! their `Scale`, so changing a base re-derives its shades.
 
-use crate::ely::theme::{Mix as _, Mode, Palette, Syntax, Theme};
-use gpui::{App, Hsla, rgb, rgba};
+use crate::ely::theme::{Mode, Palette, Syntax, Theme};
+use crate::styles::utils::{Scale, Spread, convert};
+use gpui::{App, Hsla, rgb};
 
 #[cfg(test)]
 #[path = "tokens.test.rs"]
@@ -58,10 +61,6 @@ fn hex(value: u32) -> Hsla {
     rgb(value).into()
 }
 
-fn hexa(value: u32) -> Hsla {
-    rgba(value).into()
-}
-
 /// ANSI 1-6 (red, green, yellow, blue, magenta, cyan) from the theme's base
 /// colors; black, white, and the bright row stay Ely's.
 fn ansi(mut ansi: [Hsla; 16], base: [u32; 6]) -> [Hsla; 16] {
@@ -73,38 +72,43 @@ fn ansi(mut ansi: [Hsla; 16], base: [u32; 6]) -> [Hsla; 16] {
 
 fn light() -> Palette {
     let ely = Palette::light(false);
+    let bg = hex(0xf9f9f9);
     let fg = hex(0x000000);
     // Tailwind amber-500, oklch(76.9% 0.188 70.08).
     let accent = hex(0xfe9a00);
+    let (success, warning, danger) = (hex(0x319a00), hex(0xb59a00), hex(0xd21f07));
+    // Surfaces sit a few percent apart; text and accents need contrast-sized steps.
+    let surfaces = Scale::new(bg, Spread::TIGHT);
+    let text = convert(fg);
+    let amber = convert(accent);
     Palette {
-        bg: hex(0xf9f9f9),
-        surface: hex(0xfefefe),
-        sunken: hex(0xeaeaea),
-        overlay: hex(0xf5f5f5),
-        hover: hex(0xe5e5e5),
-        active: hex(0xd9d9d9),
-        border: hex(0xd2d2d2),
+        bg,
+        surface: surfaces[100],
+        sunken: surfaces[600],
+        overlay: surfaces[400],
+        hover: surfaces[600],
+        active: surfaces[700],
+        border: surfaces[800],
         fg,
-        fg_muted: hex(0x707070),
-        fg_subtle: hex(0x6d6d6d),
-        fg_disabled: hex(0xa4abb6),
+        fg_muted: text[300],
+        fg_subtle: text[200],
+        fg_disabled: text[100],
         accent,
-        // The source has no hover shade for its primary color.
-        accent_hover: accent.mix(&fg, 0.15),
-        // Tailwind amber-950; white text is unreadable on amber.
-        on_accent: hex(0x461901),
+        accent_hover: amber[600],
+        on_accent: amber[900],
         focus: gpui::transparent_black(),
-        // Tailwind amber-700: amber-500 text is under 3:1 on the light background.
-        link: hex(0xbb4d00),
-        selection: hexa(0xfe9a0033),
-        success: hex(0x319a00),
-        warning: hex(0xb59a00),
-        danger: hex(0xd21f07),
+        // Amber-500 text is under 3:1 on the light background.
+        link: amber[800],
+        selection: accent.alpha(0.2),
+        success,
+        warning,
+        danger,
         danger_subtle: hex(0xba3e38).opacity(0.2),
-        info: hex(0xbb4d00),
-        // Tailwind amber-100.
-        info_subtle: hex(0xfef3c6),
-        glass: hexa(0xf9f9f9b8),
+        info: amber[800],
+        success_subtle: convert(success)[100],
+        warning_subtle: convert(warning)[100],
+        info_subtle: amber[100],
+        glass: bg.alpha(0.72),
         ansi: ansi(
             ely.ansi,
             [0xd21f07, 0x319a00, 0xb59a00, 0x0060de, 0x9a0068, 0x007e8a],
@@ -130,41 +134,43 @@ fn light() -> Palette {
 
 fn dark() -> Palette {
     let ely = Palette::dark(false);
+    let bg = hex(0x131313);
     let fg = hex(0xdedede);
     let editor_fg = hex(0xcaccca);
     // Tailwind amber-300, oklch(87.9% 0.169 91.605).
     let accent = hex(0xffd230);
+    let (success, warning, danger) = (hex(0x30d158), hex(0xffc600), hex(0xff5257));
+    // Lower steps are lighter, so dark surfaces climb toward 100 and text dims toward 900.
+    let surfaces = Scale::new(bg, Spread::TIGHT);
+    let text = convert(fg);
+    let amber = convert(accent);
     Palette {
-        bg: hex(0x131313),
-        surface: hex(0x1c1c1e),
-        sunken: hex(0x202020),
-        overlay: hex(0x101010),
-        hover: hexa(0x35353599),
-        active: hex(0x353535),
-        border: hex(0x303030),
+        bg,
+        surface: surfaces[400],
+        sunken: surfaces[300],
+        overlay: surfaces[600],
+        hover: surfaces[200].alpha(0.6),
+        active: surfaces[100],
+        border: surfaces[200],
         fg,
-        fg_muted: hex(0x9d9d9d),
-        fg_subtle: hex(0x9e9e9e),
-        fg_disabled: hex(0x5d5945),
+        fg_muted: text[700],
+        fg_subtle: text[800],
+        fg_disabled: text[900],
         accent,
-        // The source has no hover shade for its primary color.
-        accent_hover: accent.mix(&fg, 0.15),
-        // Tailwind amber-950; white text is unreadable on amber.
-        on_accent: hex(0x461901),
+        accent_hover: amber[400],
+        on_accent: amber[900],
         focus: gpui::transparent_black(),
         link: accent,
-        // Tailwind amber-800, which keeps the light text over it readable.
-        selection: hex(0x973c00),
-        success: hex(0x30d158),
-        warning: hex(0xffc600),
-        danger: hex(0xff5257),
+        selection: amber[900],
+        success,
+        warning,
+        danger,
         info: accent,
-        success_subtle: hex(0x0c4619),
-        warning_subtle: hex(0x3a310e),
+        success_subtle: convert(success)[900],
+        warning_subtle: convert(warning)[900],
         danger_subtle: hex(0xff5257),
-        // Tailwind amber-900.
-        info_subtle: hex(0x7b3306),
-        glass: hexa(0x131313b8),
+        info_subtle: amber[900],
+        glass: bg.alpha(0.72),
         ansi: ansi(
             ely.ansi,
             [0xff5257, 0x30d158, 0xffc600, 0x419cff, 0xa550a7, 0x07fdd3],

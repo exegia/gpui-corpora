@@ -55,3 +55,34 @@ fn kit_focus_policy_survives_repeated_appearance_changes(cx: &mut gpui::TestAppC
         }
     });
 }
+
+#[test]
+fn shades_derive_from_their_base_colors() {
+    let theme = MacosClassic::new();
+    assert_eq!(theme.light.fg_muted, convert(theme.light.fg)[300]);
+    assert_eq!(theme.dark.fg_muted, convert(theme.dark.fg)[700]);
+    assert_eq!(
+        theme.light.sunken,
+        Scale::new(theme.light.bg, Spread::TIGHT)[600]
+    );
+    assert_eq!(theme.dark.on_accent, convert(theme.dark.accent)[900]);
+}
+
+#[test]
+fn derived_text_stays_readable() {
+    use crate::styles::utils::ColorExt as _;
+    for (mode, palette) in [
+        ("light", MacosClassic::new().light),
+        ("dark", MacosClassic::new().dark),
+    ] {
+        for (name, color, surface) in [
+            ("fg_muted", palette.fg_muted, palette.bg),
+            ("link", palette.link, palette.bg),
+            ("on_accent", palette.on_accent, palette.accent),
+            ("fg on selection", palette.fg, palette.selection),
+        ] {
+            let ratio = color.contrast(surface);
+            assert!(ratio >= 4.5, "{mode} {name} is {ratio:.2}:1");
+        }
+    }
+}

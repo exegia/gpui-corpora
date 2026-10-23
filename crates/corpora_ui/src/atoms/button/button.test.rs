@@ -1,7 +1,8 @@
 use std::{cell::Cell, rc::Rc};
 
 use gpui::{
-    AppContext, Bounds, Context, Element, InputEvent, Render, TestAppContext, WindowBounds, WindowOptions, px, size,
+    AppContext, Bounds, Context, Element, InputEvent, Render, TestAppContext, WindowBounds,
+    WindowOptions, px, size,
 };
 use gpui_kit::test::TestWindowExt;
 

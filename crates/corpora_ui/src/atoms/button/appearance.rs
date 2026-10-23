@@ -1,5 +1,6 @@
-use gpui::{Hsla, hsla, transparent_black};
 use crate::ely::theme::{Mix, Theme};
+use crate::styles::utils::ColorExt as _;
+use gpui::{Hsla, hsla, transparent_black};
 
 /// Native tint and edge-lighting finishes. Live backdrop refraction is unavailable.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -12,7 +13,7 @@ pub enum ButtonVariant {
     Outline,
     Secondary,
     Ghost,
-    Link
+    Link,
 }
 
 impl ButtonVariant {
@@ -23,7 +24,7 @@ impl ButtonVariant {
         Self::Destructive,
         Self::DestructiveOutline,
         Self::Ghost,
-        Self::Link
+        Self::Link,
     ];
 
     pub fn name(self) -> &'static str {
@@ -34,7 +35,7 @@ impl ButtonVariant {
             Self::Outline => "outline",
             Self::Secondary => "secondary",
             Self::Ghost => "ghost",
-            Self::Link => "link"
+            Self::Link => "link",
         }
     }
 
@@ -50,9 +51,9 @@ impl ButtonVariant {
                     (c.danger, hsla(0., 0., 1., 1.))
                 };
                 (
-                    base.opacity(if engaged { 0.9 } else { 1. }), // background
+                    base.darken(if engaged { 0.2 } else { 0.1 }), // background
                     foreground,
-                    base, // border
+                    base,               // border
                     base.opacity(0.24), // shadow
                     hsla(
                         0.,
@@ -81,14 +82,14 @@ impl ButtonVariant {
                     base
                 };
                 (
-                    bg, // background
+                    bg,                                        // background
                     if destructive { c.danger } else { c.fg }, // foreground
                     if destructive && engaged {
                         c.danger_subtle.lighten(0.5)
                     } else {
                         c.border.lighten(0.6)
                     }, // border
-                    c.shadow.opacity(0.5), // shadow
+                    c.shadow.opacity(0.5),                     // shadow
                     hsla(
                         0.,
                         0.,
@@ -105,19 +106,19 @@ impl ButtonVariant {
                 } else {
                     1.
                 }), // background
-                c.fg, // foreground
+                c.fg,     // foreground
                 c.sunken, // border
-                clear, // shadow
-                clear, // bevel
+                clear,    // shadow
+                clear,    // bevel
             ),
             Self::Ghost => (
                 if engaged { c.hover } else { clear }, // background
-                c.fg, // foreground
-                clear, // border
-                clear, // shadow
-                clear, // bevel
+                c.fg,                                  // foreground
+                clear,                                 // border
+                clear,                                 // shadow
+                clear,                                 // bevel
             ),
-            Self::Link => (clear, c.fg, clear, clear, clear)
+            Self::Link => (clear, c.fg, clear, clear, clear),
         };
         Colors {
             background,
@@ -141,11 +142,11 @@ pub(super) struct Colors {
 impl gpui_kit::base::motion::Interpolate for Colors {
     fn interpolate(&self, target: &Self, progress: f32) -> Self {
         Self {
-            background: self.background.mix(target.background, progress),
-            foreground: self.foreground.mix(target.foreground, progress),
-            border: self.border.mix(target.border, progress),
-            shadow: self.shadow.mix(target.shadow, progress),
-            bevel: self.bevel.mix(target.bevel, progress),
+            background: self.background.mix(&target.background, progress),
+            foreground: self.foreground.mix(&target.foreground, progress),
+            border: self.border.mix(&target.border, progress),
+            shadow: self.shadow.mix(&target.shadow, progress),
+            bevel: self.bevel.mix(&target.bevel, progress),
         }
     }
 }

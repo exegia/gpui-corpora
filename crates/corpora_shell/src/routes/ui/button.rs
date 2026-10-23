@@ -1,21 +1,17 @@
 use corpora_ui::{
-    atoms::button::{Button, ButtonSize, ButtonVariant, GlassFinish},
+    atoms::button::{Button, ButtonSize, ButtonVariant},
     ely::{
         primitives::IconName,
-        theme::{ActiveTheme, Radius},
+        theme::ActiveTheme,
         typography::{Heading, Paragraph},
     },
 };
-use gpui::{
-    App, Context, IntoElement, Render, Window, div, linear_color_stop, linear_gradient, prelude::*,
-    rgb,
-};
+use gpui::{App, Context, IntoElement, Render, Window, div, prelude::*};
 
 /// Button playground state retained by the workspace tab.
 pub struct ButtonShowcase {
     variant: ButtonVariant,
     size: ButtonSize,
-    finish: GlassFinish,
     loading: bool,
     disabled: bool,
     clicks: usize,
@@ -26,18 +22,9 @@ impl ButtonShowcase {
         Self {
             variant: ButtonVariant::Default,
             size: ButtonSize::Default,
-            finish: GlassFinish::default(),
             loading: false,
             disabled: false,
             clicks: 0,
-        }
-    }
-
-    fn variant(&self) -> ButtonVariant {
-        if matches!(self.variant, ButtonVariant::Glass(_)) {
-            ButtonVariant::Glass(self.finish)
-        } else {
-            self.variant
         }
     }
 }
@@ -80,32 +67,8 @@ fn choice(id: (&'static str, &'static str), name: &'static str, selected: bool) 
         })
 }
 
-fn backdrop(content: impl IntoElement, cx: &App) -> gpui::Div {
-    let (start, end) = if cx.theme().is_dark() {
-        (0x312e81, 0x831843)
-    } else {
-        (0x818cf8, 0xfde68a)
-    };
-    div()
-        .flex()
-        .flex_wrap()
-        .items_center()
-        .justify_center()
-        .gap_4()
-        .p_6()
-        .min_h(gpui::rems(7.))
-        .rounded(cx.theme().radius(Radius::Lg))
-        .bg(linear_gradient(
-            135.,
-            linear_color_stop(rgb(start), 0.),
-            linear_color_stop(rgb(end), 1.),
-        ))
-        .child(content)
-}
-
 impl Render for ButtonShowcase {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let is_glass = matches!(self.variant, ButtonVariant::Glass(_));
         let preview = Button::new(
             "button-preview",
             if self.size.is_icon() {
@@ -114,7 +77,7 @@ impl Render for ButtonShowcase {
                 "Button"
             },
         )
-        .variant(self.variant())
+        .variant(self.variant)
         .size(self.size)
         .loading(self.loading)
         .disabled(self.disabled)
@@ -125,17 +88,13 @@ impl Render for ButtonShowcase {
             this.clicks += 1;
             cx.notify();
         }));
-        let demo = if is_glass {
-            backdrop(preview, cx)
-        } else {
-            div()
-                .flex()
-                .items_center()
-                .justify_center()
-                .p_6()
-                .min_h(gpui::rems(7.))
-                .child(preview)
-        };
+        let demo = div()
+            .flex()
+            .items_center()
+            .justify_center()
+            .p_6()
+            .min_h(gpui::rems(7.))
+            .child(preview);
         let controls = div()
             .flex()
             .flex_col()
@@ -155,23 +114,6 @@ impl Render for ButtonShowcase {
                 }),
                 cx,
             ))
-            .when(is_glass, |controls| {
-                controls.child(control_group(
-                    "Glass finish",
-                    GlassFinish::ALL.map(|finish| {
-                        choice(
-                            ("finish", finish.name()),
-                            finish.name(),
-                            self.finish == finish,
-                        )
-                        .on_click(cx.listener(move |this, _, _, cx| {
-                            this.finish = finish;
-                            cx.notify();
-                        }))
-                    }),
-                    cx,
-                ))
-            })
             .child(control_group(
                 "Size",
                 ButtonSize::ALL.map(|size| {
@@ -262,21 +204,6 @@ impl Render for ButtonShowcase {
                 .variant(ButtonVariant::Outline)
                 .when(size.is_icon(), |button| button.icon(IconName::BookOpen))
             }));
-        let glass = backdrop(
-            div()
-                .flex()
-                .flex_wrap()
-                .items_center()
-                .gap_3()
-                .children(GlassFinish::ALL.map(|finish| {
-                    Button::new(
-                        (gpui::ElementId::from("example-finish"), finish.name()),
-                        finish.name(),
-                    )
-                    .variant(ButtonVariant::Glass(finish))
-                })),
-            cx,
-        );
         let states = div()
             .flex()
             .flex_wrap()
@@ -328,7 +255,7 @@ impl Render for ButtonShowcase {
             ))
             .child(super::example(
                 "Variants",
-                "Primary, secondary, outline, destructive, ghost, link, and glass treatments.",
+                "Primary, secondary, outline, destructive, ghost, and link treatments.",
                 variants,
                 cx,
             ))
@@ -336,12 +263,6 @@ impl Render for ButtonShowcase {
                 "Sizes",
                 "Five text sizes and five square icon sizes.",
                 sizes,
-                cx,
-            ))
-            .child(super::example(
-                "Glass finishes",
-                "Native tint and edge lighting over a colored backdrop.",
-                glass,
                 cx,
             ))
             .child(super::example(

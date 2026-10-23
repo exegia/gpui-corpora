@@ -4,14 +4,15 @@ mod appearance;
 mod semantics;
 mod size;
 
-pub use appearance::{ButtonVariant};
+pub use appearance::ButtonVariant;
 pub use size::ButtonSize;
 
 use std::time::Duration;
 
 use gpui::{
-    AnyElement, App, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton,
-    ParentElement, RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div, prelude::*, relative, rems
+    AnyElement, App, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton, ParentElement,
+    RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div, prelude::*, relative,
+    rems,
 };
 use gpui_kit::{
     base::{
@@ -22,11 +23,9 @@ use gpui_kit::{
     component::{Sizable, Size, spinner::Spinner},
 };
 
-use crate::{
-    ely::{
-        primitives::IconName,
-        theme::{ActiveTheme,  Radius},
-    },
+use crate::ely::{
+    primitives::IconName,
+    theme::{ActiveTheme, Radius},
 };
 
 #[derive(Default)]
@@ -146,9 +145,7 @@ impl RenderOnce for Button {
         let inline_link = self.variant == ButtonVariant::Link && !self.size.is_icon();
         let has_background = matches!(
             self.variant,
-            ButtonVariant::Default
-                | ButtonVariant::Destructive
-                | ButtonVariant::Secondary
+            ButtonVariant::Default | ButtonVariant::Destructive | ButtonVariant::Secondary
         );
         let colors = transition(
             (self.id.clone(), "colors"),
@@ -249,10 +246,10 @@ impl RenderOnce for Button {
             .rounded(radius)
             .border_1()
             .border_color(colors.border)
-            // .when(
-            //     !inline_link && matches!(self.variant, ButtonVariant::Outline | ButtonVariant::DestructiveOutline),
-            //     |button| button.border_1().border_color(gpui::transparent_black()),
-            // )
+            .when(
+                !inline_link,
+                |button| button.border_1().border_color(gpui::transparent_black()),
+            )
             .text_size(rems(metrics.font / 16.))
             .font_weight(gpui::FontWeight::MEDIUM)
             .text_color(colors.foreground)
@@ -270,7 +267,6 @@ impl RenderOnce for Button {
             .when(!inert, |button| button.cursor_pointer())
             .when(self.href.is_some(), |button| button.role(Role::Link))
             // .child(face)
-
             .when(!self.size.is_icon(), |button| {
                 button.child(
                     div()
@@ -301,14 +297,13 @@ impl RenderOnce for Button {
                         self.variant == ButtonVariant::Link && (hovered || pressed),
                         |content| content.underline(),
                     )
-
                     .children(content),
             )
             .when(self.size.is_icon() && self.loading, |button| {
                 button.child(div().absolute().child(spinner()))
-            });
+            })
 
-             // .refine_style(&self.style);
+         .refine_style(&self.style);
 
         if !inert {
             let down = state.clone();

@@ -8,7 +8,7 @@ fn id(group: &'static str, name: &'static str) -> (gpui::ElementId, &'static str
 }
 
 #[gpui::test]
-fn playground_controls_cover_variants_sizes_glass_and_inert_states(cx: &mut TestAppContext) {
+fn playground_controls_cover_variants_sizes_and_inert_states(cx: &mut TestAppContext) {
     cx.update(|cx| {
         gpui_kit::init(cx);
         corpora_ui::ely::init_for_tests(cx);
@@ -33,10 +33,6 @@ fn playground_controls_cover_variants_sizes_glass_and_inert_states(cx: &mut Test
         for variant in ButtonVariant::ALL {
             window.click(id("variant", variant.name()), cx);
             assert_eq!(view.read(cx).variant.name(), variant.name());
-        }
-        for finish in GlassFinish::ALL {
-            window.click(id("finish", finish.name()), cx);
-            assert_eq!(view.read(cx).variant(), ButtonVariant::Glass(finish));
         }
         for size in ButtonSize::ALL {
             window.click(id("size", size.name()), cx);
