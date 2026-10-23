@@ -19,12 +19,11 @@ pub(crate) struct TabWorkspace {
 }
 
 impl TabWorkspace {
-    pub fn new(workspace: WeakEntity<Workspace>, window: &mut Window, cx: &mut App) -> Self {
+    pub fn new(window: &mut Window, cx: &mut App) -> Self {
         Self {
             pages: Pages {
                 ui: cx.new(|cx| crate::routes::ui::Ui::new(window, cx)),
                 button: cx.new(|_| crate::routes::ui::button::ButtonShowcase::new()),
-                settings: cx.new(|cx| SettingsPage::new(workspace, window, cx)),
                 notifications: cx.new(|cx| NotificationsPage::new(window, cx)),
                 diagnostics: cx.new(|cx| DiagnosticsPage::new(window, cx)),
                 about: cx.new(|_| AboutPage::new()),

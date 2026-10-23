@@ -195,6 +195,11 @@ pub fn init(cx: &mut App) {
     cx.bind_keys([
         KeyBinding::new(crate::app::keys::TOGGLE_SEARCH, ToggleSearch, None),
         KeyBinding::new("/", ToggleSearch, None),
+        KeyBinding::new(
+            "secondary-,",
+            ExecuteCommand(crate::commands::CommandId::OpenSettings),
+            None,
+        ),
         #[cfg(target_os = "macos")]
         KeyBinding::new("secondary-q", Quit, None),
         #[cfg(not(target_os = "macos"))]

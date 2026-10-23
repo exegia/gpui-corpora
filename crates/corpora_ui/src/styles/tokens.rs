@@ -7,7 +7,6 @@ use crate::styles::utils::{ColorExt, Scale, Spread, convert};
 use gpui::{App, Hsla, rgb};
 use gpui_kit::component::{Colorize, black};
 
-
 #[cfg(test)]
 #[path = "tokens.test.rs"]
 mod tokens_test;

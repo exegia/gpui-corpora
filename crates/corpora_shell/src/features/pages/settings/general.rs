@@ -1,9 +1,9 @@
 use corpora_ui::ely::{
-    buttons::{Button, SegmentedControl},
+    buttons::Button,
     forms::Switch,
     settings::{SettingsRow, SettingsSection},
 };
-use gpui::{App, IntoElement};
+use gpui::{App, IntoElement, SharedString};
 
 use crate::app::{self, LOCALE_EN, LOCALE_ZH_CN};
 

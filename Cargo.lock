@@ -1690,6 +1690,7 @@ dependencies = [
  "image",
  "rust-embed",
  "serde",
+ "tempfile",
  "tracing",
  "windows 0.61.3",
 ]
@@ -3077,9 +3078,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-agentation"
-version = "0.3.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f1fb4f146372b0cc82fdc30267ca158e78e9036af7c83fcc119cf9816929a78"
+checksum = "e8d2312072493855f4f5ec8f8ce42699acab369b3ced6ef271d7eeeea4449654"
 dependencies = [
  "alacritty_terminal",
  "anyhow",

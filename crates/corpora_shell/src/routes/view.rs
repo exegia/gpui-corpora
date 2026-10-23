@@ -69,14 +69,6 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
                             .element(|_, _| pages::license_create()),
                     ]),
                 ]),
-                Route::new().path("settings").children([
-                    Route::new()
-                        .index()
-                        .element(page(|p| p.settings.clone().into_any_element())),
-                    Route::new()
-                        .path(":section")
-                        .element(page(|p| p.settings.clone().into_any_element())),
-                ]),
                 Route::new()
                     .path("notifications")
                     .element(page(|p| p.notifications.clone().into_any_element())),

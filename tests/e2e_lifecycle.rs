@@ -31,21 +31,38 @@ mod tests {
     // test_single_instance_enforcement
     // -----------------------------------------------------------------------
 
-    /// First preflight allows startup; a same-named second instance does not.
+    /// Same-named handles exclude each other without claiming the running app's lock.
     #[test]
     fn test_single_instance_enforcement() {
-        let first = gpui_corpora::single_instance::preflight();
+        #[cfg(target_os = "macos")]
+        let lock_dir = tempfile::tempdir().unwrap();
+        #[cfg(target_os = "macos")]
+        let name = lock_dir
+            .path()
+            .join("instance")
+            .to_string_lossy()
+            .into_owned();
+        #[cfg(not(target_os = "macos"))]
+        let name = format!("com.corpora.tests.instance.{}", std::process::id());
+        let first = single_instance::SingleInstance::new(&name).unwrap();
         assert!(
-            first.should_start,
-            "first preflight should allow the app to start"
+            first.is_single(),
+            "first handle should acquire the isolated lock"
         );
 
         // Mutual exclusion: a same-named handle must not be the sole instance.
-        let second_instance = single_instance::SingleInstance::new("com.corpora.app.instance");
-        let second = second_instance.unwrap();
+        let second = single_instance::SingleInstance::new(&name).unwrap();
         assert!(
             !second.is_single(),
             "second instance with the same name should not be considered single"
+        );
+        drop(second);
+        drop(first);
+        assert!(
+            single_instance::SingleInstance::new(&name)
+                .unwrap()
+                .is_single(),
+            "the lock should be available after its owner drops"
         );
     }
 

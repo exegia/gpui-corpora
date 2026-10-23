@@ -143,10 +143,6 @@ impl RenderOnce for Button {
         let compact = window.viewport_size().width >= window.rem_size() * 40.;
         let metrics = self.size.metrics(compact);
         let inline_link = self.variant == ButtonVariant::Link && !self.size.is_icon();
-        let has_background = matches!(
-            self.variant,
-            ButtonVariant::Default | ButtonVariant::Destructive | ButtonVariant::Secondary
-        );
         let colors = transition(
             (self.id.clone(), "colors"),
             self.variant.colors(cx.theme(), hovered, pressed),
@@ -191,7 +187,6 @@ impl RenderOnce for Button {
             cx,
         );
         let radius = cx.theme().radius(Radius::Lg) * 1.2;
-        let is_dark = cx.theme().is_dark();
         let rem = window.rem_size();
         let icon_scale = transition(
             (self.id.clone(), "icon-hover"),
@@ -246,10 +241,9 @@ impl RenderOnce for Button {
             .rounded(radius)
             .border_1()
             .border_color(colors.border)
-            .when(
-                !inline_link,
-                |button| button.border_1().border_color(gpui::transparent_black()),
-            )
+            .when(!inline_link, |button| {
+                button.border_1().border_color(gpui::transparent_black())
+            })
             .text_size(rems(metrics.font / 16.))
             .font_weight(gpui::FontWeight::MEDIUM)
             .text_color(colors.foreground)
@@ -266,7 +260,6 @@ impl RenderOnce for Button {
             })
             .when(!inert, |button| button.cursor_pointer())
             .when(self.href.is_some(), |button| button.role(Role::Link))
-            // .child(face)
             .when(!self.size.is_icon(), |button| {
                 button.child(
                     div()

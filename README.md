@@ -50,33 +50,40 @@ On macOS the watcher builds, signs, and launches `target/debug/Corpora.app` so
 native notifications have the `com.corpora.app` identity. Unbundled launches
 use in-app notifications when native delivery is unavailable.
 
-Development builds include a floating annotation toolbar for native UI feedback.
-Saved notes survive rebuilds and are available to local agent tools at
-`http://127.0.0.1:4748`. The published
-[gpui-agentation 0.3.0](https://emmanuel-defreitas.github.io/gpui-agentation/)
-library supplies the overlay with its `native` feature. Release builds exclude
+Development builds include an annotation toolbar below each window's title bar.
+The published [gpui-agentation 0.5.1](https://crates.io/crates/gpui-agentation/0.5.1)
+library supplies the tools with its `native` feature. Release builds exclude
 the annotation API and UI.
 
-Install its MCP bridge once:
+The checkout's `.codex/config.toml` connects directly to the native MCP listeners;
+no CLI bridge is required:
 
-```sh
-cargo install gpui-agentation --version 0.3.0 --locked
-```
+| Window | MCP endpoint | Feedback store |
+| --- | --- | --- |
+| Workspace | `http://127.0.0.1:4748/mcp` | `target/agentation/feedback.json` |
+| Settings | `http://127.0.0.1:4751/mcp` | `target/agentation/feedback-settings.json` |
 
-The checkout's `.codex/config.toml` runs `gpui-agentation --url
-http://127.0.0.1:4748/mcp`. Restart the MCP client after changing that configuration
-and keep Corpora running in debug mode while using the tools. The native listener
-accepts loopback requests and rejects browser origins.
+Restart the MCP client after changing its configuration. Keep Corpora running in
+debug mode, with Settings open when using its listener. The native listeners
+accept loopback requests and reject browser origins. Agentation's toolbar Settings
+shows the actual endpoint and copyable client configuration.
 
-Feedback stays in `target/agentation/feedback.json`. Set `GPUI_AGENTATION_STORE`
-to change the path, `GPUI_AGENTATION_PORT` to change the port, or
-`GPUI_AGENTATION=0` to disable the overlay. Match a changed port in the MCP
-configuration. Run only one app process per feedback store.
+Set `GPUI_AGENTATION_STORE` to change the workspace path; Settings derives its own
+filename by adding `-settings`, or uses `GPUI_AGENTATION_SETTINGS_STORE` when set.
+Use different files for the two windows. Set `GPUI_AGENTATION_PORT` or
+`GPUI_AGENTATION_SETTINGS_PORT` to change their ports and match the MCP config.
+`GPUI_AGENTATION=0` disables the tools. Run only one app process per store.
+
+The app-local `shell::Devtools` adapter composes assets, initializes Agentation,
+and retains one `Agentation` per window. It renders through `Agentation::root`
+and switches feedback routes after committed workspace or Settings navigation.
+Existing notes remain in the workspace store after upgrading.
 
 `corpora_ui::ely` exposes Agentation's bundled Ely in debug builds and the
 standalone Ely crate in release builds. App controls and feedback share one
 initialization, asset source, theme, and focus system; linking both Ely copies
-would register duplicate GPUI actions. Feedback follows route changes.
+would register duplicate GPUI actions. Screen roots and selected shared views
+are inspectable targets; individual child controls are not automatically targets.
 
 ## Window
 

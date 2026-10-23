@@ -5,15 +5,18 @@ mod chrome;
 mod dev_feedback;
 mod frame_time;
 mod status;
+pub use dev_feedback::Devtools;
 pub(crate) use dev_feedback::target as dev_target;
 
 use std::{collections::HashMap, time::Duration};
 
+#[cfg(not(debug_assertions))]
+use corpora_ui::ely::primitives::FocusScope;
 use corpora_ui::ely::{
     feedback::{EmptyState, ToastViewport, Toaster},
     layout::{Dock, DockPanel, DockSide},
     navigation::{Command, CommandPalette},
-    primitives::{FocusScope, IconName},
+    primitives::IconName,
     project::Status,
     shell::TrayIcon,
     theme::{ActiveTheme, TextSize},
@@ -29,7 +32,7 @@ use crate::{
     navigation, routes,
     views::{
         AboutPage, DiagnosticsPage, NotificationsPage, ReloadCurrentPage, RenderErrorPage,
-        SettingsPage, TriggerRenderError,
+        TriggerRenderError,
     },
 };
 
@@ -56,4 +59,5 @@ pub use open_palette::open_palette;
 pub use pages::Pages;
 pub use workspace::Workspace;
 use workspace_handle::WorkspaceHandle;
+pub(crate) use workspace_handle::current_workspace;
 use workspace_tabs::{EMPTY_TAB_PREFIX, WorkspaceTabs};

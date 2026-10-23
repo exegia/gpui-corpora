@@ -2,8 +2,7 @@
 use super::*;
 
 pub struct Workspace {
-    #[cfg(debug_assertions)]
-    annotations: Option<Entity<gpui_agentation::AnnotationOverlay>>,
+    pub(super) devtools: super::Devtools,
     pub(crate) focus: FocusHandle,
     pub(crate) dock: Entity<Dock>,
     pub(crate) toaster: Entity<Toaster>,
@@ -62,6 +61,7 @@ impl Workspace {
             notify_on::<crate::connectivity::ConnectivitySnapshot>(cx),
             notify_on::<crate::session::SessionSnapshot>(cx),
             notify_on::<crate::app_state::AppState>(cx),
+            notify_on::<crate::app::window::SettingsWindowState>(cx),
         ]);
 
         cx.bind_keys([
@@ -77,13 +77,24 @@ impl Workspace {
                 .map(|i| KeyBinding::new(&crate::app::keys::page(i), NavigateToSection(i), None)),
         );
 
-        let active_path = crate::app_state::with_config(cx, |c| c.active_path.clone());
-        #[cfg(debug_assertions)]
-        let annotations = super::dev_feedback::mount(&active_path, window, cx);
+        let mut active_path = crate::app_state::with_config(cx, |c| c.active_path.clone());
+        if active_path.split('/').nth(1) == Some("settings") {
+            let path = active_path.clone();
+            cx.defer(move |cx| {
+                if let Err(error) =
+                    crate::app::window::open_settings_window(path.split('/').nth(2), cx)
+                {
+                    tracing::error!(%error, "could not open Settings window");
+                }
+            });
+            active_path = navigation::HOME.to_string();
+            crate::app_state::update_config(cx, |config| config.active_path = active_path.clone());
+        }
+        let devtools = super::Devtools::mount(&active_path, false, window, cx);
         let mut tabs = WorkspaceTabs::default();
         tabs.open(
             &active_path,
-            super::tab_workspace::TabWorkspace::new(this, window, cx),
+            super::tab_workspace::TabWorkspace::new(window, cx),
         );
         // Startup deep links were queued before this window existed.
         let drain = cx.entity().downgrade();
@@ -104,8 +115,7 @@ impl Workspace {
         .detach();
 
         Self {
-            #[cfg(debug_assertions)]
-            annotations,
+            devtools,
             focus,
             dock,
             toaster,
@@ -154,6 +164,16 @@ impl Workspace {
     /// other path shows in the route view.
     pub fn navigate(&mut self, path: impl Into<String>, cx: &mut Context<Self>) {
         let path = path.into();
+        if path.split('/').nth(1) == Some("settings") {
+            cx.defer(move |cx| {
+                if let Err(error) =
+                    crate::app::window::open_settings_window(path.split('/').nth(2), cx)
+                {
+                    tracing::error!(%error, "could not open Settings window");
+                }
+            });
+            return;
+        }
         self.tabs.show(&path);
         self.routing_to = Some(path.clone());
         self.pending_path = Some(path);
@@ -169,7 +189,7 @@ impl Workspace {
     }
 
     pub(crate) fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let state = super::tab_workspace::TabWorkspace::new(cx.entity().downgrade(), window, cx);
+        let state = super::tab_workspace::TabWorkspace::new(window, cx);
         let path = self.tabs.new_empty(state);
         self.navigate(path, cx);
     }
@@ -279,8 +299,6 @@ impl Workspace {
         if self.tabs.active().is_none() {
             return;
         }
-        #[cfg(not(debug_assertions))]
-        let _ = window;
         if self
             .routing_to
             .as_deref()
@@ -294,12 +312,7 @@ impl Workspace {
             return;
         }
         self.persisted_path = path.to_string();
-        #[cfg(debug_assertions)]
-        if let Some(annotations) = &self.annotations {
-            annotations.update(cx, |overlay, cx| {
-                overlay.set_route(&format!("gpui://corpora{path}"), window, cx)
-            });
-        }
+        self.devtools.set_route(path, window, cx);
         if let Some(tab) = self.tab_mut() {
             tab.error_page = None;
         }
@@ -339,8 +352,6 @@ impl Workspace {
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        #[cfg(debug_assertions)]
-        gpui_agentation::begin_frame(window, cx);
         let started = std::time::Instant::now();
         if let Some(path) = self.pending_path.take() {
             let owner = cx.entity().downgrade();
@@ -351,11 +362,7 @@ impl Render for Workspace {
                             return false;
                         }
                         if !this.tabs.show(&path) {
-                            let state = super::tab_workspace::TabWorkspace::new(
-                                cx.entity().downgrade(),
-                                window,
-                                cx,
-                            );
+                            let state = super::tab_workspace::TabWorkspace::new(window, cx);
                             this.tabs.open(&path, state);
                             cx.notify();
                         }
@@ -376,8 +383,11 @@ impl Render for Workspace {
         let palette = self.palette_open.then(|| self.palette(cx));
         let theme = cx.theme();
         let background = window_background(theme.is_dark());
-        let scope = FocusScope::new(&self.focus)
-            .root()
+        #[cfg(not(debug_assertions))]
+        let scope = FocusScope::new(&self.focus).root();
+        #[cfg(debug_assertions)]
+        let scope = div().id("workspace-focus").track_focus(&self.focus);
+        let scope = scope
             .size_full()
             .flex()
             .flex_col()
@@ -436,8 +446,6 @@ impl Render for Workspace {
             }))
             .child(background)
             .child(scope);
-        #[cfg(debug_assertions)]
-        let root = root.children(self.annotations.clone());
         frame_time::store_frame_time(started.elapsed().as_micros() as u64);
         root
     }

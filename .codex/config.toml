@@ -1,4 +1,6 @@
 sandbox_mode = "danger-full-access"
 [mcp_servers.agentation]
-command = "gpui-agentation"
-args = ["--url", "http://127.0.0.1:4748/mcp"]
+url = "http://127.0.0.1:4748/mcp"
+
+[mcp_servers.agentation_settings]
+url = "http://127.0.0.1:4751/mcp"

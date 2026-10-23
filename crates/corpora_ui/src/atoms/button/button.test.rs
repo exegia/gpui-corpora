@@ -44,7 +44,7 @@ fn setup(
 ) -> (gpui::AnyWindowHandle, gpui::Entity<Harness>) {
     cx.update(|cx| {
         gpui_kit::init(cx);
-        gpui_agentation::ely::init_for_tests(cx);
+        gpui_agentation::init_for_tests(cx);
         cx.set_reduce_motion(reduced);
     });
     cx.update(|cx| {
@@ -264,6 +264,18 @@ fn accessibility_exposes_disabled_busy_and_link_semantics(cx: &mut TestAppContex
 
 #[gpui::test]
 fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppContext) {
+    fn background(window: &Window) -> gpui::Hsla {
+        let bounds = window.find("target").bounds().scale(window.scale_factor());
+        window
+            .painted_quads()
+            .iter()
+            .find(|quad| quad.bounds == bounds)
+            .expect("button paints its background inside its bounds")
+            .background
+            .as_solid()
+            .expect("button uses a solid semantic background")
+    }
+
     let (handle, view) = setup(cx, 960., false);
     let initial = cx
         .update_window(handle, |_, window, cx| {
@@ -289,38 +301,60 @@ fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppC
     })
     .unwrap();
     cx.executor().advance_clock(Duration::from_millis(150));
-    let resting = cx
+    let (resting, sibling, resting_background) = cx
         .update_window(handle, |_, window, cx| {
             window.render_frame(cx);
             let resting = window.find("target").bounds();
             assert_eq!(resting.size.height, px(40.));
-            window.click("target", cx);
+            let sibling = window.find("other").bounds();
+            let resting_background = background(window);
+            window.hover("target", cx);
             window.dispatch_event(
-                gpui::KeyDownEvent {
-                    keystroke: gpui::Keystroke::parse("space").unwrap(),
-                    is_held: false,
-                    prefer_character_input: false,
+                gpui::MouseDownEvent {
+                    button: MouseButton::Left,
+                    position: resting.center(),
+                    modifiers: Default::default(),
+                    click_count: 1,
+                    first_mouse: false,
                 }
                 .to_platform_input(),
                 cx,
             );
             window.render_frame(cx);
-            resting
+            (resting, sibling, resting_background)
+        })
+        .unwrap();
+    cx.executor().advance_clock(Duration::from_millis(150));
+    let pressed_background = cx
+        .update_window(handle, |_, window, cx| {
+            window.render_frame(cx);
+            assert_eq!(window.find("target").bounds().size, resting.size);
+            assert_eq!(window.find("other").bounds(), sibling);
+            let pressed_background = background(window);
+            assert!(
+                pressed_background.a > 0. && pressed_background.a < resting_background.a,
+                "pressed {pressed_background:?}, resting {resting_background:?}",
+            );
+            window.dispatch_event(
+                gpui::MouseUpEvent {
+                    button: MouseButton::Left,
+                    position: resting.center(),
+                    modifiers: Default::default(),
+                    click_count: 1,
+                }
+                .to_platform_input(),
+                cx,
+            );
+            window.render_frame(cx);
+            pressed_background
         })
         .unwrap();
     cx.executor().advance_clock(Duration::from_millis(150));
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
+        assert!(background(window).a > pressed_background.a);
         assert_eq!(window.find("target").bounds().size, resting.size);
-        let face = window.find((ElementId::from("target"), "face")).bounds();
-        assert!(face.size.height < resting.size.height);
-        window.dispatch_event(
-            gpui::KeyUpEvent {
-                keystroke: gpui::Keystroke::parse("space").unwrap(),
-            }
-            .to_platform_input(),
-            cx,
-        );
+        assert_eq!(window.find("other").bounds(), sibling);
     })
     .unwrap();
 }

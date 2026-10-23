@@ -19,8 +19,8 @@ Native adaptations:
 
 - Glass uses the source tints with edge lighting. This GPUI version exposes
   neither backdrop blur nor live refraction.
-- Press feedback contracts the painted surface and icon while keeping layout
-  and hitboxes stable; arbitrary child subtrees have no paint scale API.
+- Press feedback fades the painted surface and scales the icon while keeping
+  layout and hitboxes stable; arbitrary child subtrees have no paint scale API.
 - Native callbacks and optional browser URLs replace React's `render` prop.
 - Desktop pointer targets use the visible button bounds. The web's coarse
   pointer hit-area expansion is not exposed by this native control.

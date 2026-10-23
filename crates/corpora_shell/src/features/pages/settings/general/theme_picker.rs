@@ -8,24 +8,15 @@ use gpui::{
 
 use crate::app::{self, theme::ThemeMode};
 
-static LIGHT: LazyLock<Arc<Image>> = LazyLock::new(|| {
-    preview(include_bytes!(
-        "../../../../shell/assets/appearance/light.svg"
-    ))
-});
-static DARK: LazyLock<Arc<Image>> = LazyLock::new(|| {
-    preview(include_bytes!(
-        "../../../../shell/assets/appearance/dark.svg"
-    ))
-});
-static SYSTEM: LazyLock<Arc<Image>> = LazyLock::new(|| {
-    preview(include_bytes!(
-        "../../../../shell/assets/appearance/system.svg"
-    ))
-});
+static LIGHT: LazyLock<Arc<Image>> =
+    LazyLock::new(|| preview(include_bytes!("../assets/appearance/appearance_light.png")));
+static DARK: LazyLock<Arc<Image>> =
+    LazyLock::new(|| preview(include_bytes!("../assets/appearance/appearance_dark.png")));
+static SYSTEM: LazyLock<Arc<Image>> =
+    LazyLock::new(|| preview(include_bytes!("../assets/appearance/appearance_system.png")));
 
 fn preview(bytes: &[u8]) -> Arc<Image> {
-    Arc::new(Image::from_bytes(ImageFormat::Svg, bytes.to_vec()))
+    Arc::new(Image::from_bytes(ImageFormat::Png, bytes.to_vec()))
 }
 
 pub(super) fn theme_picker(cx: &App) -> impl IntoElement + use<> {
@@ -100,12 +91,12 @@ impl RenderOnce for ThemePicker {
                             .aria_label(label.clone())
                             .aria_toggled(selected.into())
                             .track_focus(&focus)
-                            .w(rems(10.0))
+                            .w(rems(9.0))
                             .flex_none()
                             .flex()
                             .flex_col()
                             .items_center()
-                            .gap_2()
+                            .gap_1p5()
                             .cursor_pointer()
                             .on_mouse_down(MouseButton::Left, |_, window, _| {
                                 window.prevent_default()
@@ -131,23 +122,24 @@ impl RenderOnce for ThemePicker {
                                 div()
                                     .id(SharedString::from(format!("{id}-preview")))
                                     .w_full()
+                                    .h(rems(6.0))
                                     .border_2()
                                     .border_color(if selected {
                                         colors.accent
                                     } else {
-                                        gpui::transparent_black()
+                                        colors.border
                                     })
+                                    .overflow_hidden()
                                     .rounded(theme.radius(Radius::Xl))
-                                    .p_0p5()
                                     .when(!selected, |preview| {
                                         preview
                                             .hover(|style| style.border_color(colors.border_strong))
                                     })
                                     .child(
                                         img(Arc::clone(image))
-                                            .w_full()
-                                            .h(rems(6.0))
-                                            .object_fit(ObjectFit::Contain),
+                                            .size_full()
+                                            .rounded(theme.radius(Radius::Xl))
+                                            .object_fit(ObjectFit::Cover),
                                     ),
                             )
                             .child(
@@ -170,29 +162,21 @@ impl RenderOnce for ThemePicker {
 mod tests {
     use super::*;
 
-    #[gpui::test]
-    fn svg_previews_render_and_system_combines_both_appearances(cx: &gpui::TestAppContext) {
-        cx.update(|cx| {
-            let renderer = cx.svg_renderer();
-            let light = renderer.render_single_frame(LIGHT.bytes(), 1.0).unwrap();
-            let dark = renderer.render_single_frame(DARK.bytes(), 1.0).unwrap();
-            let system = renderer.render_single_frame(SYSTEM.bytes(), 1.0).unwrap();
-            let size = system.size(0);
-            let width = size.width.0 as usize;
-            let height = size.height.0 as usize;
-            assert_eq!(width * 5, height * 8);
-            for image in [&light, &dark, &system] {
-                assert_eq!(image.size(0), size);
-                assert_eq!(image.as_bytes(0).unwrap().len(), width * height * 4);
-            }
-            for (x, expected) in [(width / 8, &light), (width * 7 / 8, &dark)] {
-                let pixel = (height * 4 / 5 * width + x) * 4;
-                assert_eq!(
-                    &system.as_bytes(0).unwrap()[pixel..pixel + 4],
-                    &expected.as_bytes(0).unwrap()[pixel..pixel + 4],
-                );
-            }
-            assert_ne!(light.as_bytes(0), dark.as_bytes(0));
-        });
+    #[test]
+    fn png_previews_decode_at_matching_sizes_with_distinct_appearances() {
+        let decode = |image: &Arc<Image>| {
+            image::load_from_memory_with_format(image.bytes(), image::ImageFormat::Png)
+                .unwrap()
+                .into_rgba8()
+        };
+        let light = decode(&LIGHT);
+        let dark = decode(&DARK);
+        let system = decode(&SYSTEM);
+        assert!(light.width() > 0 && light.height() > 0);
+        assert_eq!(light.dimensions(), dark.dimensions());
+        assert_eq!(light.dimensions(), system.dimensions());
+        assert_ne!(light.as_raw(), dark.as_raw());
+        assert_ne!(system.as_raw(), light.as_raw());
+        assert_ne!(system.as_raw(), dark.as_raw());
     }
 }

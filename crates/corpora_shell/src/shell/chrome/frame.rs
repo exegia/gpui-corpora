@@ -46,7 +46,6 @@ pub fn frame(
             ))
         })
         .unwrap_or_default();
-    let settings_owner = workspace.clone();
     let titlebar = TitleBar::new("titlebar")
         .child(brand::brand(cx))
         .child(tabs)
@@ -77,11 +76,14 @@ pub fn frame(
         ))
         .action(round(
             IconButton::new("settings", IconName::Settings)
+                .variant(if crate::app::window::settings_window_open(cx) {
+                    ButtonVariant::Subtle
+                } else {
+                    ButtonVariant::Ghost
+                })
                 .tooltip("Settings")
                 .on_click(move |_, _, cx| {
-                    settings_owner
-                        .update(cx, |state, cx| state.navigate(navigation::SETTINGS, cx))
-                        .ok();
+                    crate::commands::execute(crate::commands::CommandId::OpenSettings, cx);
                 }),
             window,
             cx,
@@ -136,7 +138,31 @@ pub fn frame(
             "Current page",
             content,
         ));
-    let body = panels::layout(workspace, body, window, cx);
+    let body = panels::layout(workspace.clone(), body, window, cx);
+    let mut content = Some(
+        div()
+            .flex()
+            .flex_1()
+            .min_h_0()
+            .child(crate::shell::dev_target(
+                "activity-bar",
+                "Activity bar",
+                activity,
+            ))
+            .child(body)
+            .into_any_element(),
+    );
+    let framed = workspace
+        .update(cx, |state, cx| {
+            state.devtools.frame(
+                "workspace-screen",
+                "Workspace",
+                content.take().unwrap(),
+                window,
+                cx,
+            )
+        })
+        .unwrap_or_else(|_| content.take().unwrap());
     div()
         .border_0()
         .size_full()
@@ -147,16 +173,5 @@ pub fn frame(
             "Title bar and window tabs",
             titlebar,
         ))
-        .child(
-            div()
-                .flex()
-                .flex_1()
-                .min_h_0()
-                .child(crate::shell::dev_target(
-                    "activity-bar",
-                    "Activity bar",
-                    activity,
-                ))
-                .child(body),
-        )
+        .child(div().flex_1().min_h_0().child(framed))
 }
