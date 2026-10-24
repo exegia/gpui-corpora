@@ -140,6 +140,7 @@ tokio = { version = "1", features = [
     "time",
 ] }
 tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+toml = { version = "0.8", default-features = false, features = ["parse"] }
 tracing = "0.1"
 tracing-appender = "0.2"
 # tracing-log forwards Ely's `log` records into the tracing subscriber.

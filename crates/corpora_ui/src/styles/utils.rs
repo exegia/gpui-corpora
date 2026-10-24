@@ -135,6 +135,12 @@ pub fn convert(base: impl Into<Hsla>) -> Scale {
     Scale::new(base, Spread::WIDE)
 }
 
+/// Builds an opaque `Hsla` from Oklch components: lightness 0 to 1, chroma, and
+/// hue in degrees. Lowers chroma until the color fits sRGB so the hue holds.
+pub fn oklch(lightness: f32, chroma: f32, hue: f32) -> Hsla {
+    from_oklch(Oklch::new(lightness, chroma, hue), 1.0)
+}
+
 fn to_oklch(color: Hsla) -> Oklch {
     let Rgba { r, g, b, .. } = color.to_rgb();
     Oklch::from_color(Srgb::new(r, g, b))

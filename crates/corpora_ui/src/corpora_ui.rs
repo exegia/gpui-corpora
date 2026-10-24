@@ -1,4 +1,4 @@
-//! Shared UI pieces: toasts and the macOS Classic theme palettes.
+//! Shared UI pieces: toasts and the Default theme palettes.
 
 /// Standalone Ely types for release builds without annotation APIs.
 #[cfg(not(debug_assertions))]
@@ -9,6 +9,7 @@ pub use gpui_agentation::ely;
 
 pub mod styles {
     pub mod insets;
+    pub mod palette;
     pub mod tokens;
     pub mod utils;
 }
