@@ -3,8 +3,8 @@
 use std::{rc::Rc, time::Duration};
 
 use gpui::{
-    AnyElement, App, BoxShadow, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce,
-    Role, SharedString, StyleRefinement, Styled, Window, div, point, prelude::*, px,
+    AnyElement, App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role,
+    SharedString, StyleRefinement, Styled, Window, div, prelude::*, px,
 };
 use gpui_kit::base::{
     StyledExt, Tab as NativeTab, TestSupportExt,
@@ -12,6 +12,8 @@ use gpui_kit::base::{
 };
 
 use crate::ely::theme::ActiveTheme;
+
+mod glass;
 
 const TAB_WIDTH: f32 = 63.;
 const TAB_HEIGHT: f32 = 53.;
@@ -125,7 +127,6 @@ impl RenderOnce for Tabs {
         let theme = cx.theme();
         let colors = theme.colors.clone();
         let dark = theme.is_dark();
-        let tint = gpui::white().opacity(if dark { 16. / 255. } else { 18.8 / 255. });
         let x = spring(
             (self.id.clone(), "selection-position"),
             px(selected as f32 * (TAB_WIDTH + TAB_GAP)),
@@ -135,7 +136,6 @@ impl RenderOnce for Tabs {
         );
         let mut list = div().relative().flex().gap(px(TAB_GAP)).h(px(TAB_HEIGHT));
         if count > 0 {
-            // Bezel's Clear fallback: this GPUI renderer has no per-element backdrop lens.
             list = list.child(
                 div()
                     .id((self.id.clone(), "selected-indicator"))
@@ -146,16 +146,7 @@ impl RenderOnce for Tabs {
                     .w(px(TAB_WIDTH))
                     .h(px(TAB_HEIGHT))
                     .rounded(px(14.))
-                    .bg(tint)
-                    .border(px(1.4))
-                    .border_color(gpui::white().opacity(0.26))
-                    .shadow(vec![BoxShadow {
-                        inset: false,
-                        color: gpui::black().opacity(if dark { 0.16 } else { 0.04 }),
-                        offset: point(px(0.), px(1.)),
-                        blur_radius: px(3.),
-                        spread_radius: px(0.),
-                    }]),
+                    .child(glass::clear(dark)),
             );
         }
         for (index, item) in self.items.into_iter().enumerate() {

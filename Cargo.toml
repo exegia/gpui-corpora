@@ -11,6 +11,7 @@ members = [
     "crates/corpora_ui",
 ]
 resolver = "3"
+exclude = ["vendor/gpui-pre", "vendor/gpui-pre-apple"]
 
 [workspace.package]
 version = "0.1.0"
@@ -216,3 +217,7 @@ winresource.workspace = true
 [profile.dev.package]
 gpui-pre = { opt-level = 3 }
 gpui-pre-platform = { opt-level = 3 }
+
+[patch.crates-io]
+gpui-pre = { path = "vendor/gpui-pre" }
+gpui-pre-apple = { path = "vendor/gpui-pre-apple" }

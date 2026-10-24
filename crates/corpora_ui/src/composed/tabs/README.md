@@ -22,11 +22,14 @@ The selection uses [GPUI Kit motion](https://gpui-kit.com/base/motion/), with a
 320 ms critically damped spring. Retargeting preserves position and velocity;
 the operating system's reduced-motion preference snaps to the new selection.
 
-The surface uses the Clear material fallback described by
-[Bezel Materials](https://bezel.gallery/docs/material.md). Bezel's refractive
-lens requires its GPUI fork's `paint_backdrop_blur` and `GlassEffect` APIs.
-The installed `gpui-pre 0.3.8` renderer lacks them, so the surface uses Bezel's
-translucent tint and rim. Whole-window native blur is configured by the host.
+On macOS, the surface renders [Bezel Clear glass](https://bezel.gallery/docs/material.md)
+with framebuffer sampling, GPU Gaussian blur, rim refraction, and chromatic
+dispersion. The renderer backport and source revisions are documented in
+[`vendor/README.md`](../../../../../vendor/README.md). The glass stays below the
+tab icons and labels; GPUI Kit motion still drives its bounds. Other renderers
+retain a translucent fill until they implement the backdrop primitive.
 
 Render all four settings tabs in light and dark with native text shaping and
 Metal using `cargo run -p corpora_shell --example settings_preview`.
+Verify backdrop displacement, rounded clipping, and the moving glass against a
+striped backdrop with `cargo run -p corpora_ui --example tabs_glass_preview`.

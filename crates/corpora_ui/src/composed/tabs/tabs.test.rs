@@ -43,9 +43,16 @@ fn setup(cx: &mut TestAppContext, reduced: bool) -> (gpui::AnyWindowHandle, gpui
 }
 
 fn indicator(window: &mut Window) -> gpui::Bounds<gpui::Pixels> {
-    window
+    let bounds = window
         .find((ElementId::from("tabs"), "selected-indicator"))
-        .bounds()
+        .bounds();
+    #[cfg(target_os = "macos")]
+    assert!(window.painted_backdrop_blurs().iter().any(|glass| {
+        glass.bounds == bounds.scale(window.scale_factor())
+            && glass.lens.0 > 0.
+            && glass.dispersion > 0.
+    }));
+    bounds
 }
 
 #[gpui::test]
