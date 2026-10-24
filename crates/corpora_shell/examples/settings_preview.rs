@@ -56,8 +56,11 @@ fn main() -> anyhow::Result<()> {
                 window.resize(size(px(541.), px(493.)));
                 window.render_frame(cx);
             })?;
-            cx.run_until_parked();
-            cx.update_window(handle, |_, window, cx| window.render_frame(cx))?;
+            // Settle virtualized list measurements before capturing a theme change.
+            for _ in 0..3 {
+                cx.run_until_parked();
+                cx.update_window(handle, |_, window, cx| window.render_frame(cx))?;
+            }
             let path = output.join(format!(
                 "settings-{}-{section}.png",
                 if dark { "dark" } else { "light" }
