@@ -1,6 +1,6 @@
 # Base-branch policy enforcement for the template's long-lived branches.
 #
-# - lifecycle branches target `dev`
+# - lifecycle branches target `dev` or another short-lived branch
 # - only `dev` may target `next`
 # - only `next` may target `main`
 #
@@ -9,11 +9,15 @@ name: PR Base-Branch Policy
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, reopened, synchronize, edited]
 
 permissions:
   pull-requests: write   # comment, reassign base, close
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 jobs:
   enforce:
@@ -22,6 +26,7 @@ jobs:
       - name: Enforce base-branch policy
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           BASE_REF: ${{ github.base_ref }}
@@ -29,9 +34,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          is_lifecycle_head() {
+          is_work_branch() {
             case "$1" in
-              feature/*|bug/*|doc/*|chore/*|hotfix/*|dependabot/*|copilot/*|claude/*) return 0 ;;
+              feature/*|feat/*|bug/*|fix/*|doc/*|docs/*|chore/*|ai/*|hotfix/*|dependabot/*|copilot/*|claude/*) return 0 ;;
               *) return 1 ;;
             esac
           }
@@ -49,7 +54,7 @@ jobs:
               "\`$HEAD_REF\`, which is not allowed." \
               "" \
               "To ship this change:" \
-              "1. Merge your work into \`dev\` (every PR targets \`dev\`)." \
+              "1. Merge your stack into \`dev\` from its bottom PR." \
               "2. Let the \`dev-to-next\` workflow open a \`dev → next\` PR." \
               "3. Open a \`next → main\` PR to promote to production — on merge, \`release-tag.yml\`" \
               "   creates the semver tag." \
@@ -60,7 +65,7 @@ jobs:
             exit 0
           fi
 
-          # Only dev may promote into next. Everything else belongs on dev.
+          # Only dev may promote into next.
           if [ "$BASE_REF" = "next" ]; then
             if [ "$HEAD_REF" = "dev" ]; then
               echo "dev → next PR — allowed."
@@ -79,11 +84,16 @@ jobs:
             exit 0
           fi
 
+          if is_work_branch "$BASE_REF"; then
+            echo "Stacked PR #$PR_NUMBER targets $BASE_REF — allowed."
+            exit 0
+          fi
+
           if [ "$BASE_REF" != "dev" ]; then
             reassign_comment=$(printf '%s\n' \
               "↪️ **Base reassigned by base-branch policy**" \
               "" \
-              "Lifecycle work targets \`dev\`. This PR was opened against \`$BASE_REF\`; its base has" \
+              "Work targets \`dev\` or a short-lived branch. This PR targets \`$BASE_REF\`; its base has" \
               "been switched to \`dev\`." \
               "" \
               "See \`.github/BRANCH-AND-RELEASE-POLICY.md\`.")
@@ -93,7 +103,7 @@ jobs:
             exit 0
           fi
 
-          if is_lifecycle_head "$HEAD_REF" || [ "$HEAD_REF" = "dev" ]; then
+          if is_work_branch "$HEAD_REF" || [ "$HEAD_REF" = "dev" ]; then
             echo "PR #$PR_NUMBER targets dev — allowed."
             exit 0
           fi

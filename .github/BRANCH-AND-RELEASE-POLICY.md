@@ -10,6 +10,8 @@ This is the source of truth for the template's branch model, PR targeting rules,
 | `bug/<n>-<slug>` | Defect fix | `issue-start-branch.yml` | yes |
 | `doc/<n>-<slug>` | Documentation-only change | `issue-start-branch.yml` | yes |
 | `chore/<n>-<slug>` | CI, build, refactor, tooling | `issue-start-branch.yml` | yes |
+| `feat/*`, `fix/*`, `docs/*` | Manual lifecycle aliases | maintainers | yes |
+| `ai/*` | Agent-created work, including stacked PRs | coding agents | exempt from branch-tag enforcement |
 | `dev` | Integration and default branch | protected long-lived branch | yes |
 | `next` | Staging / pre-release branch | protected long-lived branch | yes |
 | `main` | Production branch | protected long-lived branch | yes |
@@ -19,7 +21,7 @@ The lifecycle prefix is chosen from the issue's `type:*` label when `status:in-p
 
 ## PR targeting rules (enforced by `pr-base-policy.yml`)
 
-1. **Lifecycle work targets `dev`.** PRs opened against unsupported base branches are reassigned to `dev`.
+1. **Lifecycle work targets `dev` or a short-lived parent branch.** Stacked PRs may target lifecycle branches, their manual aliases, or the exempt agent/automation prefixes above. The bottom PR in the stack targets `dev`; unsupported bases are reassigned to `dev`.
 2. **Only `dev` promotes into `next`.** Any other head branch targeting `next` is redirected back to `dev`.
 3. **Only `next` releases into `main`.** PRs into `main` from any head other than `next` are closed.
 
@@ -38,11 +40,15 @@ the `main` ruleset is applied.
 
 ## Branch-tag enforcement (`pr-branch-enforcement.yml`)
 
-When a PR is opened from a branch that is not one of the lifecycle prefixes and not an exempt automation branch, the workflow:
+The policy workflows run when a PR is opened, reopened, updated, or edited. GitHub CLI receives `GH_REPO` explicitly, so these jobs do not need a checkout.
+
+When a PR uses neither a lifecycle prefix (including manual aliases) nor an exempt agent/automation prefix, branch-tag enforcement:
 
 1. infers work type from the PR title's conventional-commit prefix
 2. opens a tracking issue under the `⚙️ EPIC: Workflow` milestone
 3. comments on the PR with the tracking issue link
+
+Repeated runs reuse the marked tracking issue instead of opening duplicates.
 
 Type inference uses the same conventional-commit vocabulary as `release-tag.yml`, so issue labels and semver signals stay aligned.
 
