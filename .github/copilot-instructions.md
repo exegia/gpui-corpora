@@ -1,4 +1,4 @@
-# Copilot instructions for `repo-template`
+# Copilot instructions for `gpui-corpora`
 
 ## Validation commands
 
@@ -6,17 +6,21 @@ Run commands from the repository root.
 
 | Task | Command |
 | --- | --- |
+| Run the macOS development app | `just mac` |
+| Check Rust formatting | `cargo fmt --all -- --check` |
+| Lint the workspace | `cargo clippy --workspace --all-features` |
+| Test the workspace | `cargo test --workspace --all-features` |
 | Compile agentic workflows | `gh aw compile` |
 | Compile + lint generated workflows | `gh aw compile --actionlint` |
 | Show workflow status | `gh aw status` |
 | Install the secret-scanning hook | `pre-commit install` |
 | Scan working tree for secrets | `gitleaks dir .` |
 
-This template does not assume an application stack yet. Once a generated repository has its own codebase, replace these defaults with the real install/build/lint/test commands.
+Read `AGENTS.md` and `CONTRIBUTING.md` before changing code. Python packaging and the old Make-based release pipeline are not used by this Rust application.
 
 ## High-level architecture
 
-This repository is a template for future repositories. The important surfaces are:
+This repository contains the Corpora desktop application, built with Rust, GPUI, and Ely. Application entry points live in `src/`; workspace crates live in `crates/`. The inherited automation surfaces are:
 
 - `.github/workflows/*.md`: source files for GitHub Agentic Workflows
 - `.github/workflows/*.lock.yml`: compiled workflow artifacts
@@ -42,6 +46,7 @@ This repository is a template for future repositories. The important surfaces ar
 ### Integration conventions
 
 - `copilot-setup-steps.yml` is the bootstrap hook for GitHub Copilot coding agents.
+- Copilot agent jobs require the organization's **Allow use of Copilot CLI billed to the organization** policy. See `WORKFLOW.md`; HTTP 403 from this policy is not a token-wiring error.
 - `claude.yml` and `claude-code-review.yml` depend on `CLAUDE_CODE_OAUTH_TOKEN`.
 - Do not commit local-only agent state such as `.claude/`, `.agents/`, or workflow logs.
 

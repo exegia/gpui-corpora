@@ -1,53 +1,60 @@
-# Agent operating guide for `repo-template`
+# AGENTS.md
 
-This repository is a **template for other repositories**, so changes should optimize for reusable defaults, not one-off product assumptions.
+Hard rules for humans and coding agents in this repo. They override model or
+personal defaults. Setup, workflow, and PR process live in CONTRIBUTING.md.
 
-## Mission
+## Comments
 
-Keep the template generic, secure, and immediately usable: branch model, workflow automation, and agent guidance should work before downstream application code exists.
+- Max 1-2 lines. If a comment needs a paragraph, refactor the code instead.
+- A comment states a non-obvious constraint: why the code is shaped this way,
+  a workaround, an invariant. Never narrate what the next line does.
+- Never explain a diff or PR in code ("changed because...", "new:", "removed
+  per review"). That belongs in the commit message.
 
-## Non-negotiable rules
+## Prose
 
-1. Read the relevant workflow and policy files before editing automation.
-2. Prefer reusable defaults over stack-specific assumptions.
-3. Update `README.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` when workflow behavior changes.
-4. Recompile edited `.github/workflows/*.md` files with `gh aw compile`.
-5. Do not commit local-only agent state such as `.claude/`, `.agents/`, or workflow log artifacts.
-6. Never commit a credential, token, or API key — not in code, tests, fixtures, or examples. Use
-   placeholder values and keep real values in `.env`, which is gitignored.
-7. Do not bypass the secret-scanning hook with `git commit --no-verify`. If the hook fires, the
-   correct response is to remove the secret and rotate it, never to skip the check. CI runs the
-   same scan and will fail the pull request regardless.
+- All copy (comments, README, docs, commit text) reads like a competent human
+  wrote it: direct, concrete, factual. No marketing filler. No adjectives
+  doing the work facts should do.
+- Banned tells: "delve", "seamless", "leverage", "It's not just X, it's Y",
+  rule-of-three padding, em-dash spam.
+- Doc comments (`///`) on public APIs state what callers get and any
+  preconditions, in plain sentences.
 
-## Branch and PR policy
+## De-bloat
 
-- `dev` is the default branch; lifecycle branches (`feature/*`, `bug/*`, `doc/*`, `chore/*`) target it.
-- Promotion happens from `dev` to `next`.
-- Releases land from `next` to `main`.
-- `main` is read-only except for the generated repository's explicitly configured owner and Actions bypasses.
+- Dead code is deleted, never commented out. Git keeps the history.
+- Unused dependencies are removed, not left for later.
+- No speculative abstractions. Write the second implementation when the
+  second use case exists.
 
-If this file and the automation diverge, treat `.github/LIFECYCLE.md` and `.github/BRANCH-AND-RELEASE-POLICY.md` as the source of truth.
+## Rust quality gates
 
-## Expected workflow
-
-1. Make the smallest complete change that improves the template itself.
-2. Preserve template-safe validation even when no app stack has been chosen yet.
-3. Run the existing repo validation commands for touched workflow surfaces.
-4. Leave downstream teams with clear starter docs rather than hidden assumptions.
-
-## Template details to customize in generated repos
-
-- **Core apps/services:** replace placeholders with the real repo surface area
-- **Validation commands:** replace `gh aw`-only defaults with the actual build/test commands
-- **Secrets/integrations:** document only the GitHub Actions secrets the generated repo truly needs
-- **Release process:** keep `main/dev/next` or update the policy docs and workflows together
-
-## Agentic workflow note
-
-If you edit any agentic workflow source file, regenerate the lock files before finishing:
+All three must pass before you call the work done. CI runs clippy with
+`-D warnings` and rejects anything less.
 
 ```sh
-gh aw compile
+cargo fmt --all -- --check
+cargo clippy --workspace --all-features
+cargo test --workspace --all-features
 ```
 
-Do not hand-edit `.lock.yml` files unless the repository explicitly documents that as acceptable.
+`just clippy` and `just test` run those commands verbatim. `just fmt` is
+write-mode formatting (sort-derives, rustfmt, taplo, rumdl), not a check;
+`just check` is a separate cargo check pass.
+
+- Match existing patterns: imports, module layout, error handling, naming.
+  Read the neighboring files first.
+- Conventional Commits (`feat:`, `fix:`, ...), subject under 72 characters.
+  The body explains why, not what the diff shows.
+
+## Review lenses
+
+For anything beyond mechanical edits, review against the relevant body of
+practice. These own their details; this file does not duplicate them.
+
+- Async code (tokio runtime, channels, cancellation): rust-async-patterns
+- Tests (naming, assertions, harness layout): rust-testing
+- General Rust (borrowing vs cloning, error handling, performance):
+  rust-best-practices
+- UI components and design conventions: gpui-kit, gpui-kit-design-guides

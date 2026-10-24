@@ -1,0 +1,147 @@
+default:
+    @just --list
+
+mac *args='':
+    python3 scripts/dev.py {{args}}
+
+# Rebuild and restart after saved source changes.
+dev *args='':
+    python3 scripts/dev.py {{args}}
+
+fmt:
+    cargo sort-derives
+    cargo fmt
+    taplo fmt
+    rumdl fmt .
+
+clippy:
+    cargo clippy --workspace --all-features
+
+check:
+    cargo check --workspace --all-features
+
+test:
+    cargo test --workspace --all-features
+
+test-publish:
+    cargo publish --workspace --dry-run --allow-dirty
+
+# Use local path checkout for gpui-query (for active development of gpui-query;
+# branch gpui-pre-0.6 there mirrors the default git rev).
+gpui-query-local:
+    ./scripts/toggle-gpui-query.sh local
+
+# Use the default git rev of gpui-query (run before committing). Named for
+# symmetry; the registry has neither the release fix nor gpui-pre support.
+gpui-query-cratesio:
+    ./scripts/toggle-gpui-query.sh cratesio
+
+# Show whether gpui-query is using the local path or crates.io.
+gpui-query-status:
+    ./scripts/toggle-gpui-query.sh status
+
+# ---------------------------------------------------------------------------
+# Release operations.
+#
+# CI runs on the FORK hmziqagent/gpui-starter (remote `fork`), tag-triggered:
+# pushing a v* tag fires .github/workflows/release.yml from the tagged commit.
+# publish-release uses softprops/action-gh-release@v3, which UPSERTS the GitHub
+# Release (replaces assets, regenerates notes) — so a re-trigger updates the
+# already-published release in place; no manual release deletion required.
+# ---------------------------------------------------------------------------
+release-repo    := "hmziqagent/gpui-starter"
+release-remote  := "fork"
+release-workflow := "release.yml"
+# Latest vX.Y.Z tag reachable from HEAD, as a bare version (no leading 'v').
+latest-version  := `git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//'`
+
+# Force re-release a version (default: latest tag) built from the current HEAD.
+#
+# Moves the tag to HEAD, then deletes + re-pushes it to the fork — the reliable
+# way to re-fire a tag-push Release event (a bare force-push is not always
+# delivered by GitHub). The published release for that version is updated in
+# place by action-gh-release.
+#
+# A tag marks a COMMIT, not your working tree — commit what you want shipped
+# BEFORE running this, otherwise it just re-builds the last commit unchanged.
+force-release version=latest-version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    v="$(./scripts/normalize-version.sh "{{version}}")"
+    tag="v${v}"
+    old="$(git rev-list -n 1 "${tag}" 2>/dev/null || true)"
+    echo "==> Force re-release ${tag} on {{release-repo}}"
+    echo "    HEAD : $(git rev-parse --short HEAD)  $(git log -1 --format=%s HEAD)"
+    if [ -n "${old}" ] && [ "${old}" != "$(git rev-parse HEAD)" ]; then
+        echo "    was : $(git rev-parse --short "${old}")  (moving tag -> HEAD)"
+        git log --oneline "${old}..HEAD" | sed 's/^/      /'
+    fi
+    # Point the tag at HEAD (local), then delete + recreate it on the remote so
+    # GitHub delivers a fresh tag-push event.
+    git tag -f "${tag}" HEAD
+    git push {{release-remote}} ":refs/tags/${tag}" 2>/dev/null || true
+    git push {{release-remote}} "refs/tags/${tag}"
+    echo "==> Triggered. Watch: just watch-release"
+
+# Fire the Release workflow via workflow_dispatch on a ref (default
+# feat/linux-infra) for a version, WITHOUT moving any tag. The release is
+# UPSERTED. Use this to rebuild from a branch tip when you don't want to
+# mutate tags.
+dispatch-release version=latest-version ref='feat/linux-infra':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    v="$(./scripts/normalize-version.sh "{{version}}")"
+    echo "==> Dispatch {{release-workflow}} (version=${v}, ref={{ref}}) on {{release-repo}}"
+    gh workflow run {{release-workflow}} -R {{release-repo}} --ref "{{ref}}" -f version="${v}"
+    echo "==> Triggered. Watch: just watch-release"
+
+# Watch the most recent Release run (or a specific run id) to completion.
+# Exits non-zero if the run fails.
+watch-release runid='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    runid="{{runid}}"
+    if [ -z "${runid}" ]; then
+      runid="$(gh run list -R {{release-repo}} --workflow={{release-workflow}} --limit 1 --json databaseId --jq '.[0].databaseId')"
+    fi
+    echo "==> Watching Release run ${runid} on {{release-repo}}"
+    gh run watch "${runid}" -R {{release-repo}} --exit-status
+
+# List recent Release runs on the fork.
+release-runs limit='8':
+    gh run list -R {{release-repo}} --workflow={{release-workflow}} --limit {{limit}}
+
+# Build the .deb (bundled-libs layout via scripts/build-deb.sh). Requires
+# cargo-deb (`cargo install cargo-deb --locked`) and patchelf.
+deb:
+    ./scripts/build-deb.sh
+
+# Build the .rpm (bundled-libs layout via scripts/build-rpm.sh). Requires
+# cargo-generate-rpm (`cargo install cargo-generate-rpm --locked`) and patchelf.
+rpm:
+    ./scripts/build-rpm.sh
+
+# Build the AppImage (linuxdeploy over the tarball layout via
+# scripts/build-appimage.sh). Requires GPUI_UPDATE_MANIFEST_URL in the env
+# plus patchelf, curl, file, desktop-file-utils, and zsync (appimagetool
+# needs the last three).
+appimage:
+    ./scripts/build-appimage.sh
+
+# Build the local .flatpak bundle (scripts/build-flatpak.sh; flathub runtimes
+# install on first run). Requires flatpak, flatpak-builder, and
+# flatpak-cargo-generator (pipx install flatpak-cargo-generator).
+flatpak:
+    ./scripts/build-flatpak.sh
+
+# Build the portable Windows artifacts (bare .exe + .zip in target/release
+# via scripts/build-windows-portable.sh). Git Bash on a Windows host only
+# (GHA windows-2025 runner); needs GPUI_UPDATE_MANIFEST_URL in the env.
+win-portable:
+    ./scripts/build-windows-portable.sh
+
+# Build the Inno Setup setup .exe (scripts/build-windows-installer.sh) into
+# target/release. Git Bash on a Windows host with ISCC in PATH (preinstalled
+# on GHA windows-2025); run win-portable first, this recipe needs the exe.
+win-installer:
+    ./scripts/build-windows-installer.sh
