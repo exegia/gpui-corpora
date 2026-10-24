@@ -1,119 +1,48 @@
-# Branch & Release Policy
+# Branch and release policy
 
-This is the source of truth for the template's branch model, PR targeting rules, protection expectations, and release promotion flow. Read [`LIFECYCLE.md`](./LIFECYCLE.md) alongside it.
+## Branches and pull requests
 
-## Branch model
+| Branch | Role | Allowed target |
+| --- | --- | --- |
+| `feat/*`, `fix/*`, `doc/*`, `ai/*`, `chore/*` and conventional aliases | Work started from `dev` | `dev` or a short-lived parent work branch |
+| `release/dev-to-next` | Validated snapshot of `dev` | `next` |
+| `release/next-to-main` | Validated snapshot of `next` | `main` |
+| `dev` | Integration | Promoted through the generated staging draft |
+| `next` | Staging | Promoted through the generated production draft |
+| `main` | Production | Stable release tags and production deployment |
 
-| Branch / prefix | Purpose | Created by | Lifecycle? |
-|---|---|---|---|
-| `feature/<n>-<slug>` | New capability or enhancement | `issue-start-branch.yml` | yes |
-| `bug/<n>-<slug>` | Defect fix | `issue-start-branch.yml` | yes |
-| `doc/<n>-<slug>` | Documentation-only change | `issue-start-branch.yml` | yes |
-| `chore/<n>-<slug>` | CI, build, refactor, tooling | `issue-start-branch.yml` | yes |
-| `feat/*`, `fix/*`, `docs/*` | Manual lifecycle aliases | maintainers | yes |
-| `ai/*` | Agent-created work, including stacked PRs | coding agents | exempt from branch-tag enforcement |
-| `dev` | Integration and default branch | protected long-lived branch | yes |
-| `next` | Staging / pre-release branch | protected long-lived branch | yes |
-| `main` | Production branch | protected long-lived branch | yes |
-| `hotfix/*`, `dependabot/*`, `copilot/*`, `claude/*` | Bot and exception flows | respective bots / maintainers | exempt from branch-tag enforcement |
+PR titles use lowercase conventional types: `feat`, `feature`, `fix`, `bug`,
+`doc`, `docs`, `ai`, `chore`, `ci`, `refactor`, `perf`, `test`, `style`, `build`,
+or `revert`. An optional scope and breaking `!` are accepted. Branch aliases
+and automation prefixes are listed in `.github/scripts/release.py`.
 
-The lifecycle prefix is chosen from the issue's `type:*` label when `status:in-progress` is applied, so branch prefix and issue type stay aligned.
+The policy check never retargets or closes a PR. A stacked PR keeps its chosen
+base, including `feat/scaffold-app-1`. Direct work PRs into `next` or `main`
+fail validation; those branches accept only their generated promotion draft.
 
-## PR targeting rules (enforced by `pr-base-policy.yml`)
+## Merge and release rules
 
-1. **Lifecycle work targets `dev` or a short-lived parent branch.** Stacked PRs may target lifecycle branches, their manual aliases, or the exempt agent/automation prefixes above. The bottom PR in the stack targets `dev`; unsupported bases are reassigned to `dev`.
-2. **Only `dev` promotes into `next`.** Any other head branch targeting `next` is redirected back to `dev`.
-3. **Only `next` releases into `main`.** PRs into `main` from any head other than `next` are closed.
+Squash merge work and promotion PRs. The PR title becomes the squash subject;
+include breaking footers in the squash message when applicable. Promotion
+branches use exact source trees and retain target ancestry without force pushes.
 
-## Branch protection and ruleset expectations
+Stable SemVer is computed from pending staged changes: breaking change → major,
+feature → minor, other accepted types → patch. The first baseline is `v0.0.0`.
+The production tag points at the reviewed squash commit, and the GitHub Release
+records the source staging SHA for the next cycle. Tags and published releases
+are reused on retries.
 
-`main`, `dev`, and `next` should all be non-deletable and non-force-pushable. `main` is read-only:
+`main`, `next`, and `dev` should be protected against deletion and force pushes.
+The checked-in rulesets allow squash merges and require `guard`, `check`, and
+`Detect hardcoded secrets`. Live rulesets and repository merge settings are
+administrative configuration; editing their templates does not apply them.
 
-1. changes must arrive through an approved PR with required checks;
-2. direct updates are allowed only for explicitly configured owner and GitHub Actions bypass actors;
-3. the template does not hard-code bypass IDs because they belong to the generated repository.
+## Automation
 
-Run `.github/scripts/apply-branch-guardrails.sh` after creating a repository from the template. It
-creates `dev` and `next`, makes `dev` the default branch, and applies the rulesets. Supply
-`MAIN_BYPASS_ACTORS_JSON` with the generated repository's owner/team and GitHub App actor IDs when
-the `main` ruleset is applied.
+There are no agentic workflows, generated workflow locks, provider credentials,
+issue-to-branch bots, or automatic PR merges. CI creates a staging draft only
+after validation; staging creates a production draft only after preview success.
+The maintainer marks drafts ready, reviews checks, and merges them.
 
-## Branch-tag enforcement (`pr-branch-enforcement.yml`)
-
-The policy workflows run when a PR is opened, reopened, updated, or edited. GitHub CLI receives `GH_REPO` explicitly, so these jobs do not need a checkout.
-
-When a PR uses neither a lifecycle prefix (including manual aliases) nor an exempt agent/automation prefix, branch-tag enforcement:
-
-1. infers work type from the PR title's conventional-commit prefix
-2. opens a tracking issue under the `⚙️ EPIC: Workflow` milestone
-3. comments on the PR with the tracking issue link
-
-Repeated runs reuse the marked tracking issue instead of opening duplicates.
-
-Type inference uses the same conventional-commit vocabulary as `release-tag.yml`, so issue labels and semver signals stay aligned.
-
-## Dynamic issue title prefixes
-
-| Prefix | Label | When |
-|---|---|---|
-| `[BUG]` | `type:bug` | fix work inferred from `fix:` / `bug:` titles |
-| `[FEATURE]` | `type:feature` | feature work inferred from `feat:` titles |
-| `[DOC]` | `type:docs` | docs work inferred from `docs:` titles |
-| `[CHORE]` | `type:chore` | default for everything else |
-| `[ci-failure]` | `ci-failure, bug` | `ci-failure-diagnose.md` |
-| `[release]` | `release` | `dev-to-next.md` |
-| `[qa]` | `qa, e2e` | `pr-merged-qa-scenarios.md` |
-
-## Release flow: `dev → next → main`
-
-1. **PR → `dev`** — CI, SemVer-title validation, and the Copilot review workflow run. Lifecycle PRs
-   are squash-merged, then `dev-release-candidate.yml` tags the squash merge.
-2. **Stage 8 (`dev-to-next.md`)** — when validation passes on `dev`, an agentic workflow opens a
-   `dev → next` PR and updates `CHANGELOG.md`, `README.md`, `CLAUDE.md`, and existing version
-   manifests.
-3. **Preview** — merging to `next` runs `next-preview.yml`, which runs configured install, test,
-   build, container, and preview deployment commands.
-4. **Release PR** — a successful preview opens a `next → main` PR. `next-to-main-wiki.md` refines
-   release documentation on that PR branch.
-5. **Release** — merging `next → main` creates the SemVer tag and GitHub Release; the published
-   release triggers the configured production deployment.
-
-### Semantic versioning (`release-tag.yml`)
-
-| Signal | Bump |
-|---|---|
-| `BREAKING CHANGE` in any body, or a `<type>!:` subject | **major** |
-| any `feat:` / `feature:` subject | **minor** |
-| any `fix:` subject (or default) | **patch** |
-
-If no earlier tag exists, versioning starts from `v0.0.0`. Release candidates use
-`vX.Y.Z-dev.<PR-number>` and do not replace the production tag.
-
-## Cheat sheet
-
-```text
-issue (type:feature) ──status:in-progress──▶ feature/123-slug
-                                              │
-                                              ▼
-                                  PR feature/123 → dev (squash + candidate tag)
-                                              │
-                                              ▼  Validation green on dev
-                                  PR dev → next (docs + version metadata)
-                                              │
-                                              ▼
-                                  preview CI → PR next → main
-                                              │  merge
-                                              ▼
-                                  tag vX.Y.Z + Release + production deploy
-```
-
-## Related files
-
-- `.github/LIFECYCLE.md`
-- `.github/workflows/pr-base-policy.yml`
-- `.github/workflows/pr-branch-enforcement.yml`
-- `.github/workflows/dev-to-next.md`
-- `.github/workflows/next-to-main-wiki.md`
-- `.github/workflows/release-tag.yml`
-- `.github/workflows/issue-start-branch.yml`
-- `.github/scripts/create-triage-labels.sh`
+[WORKFLOW.md](WORKFLOW.md) lists the workflow files and configuration.
+[LIFECYCLE.md](LIFECYCLE.md) shows the complete release path.

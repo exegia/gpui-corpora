@@ -2,11 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [dev, next, main, master]
+    branches: [dev, next, main]
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
 
 env:
   CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
 
 jobs:
   lint:
@@ -47,3 +51,46 @@ jobs:
           key: ${{ matrix.rust }}
       - run: cargo test --no-default-features
       - run: cargo test --all-features
+
+  workflow-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s .github/scripts/tests -v
+
+  check:
+    if: always()
+    needs: [lint, test, workflow-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every validation job
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          results = json.loads(os.environ["RESULTS"])
+          assert all(job["result"] == "success" for job in results.values()), results
+          PYTHON
+
+  draft-next:
+    concurrency:
+      group: promote-dev-next
+      cancel-in-progress: false
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Draft or refresh the validated promotion
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          VALIDATED_SHA: ${{ github.sha }}
+          VALIDATION_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 .github/scripts/release.py promote-dev
