@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -13,6 +14,25 @@ SCRIPTS = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("release", SCRIPTS / "release.py")
 release = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release)
+
+
+class WorkflowContractTests(unittest.TestCase):
+    def test_retained_actions_have_required_immutable_pins(self):
+        for workflow in (SCRIPTS.parent / "workflows").glob("*.yml"):
+            for action in re.findall(r"uses: ([^\s#]+)", workflow.read_text()):
+                if not action.startswith("./"):
+                    with self.subTest(workflow=workflow.name, action=action):
+                        self.assertRegex(action, r"@([0-9a-f]{40})$")
+
+    def test_promotion_readiness_runs_every_required_pr_check(self):
+        for name in ["ci.yml", "pr-base-policy.yml", "secret-scan.yml"]:
+            source = (SCRIPTS.parent / "workflows" / name).read_text()
+            self.assertIn("ready_for_review", source, name)
+
+    def test_only_release_and_validation_workflows_remain(self):
+        names = {path.name for path in (SCRIPTS.parent / "workflows").iterdir() if path.is_file()}
+        self.assertEqual(names, {"ci.yml", "pr-base-policy.yml", "secret-scan.yml",
+                                "next-preview.yml", "release-tag.yml", "production-deploy.yml"})
 
 
 class VersionTests(unittest.TestCase):
