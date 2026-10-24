@@ -2,11 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [dev, next, main, master]
+    branches: [dev, next, main]
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
 
 env:
   CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
 
 jobs:
   lint:
@@ -17,12 +21,12 @@ jobs:
       # rust-analyzer/rust-src/wasm extras.
       RUSTUP_TOOLCHAIN: "1.98.1"
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: "1.98.1"
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - run: cargo fmt --all --check
       # -D warnings makes this job fail on lints instead of just printing them.
       - run: cargo clippy --all-targets --all-features -- -D warnings
@@ -38,12 +42,55 @@ jobs:
     env:
       RUSTUP_TOOLCHAIN: ${{ matrix.rust }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           key: ${{ matrix.rust }}
       - run: cargo test --no-default-features
       - run: cargo test --all-features
+
+  workflow-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: python3 -m unittest discover -s .github/scripts/tests -v
+
+  check:
+    if: always()
+    needs: [lint, test, workflow-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every validation job
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          results = json.loads(os.environ["RESULTS"])
+          assert all(job["result"] == "success" for job in results.values()), results
+          PYTHON
+
+  draft-next:
+    concurrency:
+      group: promote-dev-next
+      cancel-in-progress: false
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Draft or refresh the validated promotion
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          VALIDATED_SHA: ${{ github.sha }}
+          VALIDATION_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 .github/scripts/release.py promote-dev

@@ -1,16 +1,11 @@
 #[allow(unused_imports)]
 use super::*;
 
-use gpui_kit::component::{
-    ActiveTheme, TitleBar,
-    setting::Settings,
-    tab::{Tab, TabBar},
-};
+use gpui_kit::component::{ActiveTheme, TitleBar, setting::Settings};
 
 pub struct SettingsPage {
     devtools: crate::shell::Devtools,
     focus: FocusHandle,
-    tab_focus: Vec<FocusHandle>,
     pub(crate) workspace: Option<WeakEntity<Workspace>>,
     pub(crate) selected: usize,
     pub(crate) notifications: NotificationRuntimeSnapshot,
@@ -27,8 +22,7 @@ impl SettingsPage {
         cx: &mut Context<Self>,
     ) -> Self {
         let focus = cx.focus_handle();
-        let tab_focus: Vec<_> = SECTIONS.iter().map(|_| cx.focus_handle()).collect();
-        window.focus(&tab_focus[0], cx);
+        window.focus(&focus, cx);
         cx.bind_keys([
             KeyBinding::new("secondary-w", CloseSettings, Some("SettingsWindow")),
             #[cfg(not(target_os = "macos"))]
@@ -95,7 +89,6 @@ impl SettingsPage {
         Self {
             devtools: crate::shell::Devtools::mount("/settings/general", true, window, cx),
             focus,
-            tab_focus,
             workspace,
             selected: 0,
             notifications: notifications::snapshot(cx),
@@ -110,15 +103,11 @@ impl SettingsPage {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let index = SECTIONS
-            .iter()
-            .position(|(key, ..)| *key == section)
-            .unwrap_or(0);
+        let index = super::sections::section_index(section);
         self.select_index(index, window, cx);
     }
 
     fn select_index(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
-        window.focus(&self.tab_focus[index], cx);
         if self.selected != index {
             self.selected = index;
             self.devtools
@@ -126,70 +115,93 @@ impl SettingsPage {
             cx.notify();
         }
     }
-
-    fn on_tab_key(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
-        let next = match event.keystroke.key.as_str() {
-            "left" => (self.selected + SECTIONS.len() - 1) % SECTIONS.len(),
-            "right" => (self.selected + 1) % SECTIONS.len(),
-            "home" => 0,
-            "end" => SECTIONS.len() - 1,
-            "enter" | "space" => self.selected,
-            _ => return,
-        };
-        window.prevent_default();
-        cx.stop_propagation();
-        self.select_index(next, window, cx);
-    }
 }
 
 impl Render for SettingsPage {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        use corpora_ui::composed::tabs::{Tab, Tabs};
+        use gpui_kit::base::TestSupportExt;
+
         let page = self.page();
         let key = SECTIONS[self.selected].0;
-        let ring = cx.theme().ring;
-        let transparent = cx.theme().transparent;
+        let theme = corpora_ui::ely::theme::ActiveTheme::theme(&**cx);
+        let colors = theme.colors.clone();
+        let dark = theme.is_dark();
+        let background = colors.bg;
         let body = div()
             .flex()
             .flex_col()
             .flex_1()
             .min_h_0()
             .child(
-                div()
-                    .p_4()
-                    .on_key_down(cx.listener(Self::on_tab_key))
-                    .child(
-                        TabBar::new("settings-tabs")
-                            .segmented()
-                            .w_full()
-                            .selected_index(self.selected)
-                            .children(SECTIONS.iter().enumerate().map(|(index, (_, name, _))| {
-                                Tab::new()
-                                    .label(crate::i18n::localize(name))
-                                    .flex_1()
-                                    .track_focus(
-                                        &self.tab_focus[index]
-                                            .clone()
-                                            .tab_stop(index == self.selected),
-                                    )
-                                    .border_1()
-                                    .border_color(transparent)
-                                    .focus_visible(move |style| style.border_color(ring))
-                            }))
-                            .on_click(cx.listener(|this, index, window, cx| {
-                                this.select_index(*index, window, cx);
-                            })),
-                    ),
+                div().flex_none().pt(px(6.)).pb(px(10.)).px(px(7.)).child(
+                    Tabs::new("settings-tabs")
+                        .label(crate::i18n::localize("settings_title"))
+                        .selected_index(self.selected)
+                        .autofocus(self.focus.is_focused(window))
+                        .items(SECTIONS.iter().enumerate().map(|(index, (_, name, icon))| {
+                            let icon = gpui::svg()
+                                .data(icon)
+                                .text_color(if index == self.selected {
+                                    if dark { colors.fg } else { colors.on_accent }
+                                } else {
+                                    colors.fg_muted
+                                })
+                                .size(px(if index == 0 { 18. } else { 16. }))
+                                .flex_none()
+                                .id(SharedString::from(format!("settings-tab-icon-{index}")))
+                                .test_support();
+                            Tab::new(crate::i18n::localize(name)).icon(
+                                div()
+                                    .size(px(16.))
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .child(icon),
+                            )
+                        }))
+                        .on_change(cx.listener(|this, index, window, cx| {
+                            this.select_index(*index, window, cx);
+                        })),
+                ),
             )
             .child(
-                div().flex_1().min_h_0().child(
-                    // Segmented tabs own navigation; collapse the built-in sidebar.
-                    Settings::new(SharedString::from(format!("settings-{key}")))
-                        .sidebar_width(px(0.))
-                        .sidebar_size_range(px(0.)..px(0.))
-                        .sidebar_style(&StyleRefinement::default().hidden())
-                        .header_style(&StyleRefinement::default().hidden())
-                        .page(page),
-                ),
+                div()
+                    .id("settings-content")
+                    .test_support()
+                    .flex_1()
+                    .min_h_0()
+                    .mx(px(12.))
+                    .mb(px(13.))
+                    .rounded(px(12.))
+                    .overflow_hidden()
+                    .bg(background)
+                    .border_1()
+                    .border_color(colors.border)
+                    .shadow(vec![
+                        BoxShadow {
+                            inset: true,
+                            color: gpui::black().opacity(0.25),
+                            offset: point(px(0.), px(-1.)),
+                            blur_radius: px(2.),
+                            spread_radius: px(0.),
+                        },
+                        BoxShadow {
+                            inset: true,
+                            color: gpui::white().opacity(if dark { 0.06 } else { 0.9 }),
+                            offset: point(px(0.), px(2.)),
+                            blur_radius: px(3.),
+                            spread_radius: px(0.),
+                        },
+                    ])
+                    .child(
+                        Settings::new(SharedString::from(format!("settings-{key}")))
+                            .sidebar_width(px(0.))
+                            .sidebar_size_range(px(0.)..px(0.))
+                            .sidebar_style(&StyleRefinement::default().hidden())
+                            .header_style(&StyleRefinement::default().hidden())
+                            .page(page),
+                    ),
             );
         let body = self
             .devtools
@@ -206,10 +218,41 @@ impl Render for SettingsPage {
             .min_w_0()
             .flex()
             .flex_col()
-            .bg(cx.theme().background)
-            .text_color(cx.theme().foreground)
-            .child(TitleBar::new().child(crate::i18n::localize("settings_title")))
-            .child(div().flex_1().min_h_0().child(body))
+            .rounded(px(15.))
+            .overflow_hidden()
+            .bg(gpui::linear_gradient(
+                228.,
+                gpui::linear_color_stop(background.opacity(0.94), 0.31),
+                gpui::linear_color_stop(background.opacity(0.3), 0.98),
+            ))
+            .text_color(colors.fg)
+            .child(
+                TitleBar::new()
+                    .relative()
+                    .h(px(32.))
+                    .pl_0()
+                    .border_0()
+                    .bg(gpui::transparent_black())
+                    .child(
+                        div()
+                            .absolute()
+                            .inset_0()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .gap(px(5.))
+                            .text_size(px(13.))
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .child(
+                                gpui::svg()
+                                    .data(include_bytes!("assets/tabs/settings.svg"))
+                                    .text_color(cx.theme().foreground)
+                                    .size(px(15.)),
+                            )
+                            .child(crate::i18n::localize("settings_title")),
+                    ),
+            )
+            .child(div().flex().flex_col().flex_1().min_h_0().child(body))
     }
 }
 

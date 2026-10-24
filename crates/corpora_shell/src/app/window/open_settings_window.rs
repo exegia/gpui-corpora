@@ -57,11 +57,12 @@ pub fn open_settings_window(
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
             None,
-            size(px(860.), px(680.)),
+            size(px(541.), px(493.)),
             cx,
         ))),
-        window_min_size: Some(size(px(760.), px(520.))),
+        window_min_size: Some(size(px(480.), px(420.))),
         app_id: Some("corpora".to_string()),
+        window_background: gpui::WindowBackgroundAppearance::Blurred,
         ..gpui_kit::component::TitleBar::window_options()
     };
     let workspace = crate::shell::current_workspace(cx);

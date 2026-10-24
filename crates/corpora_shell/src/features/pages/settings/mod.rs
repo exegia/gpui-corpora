@@ -5,7 +5,7 @@ mod general;
 mod notifications_section;
 mod workspace;
 
-use corpora_ui::ely::{buttons::Button, primitives::IconName};
+use corpora_ui::ely::buttons::Button;
 use gpui::{prelude::*, *};
 
 use crate::app::LocaleState;
