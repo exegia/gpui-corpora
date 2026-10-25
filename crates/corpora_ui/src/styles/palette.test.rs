@@ -17,10 +17,34 @@ fn resolves_a_scale_step_through_oklch() {
 fn build_maps_roles_onto_palette_fields() {
     let light = build(Mode::Light);
     assert_eq!(light.accent, resolve("amber.500"));
-    assert_eq!(light.bg, resolve("slate.100"));
+    assert_eq!(light.bg, resolve("slate.200"));
     assert_eq!(light.fg, resolve("neutral.950"));
 
     let dark = build(Mode::Dark);
     assert_eq!(dark.accent, resolve("amber.300"));
     assert_eq!(dark.syntax.keyword, resolve("#c28b12"));
+}
+
+#[test]
+fn every_palette_color_uses_the_theme_document() {
+    let base = parsed();
+    let mut custom = Parsed {
+        scales: base.scales.clone(),
+        named: base.named.clone(),
+        theme: toml::from_str(include_str!("../themes/default.toml")).unwrap(),
+    };
+    for role in custom.theme.colors.values_mut() {
+        role.light = "#123456".into();
+        role.dark = "#654321".into();
+    }
+    for (mode, reference) in [(Mode::Light, "#123456"), (Mode::Dark, "#654321")] {
+        let palette = build_from(&custom, mode);
+        let expected = parse_color(reference);
+        for name in Palette::NAMES {
+            let actual = palette.token(name);
+            assert_eq!(actual.to_rgb().r, expected.to_rgb().r, "{name}");
+            assert_eq!(actual.to_rgb().g, expected.to_rgb().g, "{name}");
+            assert_eq!(actual.to_rgb().b, expected.to_rgb().b, "{name}");
+        }
+    }
 }

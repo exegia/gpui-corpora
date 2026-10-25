@@ -130,7 +130,7 @@ dark = "amber.300"
 
 [colors.link]
 description = "Hyperlinks and inline navigation."
-light = "amber.700"
+light = "amber.800"
 dark = "amber.300"
 
 [colors.selection]
@@ -138,11 +138,79 @@ description = "Highlight behind selected text."
 light = "amber.200"
 dark = "amber.900"
 
-# Terminal ANSI 1-6 (red, green, yellow, blue, magenta, cyan); black, white, and
-# the bright row keep Ely's. Values are raw colors, not palette steps.
+
+# Material, inverse text, and document colors.
+[colors.border-strong]
+light = "neutral.400"
+dark = "neutral.600"
+
+[colors.on-media]
+light = "white"
+dark = "white"
+
+[colors.backdrop]
+light = "neutral.950"
+dark = "black"
+light-alpha = 0.32
+dark-alpha = 0.5
+
+[colors.media-backdrop]
+light = "neutral.950"
+dark = "black"
+light-alpha = 0.97
+dark-alpha = 0.97
+
+[colors.shimmer]
+light = "white"
+dark = "white"
+light-alpha = 0.7
+dark-alpha = 0.063
+
+[colors.shadow]
+light = "black"
+dark = "black"
+
+[colors.tooltip-background]
+light = "neutral.950"
+dark = "neutral.700"
+
+[colors.tooltip-foreground]
+light = "neutral.50"
+dark = "neutral.50"
+
+[colors.paper]
+light = "white"
+dark = "neutral.50"
+
+[colors.ink]
+light = "neutral.950"
+dark = "neutral.950"
+
+[colors.on-danger]
+light = "white"
+dark = "red.950"
+
+[colors.on-success]
+light = "green.950"
+dark = "green.950"
+
+[colors.on-warning]
+light = "amber.950"
+dark = "amber.950"
+
+[colors.on-info]
+light = "sky.950"
+dark = "sky.950"
+
+# Eight series colors shared by Ely and Kit charts.
+[chart]
+light = ["blue.600", "teal.600", "amber.700", "rose.600", "violet.600", "green.600", "orange.700", "cyan.700"]
+dark = ["blue.400", "teal.400", "amber.400", "rose.400", "violet.400", "green.400", "orange.400", "cyan.400"]
+
+# Complete terminal ANSI rows, including neutral and bright colors.
 [ansi]
-light = ["#d21f07", "#319a00", "#b59a00", "#0060de", "#9a0068", "#007e8a"]
-dark = ["#ff5257", "#30d158", "#ffc600", "#419cff", "#a550a7", "#07fdd3"]
+light = ["#181613", "#d21f07", "#319a00", "#b59a00", "#0060de", "#9a0068", "#007e8a", "#acaaa8", "#605d5a", "#bd6158", "#439458", "#a57710", "#4c82c6", "#a067ac", "#00959c", "#cccac8"]
+dark = ["#3f3f3f", "#ff5257", "#30d158", "#ffc600", "#419cff", "#a550a7", "#07fdd3", "#afadab", "#5c5a58", "#fda297", "#89d298", "#e3b667", "#8dc1ff", "#dda7ea", "#56d3da", "#f3f1f0"]
 
 # Syntax highlighting. Most values are fixed editor colors; operator, punctuation,
 # and the dark neutrals reuse palette steps.

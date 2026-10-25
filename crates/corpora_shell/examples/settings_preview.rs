@@ -49,6 +49,7 @@ fn main() -> anyhow::Result<()> {
                 None,
                 cx,
             );
+            corpora_ui::styles::tokens::sync_kit_theme(cx);
         });
         for section in ["general", "workspace", "shortcuts", "developer"] {
             cx.update(|cx| open_settings_window(Some(section), cx))?;

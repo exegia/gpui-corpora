@@ -54,21 +54,21 @@ impl ButtonVariant {
         match self {
             Self::Default | Self::Secondary | Self::Destructive => Colors {
                 background: c.accent,
-                foreground: c.accent.darken(1.0),
+                foreground: c.on_accent,
                 ..base
             },
             Self::Outline | Self::DestructiveOutline => Colors {
                 background: c.bg.lighten(0.5),
-                foreground: c.fg.darken(1.0),
+                foreground: c.fg,
                 ..base
             },
             Self::Ghost => Colors {
                 background: transparent_black(),
-                foreground: c.fg.darken(1.0),
+                foreground: c.fg,
                 ..base
             },
             Self::Link => Colors {
-                foreground: c.accent.darken(1.0),
+                foreground: c.link,
                 ..base
             },
         }
@@ -79,22 +79,22 @@ impl ButtonVariant {
         match self {
             Self::Default | Self::Secondary => Colors {
                 background: c.accent,
-                foreground: c.accent.darken(0.9),
+                foreground: c.on_accent,
                 border: c.accent.lighten(0.1),
                 ..base
             },
             Self::Destructive => Colors {
                 background: c.accent,
-                foreground: c.accent.darken(0.9),
+                foreground: c.on_accent,
                 ..base
             },
             Self::Outline | Self::DestructiveOutline | Self::Ghost => Colors {
                 border: c.accent,
-                foreground: c.accent.darken(0.9),
+                foreground: c.fg,
                 ..base
             },
             Self::Link => Colors {
-                foreground: c.accent.darken(0.9),
+                foreground: c.link,
                 ..base
             },
         }

@@ -1,11 +1,17 @@
+use crate::ely::theme::ActiveTheme;
+
 use gpui::{Corners, IntoElement, Styled, canvas, px};
 
 pub(super) fn clear(dark: bool) -> impl IntoElement {
     canvas(
         |_, _, _| (),
-        move |bounds, _, window, _| {
+        move |bounds, _, window, cx| {
             let corners = Corners::all(px(14.));
-            let tint = gpui::white().opacity(if dark { 16. / 255. } else { 18.8 / 255. });
+            let tint =
+                cx.theme()
+                    .colors
+                    .on_media
+                    .opacity(if dark { 16. / 255. } else { 18.8 / 255. });
             #[cfg(target_os = "macos")]
             window.paint_layer(bounds, |window| {
                 let half_extent = bounds.size.width.min(bounds.size.height) / 2.;

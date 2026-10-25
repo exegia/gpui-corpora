@@ -1,22 +1,80 @@
-use std::sync::{Arc, LazyLock};
-
-use corpora_ui::ely::theme::{ActiveTheme, Radius, TextSize};
+use corpora_ui::ely::theme::{ActiveTheme, Palette, Radius, TextSize};
 use gpui::{
-    App, FontWeight, Image, ImageFormat, IntoElement, MouseButton, ObjectFit, RenderOnce, Role,
-    SharedString, Window, div, img, prelude::*, rems,
+    App, Bounds, Corners, FontWeight, IntoElement, MouseButton, Pixels, RenderOnce, Role,
+    SharedString, Window, canvas, div, fill, point, prelude::*, px, rems, size,
 };
 
 use crate::app::{self, theme::ThemeMode};
 
-static LIGHT: LazyLock<Arc<Image>> =
-    LazyLock::new(|| preview(include_bytes!("../assets/appearance/appearance_light.png")));
-static DARK: LazyLock<Arc<Image>> =
-    LazyLock::new(|| preview(include_bytes!("../assets/appearance/appearance_dark.png")));
-static SYSTEM: LazyLock<Arc<Image>> =
-    LazyLock::new(|| preview(include_bytes!("../assets/appearance/appearance_system.png")));
+fn preview_half(
+    colors: &Palette,
+    bounds: Bounds<Pixels>,
+    left: bool,
+    right: bool,
+    window: &mut Window,
+) {
+    let corners = Corners {
+        top_left: px(if left { 10. } else { 0. }),
+        bottom_left: px(if left { 10. } else { 0. }),
+        top_right: px(if right { 10. } else { 0. }),
+        bottom_right: px(if right { 10. } else { 0. }),
+    };
+    window.paint_quad(fill(bounds, colors.bg).corner_radii(corners));
+    let header = Bounds {
+        size: size(bounds.size.width, px(12.)),
+        ..bounds
+    };
+    window.paint_quad(fill(header, colors.surface).corner_radii(Corners {
+        bottom_left: px(0.),
+        bottom_right: px(0.),
+        ..corners
+    }));
+    let mut rect = |x, y, width, height, color| {
+        window.paint_quad(
+            fill(
+                Bounds {
+                    origin: bounds.origin + point(px(x), px(y)),
+                    size: size(px(width), px(height)),
+                },
+                color,
+            )
+            .corner_radii(px(3.)),
+        );
+    };
+    let width = f32::from(bounds.size.width);
+    let height = f32::from(bounds.size.height);
+    rect(4., 16., 20., height - 20., colors.sunken);
+    rect(8., 20., 12., 4., colors.accent);
+    rect(8., 28., 12., 4., colors.fg_muted);
+    rect(28., 16., width - 32., 12., colors.surface);
+    rect(28., 32., (width - 36.).min(32.), 4., colors.fg);
+    rect(28., 40., (width - 36.).min(24.), 4., colors.fg_muted);
+    rect(28., 48., width - 32., 16., colors.surface);
+}
 
-fn preview(bytes: &[u8]) -> Arc<Image> {
-    Arc::new(Image::from_bytes(ImageFormat::Png, bytes.to_vec()))
+fn preview(mode: ThemeMode) -> impl IntoElement {
+    let theme = corpora_ui::styles::tokens::DefaultTheme::new();
+    canvas(
+        |_, _, _| (),
+        move |bounds, _, window, _| match mode {
+            ThemeMode::Light => preview_half(&theme.light, bounds, true, true, window),
+            ThemeMode::Dark => preview_half(&theme.dark, bounds, true, true, window),
+            ThemeMode::System => {
+                let half = bounds.size.width / 2.;
+                let left = Bounds {
+                    size: size(half, bounds.size.height),
+                    ..bounds
+                };
+                let right = Bounds {
+                    origin: bounds.origin + point(half, px(0.)),
+                    size: left.size,
+                };
+                preview_half(&theme.light, left, true, false, window);
+                preview_half(&theme.dark, right, false, true, window);
+            }
+        },
+    )
+    .size_full()
 }
 
 pub(super) fn theme_picker(cx: &App) -> impl IntoElement + use<> {
@@ -37,20 +95,13 @@ impl RenderOnce for ThemePicker {
                 "appearance-system",
                 ThemeMode::System,
                 "menu_appearance_system",
-                &SYSTEM,
             ),
             (
                 "appearance-light",
                 ThemeMode::Light,
                 "menu_appearance_light",
-                &LIGHT,
             ),
-            (
-                "appearance-dark",
-                ThemeMode::Dark,
-                "menu_appearance_dark",
-                &DARK,
-            ),
+            ("appearance-dark", ThemeMode::Dark, "menu_appearance_dark"),
         ];
         let handles: Vec<_> = options
             .iter()
@@ -78,7 +129,7 @@ impl RenderOnce for ThemePicker {
                 options
                     .iter()
                     .enumerate()
-                    .map(|(index, &(id, mode, label, image))| {
+                    .map(|(index, &(id, mode, label))| {
                         let selected = self.selected == mode;
                         let focus = handles[index].clone();
                         let previous =
@@ -135,12 +186,7 @@ impl RenderOnce for ThemePicker {
                                         preview
                                             .hover(|style| style.border_color(colors.border_strong))
                                     })
-                                    .child(
-                                        img(Arc::clone(image))
-                                            .size_full()
-                                            .rounded(theme.radius(Radius::Xl))
-                                            .object_fit(ObjectFit::Cover),
-                                    ),
+                                    .child(preview(mode)),
                             )
                             .child(
                                 div()
@@ -155,28 +201,5 @@ impl RenderOnce for ThemePicker {
                             )
                     }),
             )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn png_previews_decode_at_matching_sizes_with_distinct_appearances() {
-        let decode = |image: &Arc<Image>| {
-            image::load_from_memory_with_format(image.bytes(), image::ImageFormat::Png)
-                .unwrap()
-                .into_rgba8()
-        };
-        let light = decode(&LIGHT);
-        let dark = decode(&DARK);
-        let system = decode(&SYSTEM);
-        assert!(light.width() > 0 && light.height() > 0);
-        assert_eq!(light.dimensions(), dark.dimensions());
-        assert_eq!(light.dimensions(), system.dimensions());
-        assert_ne!(light.as_raw(), dark.as_raw());
-        assert_ne!(system.as_raw(), light.as_raw());
-        assert_ne!(system.as_raw(), dark.as_raw());
     }
 }

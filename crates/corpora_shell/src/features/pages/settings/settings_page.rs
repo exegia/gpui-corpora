@@ -127,11 +127,7 @@ impl Render for SettingsPage {
         let theme = corpora_ui::ely::theme::ActiveTheme::theme(&**cx);
         let colors = theme.colors.clone();
         let dark = theme.is_dark();
-        let background = if dark {
-            colors.bg
-        } else {
-            gpui::rgb(0xf1f5f9).into()
-        };
+        let background = colors.surface;
         let body = div()
             .flex()
             .flex_col()
@@ -185,14 +181,14 @@ impl Render for SettingsPage {
                     .shadow(vec![
                         BoxShadow {
                             inset: true,
-                            color: gpui::black().opacity(0.25),
+                            color: colors.shadow.opacity(0.25),
                             offset: point(px(0.), px(-1.)),
                             blur_radius: px(2.),
                             spread_radius: px(0.),
                         },
                         BoxShadow {
                             inset: true,
-                            color: gpui::white().opacity(if dark { 0.06 } else { 0.9 }),
+                            color: colors.on_media.opacity(if dark { 0.06 } else { 0.9 }),
                             offset: point(px(0.), px(2.)),
                             blur_radius: px(3.),
                             spread_radius: px(0.),
@@ -226,7 +222,7 @@ impl Render for SettingsPage {
             .rounded(px(15.))
             .overflow_hidden()
             .text_color(colors.fg)
-            .child(corpora_ui::ui::layout::window_background(dark))
+            .child(corpora_ui::ui::layout::window_background(&colors))
             .child(
                 TitleBar::new()
                     .relative()

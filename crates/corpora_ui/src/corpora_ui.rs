@@ -8,7 +8,7 @@ pub use ely_gpui_component as ely;
 pub use gpui_agentation::ely;
 
 pub mod styles {
-    pub mod insets;
+    mod kit;
     pub mod palette;
     pub mod tokens;
     pub mod utils;

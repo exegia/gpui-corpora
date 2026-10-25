@@ -16,7 +16,7 @@ use corpora_ui::ely::{
     feedback::{EmptyState, ToastViewport, Toaster},
     layout::{Dock, DockPanel, DockSide},
     navigation::{Command, CommandPalette},
-    primitives::{IconName},
+    primitives::IconName,
     project::Status,
     shell::TrayIcon,
     theme::{ActiveTheme, TextSize},

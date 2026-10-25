@@ -31,7 +31,8 @@ enum Entry {
 #[derive(Deserialize)]
 struct ThemeDoc {
     colors: HashMap<String, Role>,
-    ansi: Modes<[String; 6]>,
+    ansi: Modes<[String; 16]>,
+    chart: Modes<[String; 8]>,
     syntax: Modes<SyntaxRefs>,
 }
 
@@ -39,6 +40,14 @@ struct ThemeDoc {
 struct Role {
     light: String,
     dark: String,
+    #[serde(default = "opaque", rename = "light-alpha")]
+    light_alpha: f32,
+    #[serde(default = "opaque", rename = "dark-alpha")]
+    dark_alpha: f32,
+}
+
+fn opaque() -> f32 {
+    1.0
 }
 
 #[derive(Deserialize)]
@@ -93,11 +102,14 @@ impl Parsed {
             .colors
             .get(name)
             .unwrap_or_else(|| panic!("default.toml has no role `{name}`"));
-        self.resolve(pick(mode, &role.light, &role.dark))
+        Hsla {
+            a: pick(mode, role.light_alpha, role.dark_alpha),
+            ..self.resolve(pick(mode, &role.light, &role.dark))
+        }
     }
 
-    fn ansi(&self, mode: Mode) -> [Hsla; 6] {
-        let refs = pick(mode, &self.theme.ansi.light, &self.theme.ansi.dark);
+    fn row<const N: usize>(&self, rows: &Modes<[String; N]>, mode: Mode) -> [Hsla; N] {
+        let refs = pick(mode, &rows.light, &rows.dark);
         std::array::from_fn(|i| self.resolve(&refs[i]))
     }
 
@@ -192,13 +204,12 @@ fn parse_oklch(inner: &str) -> Hsla {
 }
 
 /// The Default theme's `Palette` for one mode, mapping each default.toml role
-/// onto its Ely field. Unlisted fields keep Ely's values via `..base`.
+/// onto its Ely field without dependency palette fallbacks.
 pub fn build(mode: Mode) -> Palette {
-    let parsed = parsed();
-    let base = match mode {
-        Mode::Light => Palette::light(false),
-        Mode::Dark => Palette::dark(false),
-    };
+    build_from(parsed(), mode)
+}
+
+fn build_from(parsed: &Parsed, mode: Mode) -> Palette {
     let role = |name| parsed.role(name, mode);
     let bg = role("background");
     Palette {
@@ -209,6 +220,7 @@ pub fn build(mode: Mode) -> Palette {
         hover: role("hover"),
         active: role("active"),
         border: role("border"),
+        border_strong: role("border-strong"),
         fg: role("foreground"),
         fg_muted: role("muted"),
         fg_subtle: role("subtle"),
@@ -216,6 +228,7 @@ pub fn build(mode: Mode) -> Palette {
         accent: role("accent"),
         accent_hover: role("accent-hover"),
         on_accent: role("on-accent"),
+        on_media: role("on-media"),
         focus: role("focus"),
         link: role("link"),
         selection: role("selection"),
@@ -228,9 +241,17 @@ pub fn build(mode: Mode) -> Palette {
         danger_subtle: role("danger-subtle"),
         info_subtle: role("info-subtle"),
         glass: Hsla { a: 0.72, ..bg },
-        ansi: merge_ansi(base.ansi, parsed.ansi(mode)),
+        backdrop: role("backdrop"),
+        media_backdrop: role("media-backdrop"),
+        shimmer: role("shimmer"),
+        shadow: role("shadow"),
+        tooltip_bg: role("tooltip-background"),
+        tooltip_fg: role("tooltip-foreground"),
+        paper: role("paper"),
+        ink: role("ink"),
+        chart: parsed.row(&parsed.theme.chart, mode),
+        ansi: parsed.row(&parsed.theme.ansi, mode),
         syntax: parsed.syntax(mode),
-        ..base
     }
 }
 
@@ -238,14 +259,6 @@ pub fn build(mode: Mode) -> Palette {
 /// in the given mode. Panics if default.toml has no such role.
 pub fn color(role: &str, mode: Mode) -> Hsla {
     parsed().role(role, mode)
-}
-
-/// Overwrites ANSI 1-6 with the theme's colors; the rest keep Ely's row.
-fn merge_ansi(mut row: [Hsla; 16], overrides: [Hsla; 6]) -> [Hsla; 16] {
-    for (slot, color) in row[1..7].iter_mut().zip(overrides) {
-        *slot = color;
-    }
-    row
 }
 
 /// Resolves a palette reference (`amber.500`, `white`, `#rrggbb`) to a color.

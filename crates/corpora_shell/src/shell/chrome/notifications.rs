@@ -1,6 +1,6 @@
 use corpora_ui::ely::buttons::IconButton;
 use corpora_ui::ely::theme::{ControlSize, TextSize};
-use gpui::{FontWeight, rgb, white};
+use gpui::FontWeight;
 use gpui_kit::{Anchor, base::Selectable, component::popover::Popover, px};
 
 use super::*;
@@ -36,12 +36,15 @@ impl RenderOnce for NotificationsTrigger {
         } else {
             ButtonVariant::Ghost
         };
-        // Tailwind rose-500 in dark mode, rose-700 in light mode.
-        let fill = if theme.is_dark() {
-            rgb(0xff2056)
-        } else {
-            rgb(0xc70036)
-        };
+        let fill = theme.colors.danger;
+        let foreground = corpora_ui::styles::palette::color(
+            "on-danger",
+            if theme.is_dark() {
+                corpora_ui::ely::theme::Mode::Dark
+            } else {
+                corpora_ui::ely::theme::Mode::Light
+            },
+        );
         let height = theme.control_height(ControlSize::Sm) * 0.67;
         let count = if self.unread > MAX_UNREAD {
             format!("{MAX_UNREAD}+")
@@ -59,7 +62,7 @@ impl RenderOnce for NotificationsTrigger {
             .px_1()
             .rounded_full()
             .bg(fill)
-            .text_color(white())
+            .text_color(foreground)
             .text_size(text_size)
             .font_weight(FontWeight::MEDIUM)
             .child(count);

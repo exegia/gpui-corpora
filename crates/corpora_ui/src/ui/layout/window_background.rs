@@ -1,14 +1,12 @@
-use crate::ely::theme::Mode;
-use crate::styles::palette::color;
+use crate::ely::theme::Palette;
 use gpui::{Div, Hsla, div, linear_color_stop, linear_gradient, prelude::*};
 
 /// A theme tint over the native window material, filling its relative parent.
-pub fn window_background(dark: bool) -> Div {
-    let mode = if dark { Mode::Dark } else { Mode::Light };
-    let start = color("border", mode);
+pub fn window_background(colors: &Palette) -> Div {
+    let start = colors.border;
     let end = Hsla {
         a: 0.1,
-        ..color("disabled", mode)
+        ..colors.fg_disabled
     };
     div().absolute().inset_0().bg(linear_gradient(
         -150.,

@@ -3,9 +3,10 @@
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use corpora_ui::composed::tabs::{Tab, Tabs};
+use corpora_ui::ely::theme::ActiveTheme;
 use gpui::{
     AppContext, Context, ElementId, HeadlessAppContext, IntoElement, Render, Window, div,
-    prelude::*, px, rgb, size,
+    prelude::*, px, size,
 };
 use gpui_kit::test::TestWindowExt;
 
@@ -15,7 +16,7 @@ struct Preview {
 }
 
 impl Render for Preview {
-    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .size_full()
             .relative()
@@ -26,7 +27,7 @@ impl Render for Preview {
                     .top_0()
                     .w(px(8.))
                     .h_full()
-                    .bg(rgb(if stripe % 2 == 0 { 0xe85a32 } else { 0x2864e6 }))
+                    .bg(cx.theme().colors.chart[if stripe % 2 == 0 { 6 } else { 0 }])
             }))
             .when(self.visible, |root| {
                 root.child(
@@ -58,6 +59,9 @@ fn main() -> gpui::Result<()> {
     cx.update(|cx| {
         gpui_kit::init(cx);
         corpora_ui::ely::init_for_tests(cx);
+        corpora_ui::styles::tokens::DefaultTheme::new().install(cx);
+        corpora_ui::ely::theme::Theme::set_mode_now(corpora_ui::ely::theme::Mode::Light, cx);
+        corpora_ui::styles::tokens::sync_kit_theme(cx);
         cx.set_reduce_motion(false);
     });
     let window = cx.open_window(size(px(360.), px(120.)), |_, cx| {

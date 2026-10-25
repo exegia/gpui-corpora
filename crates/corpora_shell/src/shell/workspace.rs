@@ -382,7 +382,7 @@ impl Render for Workspace {
         let status = status::bar(window, cx);
         let palette = self.palette_open.then(|| self.palette(cx));
         let theme = cx.theme();
-        let background = window_background(theme.is_dark());
+        let background = window_background(&theme.colors);
         #[cfg(not(debug_assertions))]
         let scope = FocusScope::new(&self.focus).root();
         #[cfg(debug_assertions)]

@@ -4,7 +4,7 @@ use crate::styles::palette::resolve;
 #[test]
 fn palettes_keep_custom_backgrounds_and_accents() {
     let theme = DefaultTheme::new();
-    assert_eq!(theme.light.bg, resolve("slate.100"));
+    assert_eq!(theme.light.bg, resolve("slate.200"));
     assert_eq!(theme.light.accent, resolve("amber.500"));
     assert_eq!(theme.dark.accent, resolve("amber.300"));
     assert_eq!(theme.dark.bg, resolve("neutral.800"));
@@ -19,19 +19,14 @@ fn palette_picks_the_mode() {
 }
 
 #[test]
-fn ansi_takes_base_colors_and_keeps_the_rest() {
-    let (ely, theme) = (Palette::light(false), DefaultTheme::new());
+fn terminal_and_chart_rows_are_fully_theme_owned() {
+    let theme = DefaultTheme::new();
+    assert_eq!(theme.light.ansi[0], resolve("#181613"));
     assert_eq!(theme.light.ansi[1], resolve("#d21f07"));
-    assert_eq!(theme.light.ansi[6], resolve("#007e8a"));
-    assert_eq!(theme.light.ansi[0], ely.ansi[0]);
-    assert_eq!(theme.light.ansi[9], ely.ansi[9]);
-}
-
-#[test]
-fn unmapped_fields_keep_ely_values() {
-    let (ely, theme) = (Palette::dark(false), DefaultTheme::new());
-    assert_eq!(theme.dark.chart, ely.chart);
-    assert_eq!(theme.dark.tooltip_bg, ely.tooltip_bg);
+    assert_eq!(theme.light.ansi[9], resolve("#bd6158"));
+    assert_eq!(theme.dark.ansi[15], resolve("#f3f1f0"));
+    assert_eq!(theme.dark.chart[7], resolve("cyan.400"));
+    assert_eq!(theme.dark.tooltip_bg, resolve("neutral.700"));
 }
 
 #[test]
@@ -42,7 +37,7 @@ fn focus_matches_the_accent() {
 }
 
 #[gpui::test]
-fn kit_focus_policy_survives_repeated_appearance_changes(cx: &mut gpui::TestAppContext) {
+fn kit_theme_survives_repeated_appearance_changes(cx: &mut gpui::TestAppContext) {
     cx.update(|cx| {
         gpui_kit::init(cx);
         for mode in [
@@ -51,9 +46,35 @@ fn kit_focus_policy_survives_repeated_appearance_changes(cx: &mut gpui::TestAppC
             gpui_kit::component::ThemeMode::Light,
         ] {
             gpui_kit::component::Theme::change(mode, None, cx);
-            disable_focus_outlines(cx);
+            sync_kit_theme(cx);
             let theme = gpui_kit::component::Theme::global(cx);
             assert!(!theme.focus_ring && theme.ring.a == 0.0);
+            let mode = if mode.is_dark() {
+                Mode::Dark
+            } else {
+                Mode::Light
+            };
+            let palette = build(mode);
+            assert_eq!(theme.background, palette.bg);
+            assert_eq!(theme.tokens.background.color, palette.bg);
+            assert_eq!(theme.button_primary, palette.accent);
+            assert_eq!(theme.popover, palette.overlay);
+            assert_eq!(theme.chart_5, palette.chart[4]);
+            assert_eq!(theme.blue_light, palette.ansi[12]);
+            assert_eq!(
+                theme.highlight_theme.style.editor_background,
+                Some(palette.bg)
+            );
+            assert_eq!(
+                theme
+                    .highlight_theme
+                    .style
+                    .syntax
+                    .style("keyword")
+                    .unwrap()
+                    .color,
+                Some(palette.syntax.keyword)
+            );
         }
     });
 }

@@ -1,6 +1,7 @@
 use gpui::{AnyElement, App, Div, IntoElement, RenderOnce, Window, prelude::*};
 
 use crate::ely::layout::Well;
+use crate::ely::theme::ActiveTheme;
 
 /// A workspace pane with the shared fill and inset shadows, rounded on every corner.
 pub fn main(dark: bool, content: impl IntoElement) -> Surface {
@@ -39,7 +40,11 @@ impl RenderOnce for Surface {
             .downcast_mut::<Div>()
             .expect("Ely Well renders a Div")
             .style()
-            .refine(&super::surface_style::style(self.dark, self.flush_right));
+            .refine(&super::surface_style::style(
+                &cx.theme().colors,
+                self.dark,
+                self.flush_right,
+            ));
         surface
     }
 }
