@@ -127,7 +127,11 @@ impl Render for SettingsPage {
         let theme = corpora_ui::ely::theme::ActiveTheme::theme(&**cx);
         let colors = theme.colors.clone();
         let dark = theme.is_dark();
-        let background = colors.bg;
+        let background = if dark {
+            colors.bg
+        } else {
+            gpui::rgb(0xf1f5f9).into()
+        };
         let body = div()
             .flex()
             .flex_col()
@@ -208,6 +212,7 @@ impl Render for SettingsPage {
             .frame("settings-screen", "Settings", body, window, cx);
         div()
             .id("settings-window")
+            .relative()
             .key_context("SettingsWindow")
             .track_focus(&self.focus)
             .on_action(|_: &CloseSettings, window, cx| {
@@ -220,12 +225,8 @@ impl Render for SettingsPage {
             .flex_col()
             .rounded(px(15.))
             .overflow_hidden()
-            .bg(gpui::linear_gradient(
-                228.,
-                gpui::linear_color_stop(background.opacity(0.94), 0.31),
-                gpui::linear_color_stop(background.opacity(0.3), 0.98),
-            ))
             .text_color(colors.fg)
+            .child(corpora_ui::ui::layout::window_background(dark))
             .child(
                 TitleBar::new()
                     .relative()

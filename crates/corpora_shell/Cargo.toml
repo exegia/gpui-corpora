@@ -41,6 +41,9 @@ gpui-kit = { workspace = true, features = ["test-support"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 global-hotkey.workspace = true
+objc2.workspace = true
+objc2-app-kit.workspace = true
+raw-window-handle.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 image.workspace = true

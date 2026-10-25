@@ -62,6 +62,9 @@ pub fn open_settings_window(
         ))),
         window_min_size: Some(size(px(480.), px(420.))),
         app_id: Some("corpora".to_string()),
+        #[cfg(target_os = "macos")]
+        window_background: gpui::WindowBackgroundAppearance::Transparent,
+        #[cfg(not(target_os = "macos"))]
         window_background: gpui::WindowBackgroundAppearance::Blurred,
         ..gpui_kit::component::TitleBar::window_options()
     };
@@ -76,6 +79,8 @@ pub fn open_settings_window(
             view
         })
     })?;
+    #[cfg(target_os = "macos")]
+    super::frosted_backdrop::install(handle, cx)?;
     cx.global_mut::<SettingsWindowState>().window = Some((handle, view.downgrade()));
     Ok((handle, view))
 }

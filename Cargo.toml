@@ -90,6 +90,14 @@ network-interface = "2.0.3"
 notify = "8.2.0"
 notify-rust = "4.17.0"
 objc2 = { version = "0.6", features = ["exception"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+    "NSAppearance",
+    "NSGraphics",
+    "NSResponder",
+    "NSView",
+    "NSVisualEffectView",
+    "std",
+] }
 objc2-foundation = { version = "0.3.0", default-features = false, features = [
     "NSBundle",
     "NSError",
@@ -113,6 +121,7 @@ opentelemetry_sdk = { version = "0.24.1", features = ["rt-tokio", "trace"] }
 palette = { version = "0.7.7", default-features = false, features = ["std"] }
 percent-encoding = "2"
 quick-xml = "0.37"
+raw-window-handle = "0.6"
 reqwest = { version = "0.12.24", default-features = false, features = [
     "cookies",
     "json",

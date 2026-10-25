@@ -11,6 +11,8 @@ mod window_test;
 
 mod dispatch_quit;
 mod flush_window_bounds;
+#[cfg(target_os = "macos")]
+mod frosted_backdrop;
 mod open_settings_window;
 mod open_workspace_window;
 mod persisted_bounds;

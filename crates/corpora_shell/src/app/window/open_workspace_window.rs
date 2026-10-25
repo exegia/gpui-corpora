@@ -54,6 +54,8 @@ pub fn open_workspace_window(
     let (handle, workspace) = gpui_kit::open_window(options, cx, |window, cx| {
         cx.new(|cx| Workspace::new(window, cx))
     })?;
+    #[cfg(target_os = "macos")]
+    super::frosted_backdrop::install(handle, cx)?;
     cx.set_global(RootWindow(handle));
     // App level (not inside the window update) so the new window reports as
     // active in the accessibility snapshot.

@@ -4,8 +4,9 @@ pub(super) fn style(dark: bool, flush_right: bool) -> StyleRefinement {
     let (fill, lit_blur, lit_alpha, dim_offset, dim_alpha) = if dark {
         (0x181818, 0.7, 0.18, -2.5, 0.5)
     } else {
-        (0xe9eaeaeb, 1.0, 0.95, -2.0, 0.08)
+        (0xf1f5f9, 1.0, 0.95, -2.0, 0.08)
     };
+    let opacity = if cfg!(target_os = "macos") { 0.85 } else { 1.0 };
     let style = StyleRefinement::default();
     let style = if flush_right {
         style.rounded_tr(px(0.0)).rounded_br(px(0.0))
@@ -15,7 +16,7 @@ pub(super) fn style(dark: bool, flush_right: bool) -> StyleRefinement {
     style
         .border_0()
         .p_0()
-        .bg(rgb(fill))
+        .bg(rgb(fill).opacity(opacity))
         // GPUI paints shadows in order; CSS lists the topmost shadow first.
         .shadow(vec![
             // The dim shadow is painted first, so it appears behind the lit shadow.
