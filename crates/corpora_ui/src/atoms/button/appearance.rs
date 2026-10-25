@@ -1,4 +1,4 @@
-use crate::ely::theme::{Mix, Palette, Theme};
+use crate::ely::theme::{Mix, Palette, Radius, Theme};
 use crate::styles::utils::ColorExt as _;
 use gpui::{Hsla, transparent_black};
 
@@ -13,6 +13,30 @@ pub enum ButtonVariant {
     Secondary,
     Ghost,
     Link,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ButtonShape {
+    #[default]
+    Default,
+    Rounded,
+}
+
+impl ButtonShape {
+    pub fn name(self) -> &'static Radius {
+        match self {
+            Self::Default => &Radius::Md,
+            Self::Rounded => &Radius::Xl,
+        }
+    }
+
+    pub fn is_rounded(self) -> bool {
+        matches!(self, Self::Rounded)
+    }
+
+    pub fn is_default(self) -> bool {
+        matches!(self, Self::Default)
+    }
 }
 
 impl ButtonVariant {

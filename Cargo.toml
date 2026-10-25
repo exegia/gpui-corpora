@@ -52,7 +52,6 @@ gpui-agentation = { version = "=0.5.1", default-features = false, features = [
     "native",
 ] }
 
-ely-gpui-component = { git = "https://git.zacharyzhang.com/ZacharyZhang-NY/Ely-GPUI-Components", rev = "da3fdcaf39f2fa85ce1dd9cad07c3c81cf1dd721" }
 # Ely pins gpui-pre =0.3.8; any other GPUI source is a different, type-incompatible crate.
 gpui = { package = "gpui-pre", version = "=0.3.8", default-features = false, features = [
     "stacker",

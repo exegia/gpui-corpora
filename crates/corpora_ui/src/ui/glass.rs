@@ -2,17 +2,44 @@ use crate::ely::theme::ActiveTheme;
 
 use gpui::{Corners, Hsla, IntoElement, Pixels, Styled, canvas, px};
 
+#[derive(Clone, Copy)]
+struct GlassProfile {
+    magnify: f32,
+    dispersion: f32,
+    edge: f32,
+    edge_width: Pixels,
+}
+
+const STANDARD: GlassProfile = GlassProfile {
+    magnify: 1.2,
+    dispersion: 0.014,
+    edge: 0.26,
+    edge_width: px(1.4),
+};
+
+const DEEP_BEZEL: GlassProfile = GlassProfile {
+    magnify: 1.38,
+    dispersion: 0.02,
+    edge: 0.34,
+    edge_width: px(2.),
+};
+
 /// Clear glass tinted by the active theme's highlight color.
 pub fn clear(radius: Pixels) -> impl IntoElement {
-    surface(radius, None)
+    surface(radius, None, STANDARD)
+}
+
+/// Clear glass with stronger refraction and a deeper illuminated rim.
+pub(crate) fn clear_deep(radius: Pixels) -> impl IntoElement {
+    surface(radius, None, DEEP_BEZEL)
 }
 
 /// Glass with a translucent semantic tint supplied by the caller.
 pub fn tinted(radius: Pixels, tint: Hsla) -> impl IntoElement {
-    surface(radius, Some(tint))
+    surface(radius, Some(tint), STANDARD)
 }
 
-fn surface(radius: Pixels, tint: Option<Hsla>) -> impl IntoElement {
+fn surface(radius: Pixels, tint: Option<Hsla>, profile: GlassProfile) -> impl IntoElement {
     canvas(
         |_, _, _| (),
         move |bounds, _, window, cx| {
@@ -32,15 +59,15 @@ fn surface(radius: Pixels, tint: Option<Hsla>) -> impl IntoElement {
                     corners,
                     gpui::GlassEffect {
                         blur_radius: px(1.2),
-                        lens: px(18.75).min(half_extent),
-                        reach: px(47.).min(half_extent),
-                        magnify: 1.1,
-                        dispersion: 0.005,
+                        lens: px(28.).min(half_extent),
+                        reach: px(64.).min(half_extent),
+                        magnify: profile.magnify,
+                        dispersion: profile.dispersion,
                         gain: if dark { 1.029 } else { 1.041 },
                         saturation: 1.,
                         tint,
-                        edge: 0.26,
-                        edge_width: px(1.4),
+                        edge: profile.edge,
+                        edge_width: profile.edge_width,
                         edge_aa: px(0.5),
                     },
                 );

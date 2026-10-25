@@ -45,8 +45,8 @@ impl RenderOnce for NotificationsTrigger {
                 bell.child(
                     div()
                         .absolute()
-                        .top_neg_1()
-                        .right_neg_1()
+                        .top_neg_0p5()
+                        .right_neg_0p5()
                         .child(UnreadBadge::new(self.unread)),
                 )
             })

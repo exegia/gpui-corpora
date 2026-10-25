@@ -50,7 +50,10 @@ fn indicator(window: &mut Window) -> gpui::Bounds<gpui::Pixels> {
     assert!(window.painted_backdrop_blurs().iter().any(|glass| {
         glass.bounds == bounds.scale(window.scale_factor())
             && glass.lens.0 > 0.
-            && glass.dispersion > 0.
+            && glass.magnify > 1.3
+            && glass.dispersion >= 0.02
+            && glass.edge > 0.3
+            && glass.edge_width.0 >= 2.
     }));
     bounds
 }
@@ -60,6 +63,17 @@ fn pointer_and_keyboard_select_tabs_with_roving_focus(cx: &mut TestAppContext) {
     let (handle, view) = setup(cx, true);
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
+        let hover_bounds = window.within("tabs").find(1usize).bounds();
+        window.hover(1usize, cx);
+        window.render_frame(cx);
+        let hover_fill = window
+            .painted_quads()
+            .into_iter()
+            .filter(|quad| quad.bounds == hover_bounds.scale(window.scale_factor()))
+            .filter_map(|quad| quad.background.as_solid())
+            .last()
+            .expect("tab hover paints a muted fill");
+        assert_eq!(hover_fill, cx.theme().colors.fg_muted.opacity(0.04));
         window.within("tabs").click(1usize, cx);
         assert_eq!(view.read(cx).selected, 1);
         window.press("right", cx);

@@ -16,7 +16,6 @@ path = "src/corpora_ui.rs"
 default = []
 
 [dependencies]
-ely-gpui-component.workspace = true
 gpui-agentation.workspace = true
 gpui.workspace = true
 gpui-kit.workspace = true

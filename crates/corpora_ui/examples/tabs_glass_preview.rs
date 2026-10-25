@@ -2,7 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
-use corpora_ui::composed::tabs::{Tab, Tabs};
+use corpora_ui::atoms::tab::{Tab, Tabs};
 use corpora_ui::ely::theme::ActiveTheme;
 use gpui::{
     AppContext, Context, ElementId, HeadlessAppContext, IntoElement, Render, Window, div,

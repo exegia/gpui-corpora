@@ -429,8 +429,8 @@ fn tab_hover_keeps_the_glass_visible_and_keyboard_activation_routes(cx: &mut Tes
             .filter(|quad| quad.bounds == scaled)
             .filter_map(|quad| quad.background.as_solid())
             .last()
-            .expect("tab hover paints a translucent fill");
-        assert!(fill.a > 0. && fill.a < 0.1, "{fill:?}");
+            .expect("tab hover paints a muted fill");
+        assert_eq!(fill, cx.theme().colors.hover);
         window.click(id, cx);
         view.update(cx, |view, cx| view.navigate("/projects", cx));
     })

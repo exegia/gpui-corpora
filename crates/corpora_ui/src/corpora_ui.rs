@@ -1,10 +1,7 @@
 //! Shared UI pieces: toasts and the Default theme palettes.
 
-/// Standalone Ely types for release builds without annotation APIs.
-#[cfg(not(debug_assertions))]
-pub use ely_gpui_component as ely;
-/// Shared Ely types for app controls and the debug feedback overlay.
-#[cfg(debug_assertions)]
+/// Ely types for app controls and the debug feedback overlay. One copy for all
+/// profiles: linking a second Ely duplicates its action names and panics at startup.
 pub use gpui_agentation::ely;
 
 pub mod styles {

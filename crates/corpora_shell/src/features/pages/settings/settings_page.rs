@@ -119,7 +119,7 @@ impl SettingsPage {
 
 impl Render for SettingsPage {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        use corpora_ui::composed::tabs::{Tab, Tabs};
+        use corpora_ui::atoms::tab::{Tab, Tabs};
         use gpui_kit::base::TestSupportExt;
 
         let page = self.page();

@@ -4,7 +4,7 @@ mod appearance;
 mod semantics;
 mod size;
 
-pub use appearance::ButtonVariant;
+pub use appearance::{ButtonShape, ButtonVariant};
 pub use size::ButtonSize;
 
 use std::time::Duration;
@@ -16,7 +16,7 @@ use gpui::{
 };
 use gpui_kit::{
     base::{
-        Button as NativeButton, TestSupportExt,
+        Button as NativeButton, StyledExt, TestSupportExt,
         animation::cubic_bezier,
         motion::{Transition, transition},
     },
@@ -41,6 +41,7 @@ pub struct Button {
     label: SharedString,
     variant: ButtonVariant,
     size: ButtonSize,
+    shape: ButtonShape,
     loading: bool,
     disabled: bool,
     focus: Option<FocusHandle>,
@@ -58,6 +59,7 @@ impl Button {
             label: label.into(),
             variant: ButtonVariant::default(),
             size: ButtonSize::default(),
+            shape: ButtonShape::default(),
             loading: false,
             disabled: false,
             focus: None,
@@ -75,6 +77,10 @@ impl Button {
     }
     pub fn size(mut self, size: ButtonSize) -> Self {
         self.size = size;
+        self
+    }
+    pub fn shape(mut self, shape: ButtonShape) -> Self {
+        self.shape = shape;
         self
     }
     pub fn loading(mut self, loading: bool) -> Self {
@@ -186,7 +192,10 @@ impl RenderOnce for Button {
             window,
             cx,
         );
-        let radius = cx.theme().radius(Radius::Lg) * 1.2;
+        let shape = self.shape.is_default();
+        let radius = cx
+            .theme()
+            .radius(if shape { Radius::Lg } else { Radius::Md });
         let rem = window.rem_size();
         let icon_scale = transition(
             (self.id.clone(), "icon-hover"),
@@ -372,6 +381,8 @@ impl RenderOnce for Button {
                 cx.open_url(href);
             }
         });
+        // Caller overrides win over the variant/size defaults set above.
+        button = button.refine_style(&self.style);
         semantics::ButtonSemantics::new(
             button.render(window, cx).into_element(),
             inert,

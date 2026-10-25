@@ -1,10 +1,16 @@
 //! Controlled icon tabs with a shared moving glass selection surface.
 
+mod appearance;
+mod semantics;
+mod size;
+
+pub use semantics::Tab;
+
 use std::{rc::Rc, time::Duration};
 
 use gpui::{
-    AnyElement, App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role,
-    SharedString, StyleRefinement, Styled, Window, div, prelude::*, px,
+    App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role, SharedString,
+    StyleRefinement, Styled, Window, div, prelude::*, px,
 };
 use gpui_kit::base::{
     StyledExt, Tab as NativeTab, TestSupportExt,
@@ -12,32 +18,10 @@ use gpui_kit::base::{
 };
 
 use crate::ely::theme::ActiveTheme;
-
 use crate::ui::glass;
 
-const TAB_WIDTH: f32 = 63.;
-const TAB_HEIGHT: f32 = 53.;
-const TAB_GAP: f32 = 12.;
-
-/// A tab's label and optional caller-supplied icon.
-pub struct Tab {
-    label: SharedString,
-    icon: Option<AnyElement>,
-}
-
-impl Tab {
-    pub fn new(label: impl Into<SharedString>) -> Self {
-        Self {
-            label: label.into(),
-            icon: None,
-        }
-    }
-
-    pub fn icon(mut self, icon: impl IntoElement) -> Self {
-        self.icon = Some(icon.into_any_element());
-        self
-    }
-}
+use appearance::{TAB_LABEL_SIZE, TAB_RADIUS, label_color};
+use size::{TAB_GAP, TAB_HEIGHT, TAB_WIDTH};
 
 type ChangeHandler = Rc<dyn Fn(&usize, &mut Window, &mut App)>;
 
@@ -145,8 +129,8 @@ impl RenderOnce for Tabs {
                     .top_0()
                     .w(px(TAB_WIDTH))
                     .h(px(TAB_HEIGHT))
-                    .rounded(px(14.))
-                    .child(glass::clear(px(14.))),
+                    .rounded(px(TAB_RADIUS))
+                    .child(glass::clear_deep(px(TAB_RADIUS))),
             );
         }
         for (index, item) in self.items.into_iter().enumerate() {
@@ -166,19 +150,15 @@ impl RenderOnce for Tabs {
                     .gap(px(4.))
                     .w(px(TAB_WIDTH))
                     .h(px(TAB_HEIGHT))
-                    .rounded(px(14.))
+                    .rounded(px(TAB_RADIUS))
                     .border_1()
                     .border_color(gpui::transparent_black())
-                    .text_size(px(9.))
+                    .text_size(px(TAB_LABEL_SIZE))
                     .font_weight(gpui::FontWeight::BOLD)
-                    .text_color(if active {
-                        if dark { colors.fg } else { colors.on_accent }
-                    } else {
-                        colors.fg_muted
-                    })
+                    .text_color(label_color(&colors, dark, active))
                     .cursor_pointer()
                     .focus_visible(move |style| style.border_color(colors.accent))
-                    .hover(move |style| style.bg(colors.fg.opacity(0.04)))
+                    // .hover(move |style| style.bg(colors.fg_muted.opacity(0.04)))
                     .on_click(move |_, window, cx| {
                         focus.focus(window, cx);
                         if let Some(change) = &click {
@@ -219,5 +199,5 @@ impl RenderOnce for Tabs {
 }
 
 #[cfg(test)]
-#[path = "tabs.test.rs"]
+#[path = "tab.test.rs"]
 mod tests;

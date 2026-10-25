@@ -52,26 +52,38 @@ pub(super) fn tabs(
                 "UI".to_string()
             };
             let colors = cx.theme().colors.clone();
+            // Tabs grow to fit the full label; no shrink, no truncation.
             let button = NativeButton::new(format!("select-tab-{}", tab.id))
                 .accessibility_label(label.clone())
                 .h(cx.theme().control_height(ControlSize::Md))
                 .px(cx.theme().control_padding(ControlSize::Md))
                 .pr_6()
                 .min_w(tab_min)
-                .flex_shrink_1()
                 .gap_1p5()
                 .rounded(cx.theme().radius(Radius::Md))
                 .border_1()
                 .border_color(gpui::transparent_black())
-                .text_color(colors.fg)
+                .text_color(if selected {
+                    colors.fg
+                } else {
+                    colors.fg.opacity(0.6)
+                })
                 .text_size(text_size)
                 .font_weight(gpui::FontWeight::MEDIUM)
                 .cursor_pointer()
-                .hover(move |style| style.bg(colors.fg.opacity(0.04)))
-                .active(move |style| style.bg(colors.fg.opacity(0.08)))
+                .hover(move |style| style.bg(colors.hover))
+                .active(move |style| style.bg(colors.active).text_color(colors.fg))
                 .focus_visible(move |style| style.border_color(colors.accent))
-                .child(Icon::new(IconName::AppWindow).size(IconSize::Sm))
-                .child(div().min_w_0().truncate().child(label.clone()))
+                .child(
+                    Icon::new(IconName::AppWindow)
+                        .size(IconSize::Sm)
+                        .color(if selected {
+                            colors.fg
+                        } else {
+                            colors.fg.opacity(0.6)
+                        }),
+                )
+                .child(label.clone())
                 .on_click(move |_, _, cx| {
                     select_owner
                         .update(cx, |state, cx| {
@@ -124,7 +136,7 @@ pub(super) fn tabs(
                         .child(close),
                 )
         }))
-        .child(
+        .child(round(
             IconButton::new("new-workspace-tab", IconName::Plus)
                 .tooltip("New tab")
                 .on_click(move |_, window, cx| {
@@ -132,5 +144,7 @@ pub(super) fn tabs(
                         .update(cx, |state, cx| state.new_tab(window, cx))
                         .ok();
                 }),
-        )
+            window,
+            cx,
+        ))
 }
