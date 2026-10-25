@@ -1,12 +1,14 @@
 use super::*;
 use corpora_ui::ui::layout;
 use gpui_kit::{
-    base::{ResizeHandleRenderer, StyledExt, Transition, transition},
+    base::{ResizeHandleRenderer, StyledExt, TestSupportExt, Transition, transition},
     component::{
         Theme,
         resizable::{h_resizable, resizable_panel, resize_handle_appearance, v_resizable},
     },
 };
+
+mod inspector;
 
 use crate::shell::tab_workspace::{ToggleInspector, ToggleSidebar};
 
@@ -100,48 +102,37 @@ pub(super) fn layout(
     let panes = routes::panes(&tab.path);
     let motion = Theme::global(cx).motion_tokens();
     let policy = Transition::new(motion.duration_normal).easing(motion.easing_move.clone());
+    let rem = window.rem_size();
+    let sidebar_width = rems(16.0)
+        .to_pixels(rem)
+        .min(window.viewport_size().width * 0.24);
+    let inspector_width = inspector::width(&state.inspector_width, window);
     let sidebar = transition(
-        format!("{}-sidebar", tab.id),
+        "workspace-sidebar-width",
         if panes.sidebar && state.panels.sidebar_visible {
-            1.0_f32
+            sidebar_width
         } else {
-            0.0
+            gpui::px(0.)
         },
         policy.clone(),
         window,
         cx,
     );
     let inspector = transition(
-        format!("{}-inspector", tab.id),
+        "workspace-inspector-width",
         if panes.inspector && state.panels.inspector_visible {
-            1.0_f32
+            inspector_width
         } else {
-            0.0
+            gpui::px(0.)
         },
-        policy,
+        if cx.has_active_drag() {
+            Transition::new(std::time::Duration::ZERO)
+        } else {
+            policy
+        },
         window,
         cx,
     );
-    let rem = window.rem_size();
-    // Reserve the central viewport even when the window is narrow or zoomed in.
-    let sidebar_width = rems(16.0)
-        .to_pixels(rem)
-        .min(window.viewport_size().width * 0.24);
-    let max_inspector = rems(32.0)
-        .to_pixels(rem)
-        .min(window.viewport_size().width * 0.32);
-    let min_inspector = rems(12.0).to_pixels(rem).min(max_inspector);
-    let inspector_width = state
-        .inspector_width
-        .to_pixels(rem)
-        .clamp(min_inspector, max_inspector);
-    let range = if inspector < 1.0 || (sidebar > 0.0 && sidebar < 1.0) {
-        let width = inspector_width * inspector;
-        width..width
-    } else {
-        min_inspector..max_inspector
-    };
-    let tab_id = tab.id.clone();
     let selected = if tab.path.starts_with(EMPTY_TAB_PREFIX) {
         ""
     } else {
@@ -178,14 +169,8 @@ pub(super) fn layout(
                     })
             }),
         );
-    let inspector_content = div()
-        .id(format!("{}-inspector-content", tab.id))
-        .size_full()
-        .overflow_y_scroll()
-        .track_scroll(&state.inspector_scroll)
-        .child(placeholder("Inspector", "No selection", cx));
     // Only panes that meet the window's right edge keep square right corners.
-    let flush = inspector == 0.0;
+    let flush = inspector <= gpui::px(0.);
     let primary = layout::main(dark, content).flush_right(flush && !panes.split);
     let top = if panes.split {
         h_resizable(format!("{}-content-split", tab.id))
@@ -225,58 +210,27 @@ pub(super) fn layout(
     } else {
         top
     };
-    let split = h_resizable(format!("{}-split", tab.id))
-        .with_state(&state.split)
-        .with_handle_appearance(splitter())
-        .on_resize(move |split, window, cx| {
-            if let Some(width) = split.read(cx).sizes().get(1).copied() {
-                workspace
-                    .update(cx, |owner, cx| {
-                        if let Some(tab) = owner.tabs.active_mut().filter(|tab| tab.id == tab_id) {
-                            tab.state.inspector_width = rems(width / window.rem_size());
-                            cx.notify();
-                        }
-                    })
-                    .ok();
-            }
-        })
-        .child(
-            resizable_panel()
-                .size_range(gpui::px(0.0)..gpui::Pixels::MAX)
-                .pr(rems(HALF_GAP * inspector))
-                .child(center),
-        )
-        .child(
-            resizable_panel()
-                .visible(inspector > 0.0)
-                .flex_none()
-                .size(inspector_width)
-                .size_range(range)
-                .pl(rems(HALF_GAP * inspector))
-                .overflow_hidden()
-                .child(crate::shell::dev_target(
-                    "tab-inspector",
-                    "Tab inspector",
-                    layout::inspector(dark, inspector_content),
-                )),
-        );
+    let split = inspector::layout(workspace.clone(), &tab, center, inspector, window, cx);
     div()
-        .id(format!("{}-layout", tab.id))
+        .id("workspace-panel-layout")
         .size_full()
         .flex()
         .min_w_0()
-        .when(sidebar > 0.0, |row| {
+        .when(sidebar > gpui::px(0.), |row| {
             row.child(
                 div()
-                    .w(sidebar_width * sidebar)
+                    .id("workspace-sidebar")
+                    .test_support()
+                    .w(sidebar)
                     .h_full()
                     .flex_shrink_0()
                     .overflow_hidden()
-                    .pr(rems(0.5 * sidebar))
-                    .child(crate::shell::dev_target(
-                        "tab-sidebar",
-                        "Tab sidebar",
-                        layout::sidebar(dark, sidebar_content),
+                    .child(div().w(sidebar_width).h_full().pr(rems(0.5)).child(
+                        crate::shell::dev_target(
+                            "tab-sidebar",
+                            "Tab sidebar",
+                            layout::sidebar(dark, sidebar_content),
+                        ),
                     )),
             )
         })

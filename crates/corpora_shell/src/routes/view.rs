@@ -8,12 +8,16 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
     let create_project = workspace.clone();
     let page = |select: fn(&shell::Pages) -> AnyElement| {
         let workspace = workspace.clone();
-        move |_: &mut gpui::Window, cx: &mut App| match workspace.upgrade() {
-            Some(entity) => entity
-                .read(cx)
-                .pages()
-                .map(select)
-                .unwrap_or_else(|| gpui::div().into_any_element()),
+        move |window: &mut gpui::Window, cx: &mut App| match workspace.upgrade() {
+            Some(entity) => {
+                let path = gpui_router::use_location(cx).pathname.to_string();
+                entity.update(cx, |state, cx| state.prepare_route(&path, window, cx));
+                entity
+                    .read(cx)
+                    .pages()
+                    .map(select)
+                    .unwrap_or_else(|| gpui::div().into_any_element())
+            }
             None => pages::not_found().into_any_element(),
         }
     };

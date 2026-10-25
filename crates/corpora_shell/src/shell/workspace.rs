@@ -8,6 +8,7 @@ pub struct Workspace {
     pub(crate) toaster: Entity<Toaster>,
     pub(crate) tabs: WorkspaceTabs<super::tab_workspace::TabWorkspace>,
     routing_to: Option<String>,
+    closing_tabs: Vec<String>,
     pub tray: Option<TrayIcon>,
     pub dock_visible: bool,
     pub loading: bool,
@@ -129,6 +130,7 @@ impl Workspace {
             toaster,
             tabs,
             routing_to: Some(active_path.clone()),
+            closing_tabs: Vec::new(),
             tray: None,
             dock_visible: false,
             loading: true,
@@ -182,10 +184,6 @@ impl Workspace {
             });
             return;
         }
-        self.tabs.show(&path);
-        if let Some(tab) = self.tabs.active_mut() {
-            tab.state.panels.navigate(&path);
-        }
         self.routing_to = Some(path.clone());
         self.pending_path = Some(path);
         cx.notify();
@@ -201,16 +199,22 @@ impl Workspace {
 
     pub(crate) fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let state = super::tab_workspace::TabWorkspace::new(EMPTY_TAB_PREFIX, window, cx);
-        let path = self.tabs.new_empty(state);
+        let path = self.tabs.insert_empty(state);
         self.navigate(path, cx);
     }
 
     pub(crate) fn close_tab(&mut self, id: &str, cx: &mut Context<Self>) {
-        if let Some(path) = self.tabs.close(id) {
+        if self.tabs.active_id() == Some(id)
+            && let Some(path) = self.tabs.path_after_close(id)
+        {
+            self.closing_tabs.push(id.to_string());
             self.navigate(path, cx);
-        } else if self.tabs.active().is_none() {
-            self.pending_path = None;
-            self.routing_to = None;
+        } else {
+            self.tabs.close(id);
+            if self.tabs.active().is_none() {
+                self.pending_path = None;
+                self.routing_to = None;
+            }
         }
         cx.notify();
     }
@@ -299,6 +303,35 @@ impl Workspace {
         tab.error_page.clone().map(Into::into)
     }
 
+    /// Commits the router's current path before selecting retained pages or pane state.
+    pub(crate) fn prepare_route(
+        &mut self,
+        path: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self
+            .routing_to
+            .as_deref()
+            .is_some_and(|target| target != path)
+            || (self.tabs.active().is_none() && self.routing_to.is_none())
+        {
+            return;
+        }
+        for id in std::mem::take(&mut self.closing_tabs) {
+            self.tabs.close(&id);
+        }
+        if !self.tabs.show(path) {
+            self.tabs.open(
+                path,
+                super::tab_workspace::TabWorkspace::new(path, window, cx),
+            );
+        }
+        if let Some(tab) = self.tabs.active_mut() {
+            tab.state.panels.navigate(path);
+        }
+    }
+
     /// Persist the routed path once it changes; leaving a path also clears
     /// the error boundary.
     pub(crate) fn path_rendered(
@@ -371,14 +404,9 @@ impl Render for Workspace {
             let owner = cx.entity().downgrade();
             window.defer(cx, move |window, cx| {
                 let navigate = owner
-                    .update(cx, |this, cx| {
+                    .update(cx, |this, _| {
                         if this.routing_to.as_deref() != Some(path.as_str()) {
                             return false;
-                        }
-                        if !this.tabs.show(&path) {
-                            let state = super::tab_workspace::TabWorkspace::new(&path, window, cx);
-                            this.tabs.open(&path, state);
-                            cx.notify();
                         }
                         true
                     })
@@ -468,3 +496,7 @@ impl Render for Workspace {
         root
     }
 }
+
+#[cfg(test)]
+#[path = "workspace.test.rs"]
+mod tests;

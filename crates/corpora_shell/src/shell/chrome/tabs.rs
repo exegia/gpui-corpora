@@ -1,5 +1,6 @@
 use corpora_ui::ely::theme::{ControlSize, TextSize};
 use gpui::px;
+use gpui_kit::base::{Transition, motion::Presence};
 
 use super::*;
 
@@ -32,6 +33,12 @@ pub(super) fn tabs(
         .children(entries.into_iter().map(|tab| {
             let selected = active.as_deref() == Some(tab.id.as_str());
             let group = gpui::SharedString::from(format!("workspace-tab-{}", tab.id));
+            let motion = gpui_kit::component::Theme::global(cx).motion_tokens();
+            let glass = Presence::new((group.clone(), "glass-selection"), selected)
+                .transition(
+                    Transition::new(motion.duration_fast).easing(motion.easing_move.clone()),
+                )
+                .sample(window, cx);
             let select_owner = workspace.clone();
             let select_id = tab.id.clone();
             let close_owner = workspace.clone();
@@ -47,7 +54,7 @@ pub(super) fn tabs(
                 .on_click(move |_, _, cx| {
                     select_owner
                         .update(cx, |state, cx| {
-                            if let Some(path) = state.tabs.select(&select_id) {
+                            if let Some(path) = state.tabs.path(&select_id) {
                                 state.navigate(path, cx);
                             }
                         })
@@ -86,11 +93,12 @@ pub(super) fn tabs(
                 .id(format!("workspace-tab-{}", tab.id))
                 .relative()
                 .group(group.clone())
-                .when(selected, |tab| {
+                .when(glass.should_render(), |tab| {
                     tab.child(
                         div()
                             .absolute()
                             .inset_0()
+                            .opacity(glass.progress)
                             .child(corpora_ui::ui::glass::clear(px(8.))),
                     )
                 })

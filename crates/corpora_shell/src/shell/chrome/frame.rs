@@ -9,6 +9,9 @@ pub fn frame(
     cx: &mut App,
 ) -> impl IntoElement + use<> {
     let path = use_location(cx).pathname.to_string();
+    workspace
+        .update(cx, |state, cx| state.prepare_route(&path, window, cx))
+        .ok();
     let has_view = workspace
         .upgrade()
         .is_some_and(|owner| owner.read(cx).tabs.active().is_some());
@@ -127,8 +130,18 @@ pub fn frame(
                 .into_any_element(),
         }
     };
+    let motion = gpui_kit::component::Theme::global(cx).motion_tokens();
+    let entry = gpui_kit::base::motion::Presence::new(("workspace-route", path.clone()), true)
+        .transition(
+            gpui_kit::base::Transition::new(motion.duration_fast)
+                .easing(motion.easing_enter.clone()),
+        )
+        .sample(window, cx);
     let body = div()
         .id("route-content")
+        .opacity(entry.progress)
+        .relative()
+        .top(gpui::px(4. * (1. - entry.progress)))
         .size_full()
         .overflow_y_scroll()
         .track_scroll(&scroll)

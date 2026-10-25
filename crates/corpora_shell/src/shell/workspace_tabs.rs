@@ -152,6 +152,37 @@ impl<T> WorkspaceTabs<T> {
         id
     }
 
+    pub(crate) fn path(&self, id: &str) -> Option<String> {
+        self.entries
+            .iter()
+            .find(|tab| tab.id == id)
+            .map(|tab| tab.path.clone())
+    }
+
+    pub(crate) fn insert_empty(&mut self, state: T) -> String {
+        let active = self.active.clone();
+        let path = self.new_empty(state);
+        self.active = active;
+        path
+    }
+
+    pub(crate) fn path_after_close(&self, id: &str) -> Option<String> {
+        let index = self
+            .entries
+            .iter()
+            .position(|tab| tab.id == id && tab.closable)?;
+        self.entries
+            .get(index + 1)
+            .or_else(|| {
+                index
+                    .checked_sub(1)
+                    .and_then(|index| self.entries.get(index))
+            })
+            .or(self.route.as_ref())
+            .map(|tab| tab.path.clone())
+    }
+
+    #[cfg(test)]
     pub(crate) fn select(&mut self, id: &str) -> Option<String> {
         let tab = self.entries.iter().find(|tab| tab.id == id)?;
         self.active = Some(tab.id.clone());
