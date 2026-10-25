@@ -9,7 +9,7 @@ pub use semantics::{Tab, TabVariant, Tabs};
 use std::{rc::Rc, time::Duration};
 
 use gpui::{
-    App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role, SharedString,
+    App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role, SharedString, GlassEffect,
     StyleRefinement, Styled, Window, div, prelude::*, px,
 };
 use gpui_kit::{
@@ -201,7 +201,12 @@ impl RenderOnce for Tabs {
                         style.bg(colors.fg_subtle.opacity(0.4))
                     }
                 })
-                .active(move |style| style.bg(colors.active).text_color(colors.fg))
+                // .active(move |style| {
+                //     style
+                //         .bg(colors.active)
+                //         .text_color(colors.fg)
+                //         .child(glass::clear(px(5.)))
+                // })
                 .on_click(move |_, window, cx| {
                     focus.focus(window, cx);
                     if let Some(change) = &click {
