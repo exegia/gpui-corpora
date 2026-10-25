@@ -1,5 +1,5 @@
 use super::*;
-use corpora_ui::ui::layout;
+use corpora_ui::{styles::palette, ui::layout};
 use gpui_kit::{
     base::{ResizeHandleRenderer, StyledExt, Transition, transition},
     component::{
@@ -55,6 +55,8 @@ fn splitter() -> ResizeHandleRenderer {
     let kit = resize_handle_appearance();
     std::rc::Rc::new(move |handle, window, cx| {
         let mut line = kit(handle, window, cx)?;
+        let dark = cx.theme();
+        let theme = palette::color("accent", dark.mode());
         if let Some(line) = line.downcast_mut::<gpui::Div>() {
             line.style()
                 .refine(&StyleRefinement::default().bg(gpui::transparent_black()));

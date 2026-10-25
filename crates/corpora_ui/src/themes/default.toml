@@ -6,12 +6,12 @@ description = "The default theme for the desktop app."
 # Surfaces, from the base canvas up to raised and inset layers.
 [colors.background]
 description = "Base canvas behind everything."
-light = "slate.100"
+light = "slate.200"
 dark = "neutral.800"
 
 [colors.surface]
 description = "Cards, panels, and sidebars raised off the canvas."
-light = "neutral.50"
+light = "slate.100"
 dark = "neutral.900"
 
 [colors.elevated]

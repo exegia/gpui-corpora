@@ -234,6 +234,12 @@ pub fn build(mode: Mode) -> Palette {
     }
 }
 
+/// The Default theme's color for a semantic role (`background`, `border`, ...)
+/// in the given mode. Panics if default.toml has no such role.
+pub fn color(role: &str, mode: Mode) -> Hsla {
+    parsed().role(role, mode)
+}
+
 /// Overwrites ANSI 1-6 with the theme's colors; the rest keep Ely's row.
 fn merge_ansi(mut row: [Hsla; 16], overrides: [Hsla; 6]) -> [Hsla; 16] {
     for (slot, color) in row[1..7].iter_mut().zip(overrides) {

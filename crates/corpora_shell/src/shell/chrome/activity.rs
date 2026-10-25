@@ -35,7 +35,7 @@ pub(super) fn activity(
         let color = if is_selected {
             colors.accent
         } else {
-            colors.fg_subtle
+            colors.fg
         };
         let owner = workspace.clone();
         div()

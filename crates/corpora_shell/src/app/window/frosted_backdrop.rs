@@ -2,9 +2,7 @@ use gpui::{AnyWindowHandle, App, Styled, Window};
 use gpui_kit::component::Theme;
 use objc2::{MainThreadMarker, MainThreadOnly, rc::Retained};
 use objc2_app_kit::{
-    NSAppearance, NSAppearanceCustomization, NSAppearanceNameAqua, NSAppearanceNameDarkAqua,
-    NSAutoresizingMaskOptions, NSView, NSVisualEffectBlendingMode, NSVisualEffectMaterial,
-    NSVisualEffectState, NSVisualEffectView, NSWindowOrderingMode,
+    NSAppearance, NSAppearanceCustomization, NSAppearanceNameAqua, NSAppearanceNameDarkAqua, NSAppearanceNameVibrantDark, NSAppearanceNameVibrantLight, NSAutoresizingMaskOptions, NSView, NSVisualEffectBlendingMode, NSVisualEffectMaterial, NSVisualEffectState, NSVisualEffectView, NSWindowOrderingMode,
 };
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
@@ -36,8 +34,8 @@ fn install_material(window: &Window) -> Option<Retained<NSVisualEffectView>> {
     let parent = unsafe { view.superview() }?;
     let material = NSVisualEffectView::initWithFrame(NSVisualEffectView::alloc(mtm), view.frame());
     // GPUI's Blurred material removes AppKit's tint layers; retain them for a frosted window.
-    material.setMaterial(NSVisualEffectMaterial::UnderWindowBackground);
-    material.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
+    material.setMaterial(NSVisualEffectMaterial::HUDWindow);
+    material.setBlendingMode(NSVisualEffectBlendingMode::WithinWindow);
     material.setState(NSVisualEffectState::Active);
     let sizing =
         NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable;
@@ -50,9 +48,9 @@ fn set_appearance(material: &NSVisualEffectView, cx: &App) {
     // AppKit's immutable appearance-name constants are valid for the process lifetime.
     let name = unsafe {
         if Theme::global(cx).is_dark() {
-            NSAppearanceNameDarkAqua
+            NSAppearanceNameVibrantDark
         } else {
-            NSAppearanceNameAqua
+            NSAppearanceNameVibrantLight
         }
     };
     material.setAppearance(NSAppearance::appearanceNamed(name).as_deref());
