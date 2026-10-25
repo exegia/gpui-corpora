@@ -1,6 +1,7 @@
 use crate::ely::theme::{ActiveTheme, ControlSize, TextSize};
-use crate::styles::palette::color;
-use gpui::{App, BoxShadow, FontWeight, IntoElement, RenderOnce, Window, div, prelude::*, px};
+use gpui::{
+    App, BoxShadow, FontWeight, Hsla, IntoElement, RenderOnce, Window, div, prelude::*, px,
+};
 
 /// The shared unread count pill, capped at 99+.
 #[derive(IntoElement)]
@@ -28,6 +29,7 @@ impl RenderOnce for UnreadBadge {
         let colors = &theme.colors;
         let height = theme.control_height(ControlSize::Sm) * 0.67;
         let radius = height.to_pixels(window.rem_size()) / 2.;
+        let bg_color = Hsla::red();
         div()
             .relative()
             .flex_none()
@@ -38,20 +40,21 @@ impl RenderOnce for UnreadBadge {
             .h(height)
             .px_1()
             .rounded_full()
-            .text_size(theme.text_size(TextSize::Xs) * (10. / 11.))
+            .text_size(theme.text_size(TextSize::Xs) * 0.8)
             .font_weight(FontWeight::MEDIUM)
-            .text_color(color("on-danger", theme.mode()))
+            .text_color(Hsla::white())
+            .bg(bg_color)
             .child(
                 div()
                     .absolute()
                     .inset_0()
-                    .child(crate::ui::glass::tinted(radius, colors.danger.opacity(0.7))),
+                    .child(crate::ui::glass::tinted(radius.round(), bg_color)),
             )
             .child(div().absolute().inset_0().rounded_full().shadow(vec![
                 BoxShadow::new(px(0.), px(1.), colors.on_media.opacity(0.55))
-                    .blur_radius(px(1.)).inset(),
+                    .blur_radius(px(0.5)).inset(),
                 BoxShadow::new(px(0.), px(-1.), colors.shadow.opacity(0.35))
-                    .blur_radius(px(1.)).inset(),
+                    .blur_radius(px(0.2)).inset(),
             ]))
             .child(div().relative().child(label(self.count)))
     }
@@ -63,7 +66,7 @@ mod tests {
 
     #[cfg(target_os = "macos")]
     #[gpui::test]
-    fn badge_instances_share_theme_tint_and_material(cx: &mut gpui::TestAppContext) {
+    fn badge_instances_share_red_tint_and_material(cx: &mut gpui::TestAppContext) {
         use gpui::{AppContext, Context, Render};
         use gpui_kit::test::TestWindowExt;
         struct Pair;
@@ -93,7 +96,7 @@ mod tests {
                 assert_eq!(glass.len(), 2);
                 assert_eq!(glass[0].bounds.size, glass[1].bounds.size);
                 assert_eq!(glass[0].tint, glass[1].tint);
-                assert_eq!(glass[0].tint, cx.theme().colors.danger.opacity(0.7));
+                assert_eq!(glass[0].tint, Hsla::red());
                 assert!(glass[0].blur_radius.0 > 0.);
             })
             .unwrap();
