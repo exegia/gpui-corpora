@@ -147,3 +147,26 @@ fn closing_the_only_view_drops_its_workspace_and_leaves_no_replacement() {
     assert_eq!(tabs.close(&id), None);
     assert!(tabs.entries().is_empty());
 }
+
+#[test]
+#[cfg(debug_assertions)]
+fn pinned_showcase_keeps_its_subroutes_and_cannot_close() {
+    let mut tabs = WorkspaceTabs::default();
+    tabs.open("/explore", "route");
+    tabs.pin("/ui", "showcase");
+    assert_eq!(tabs.active().unwrap().path, "/explore");
+    assert!(tabs.show("/ui/button"));
+    assert_eq!(tabs.active_id(), Some("/ui"));
+    assert_eq!(tabs.close("/ui"), None);
+    assert_eq!(tabs.entries().len(), 1);
+    assert_eq!(tabs.active().unwrap().path, "/ui/button");
+    assert!(!tabs.active().unwrap().closable);
+    let tab = tabs.new_empty("new tab");
+    assert_eq!(tab, "/tabs/new/1");
+    assert_eq!(tabs.close(&tab).as_deref(), Some("/ui/button"));
+    assert_eq!(tabs.active().unwrap().state, "showcase");
+    assert!(tabs.show("/projects"));
+    assert_eq!(tabs.active().unwrap().state, "route");
+    assert!(tabs.show("/ui"));
+    assert_eq!(tabs.active().unwrap().state, "showcase");
+}

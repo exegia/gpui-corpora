@@ -102,7 +102,7 @@ pub(super) fn layout(
     let policy = Transition::new(motion.duration_normal).easing(motion.easing_move.clone());
     let sidebar = transition(
         format!("{}-sidebar", tab.id),
-        if panes.sidebar && state.sidebar_visible {
+        if panes.sidebar && state.panels.sidebar_visible {
             1.0_f32
         } else {
             0.0
@@ -113,7 +113,7 @@ pub(super) fn layout(
     );
     let inspector = transition(
         format!("{}-inspector", tab.id),
-        if panes.inspector && state.inspector_visible {
+        if panes.inspector && state.panels.inspector_visible {
             1.0_f32
         } else {
             0.0
@@ -162,7 +162,6 @@ pub(super) fn layout(
                 ("/", "Home", IconName::House),
                 ("/explore", "Explore", IconName::Compass),
                 ("/projects", "Projects", IconName::Folder),
-                ("/ui", "UI", IconName::LayoutGrid),
             ]
             .into_iter()
             .map(|(path, label, icon)| {

@@ -3,9 +3,8 @@ use super::*;
 use std::borrow::Cow;
 use std::sync::{Arc, LazyLock};
 
-use corpora_ui::ely::theme::{ActiveTheme, TextSize};
-use gpui::{App, Image, ImageFormat, Img, ObjectFit, div, img, px};
-use gpui_kit::base::StyledExt;
+use corpora_ui::ely::theme::ActiveTheme;
+use gpui::{App, Image, ImageFormat, Img, img};
 
 static LIGHT: LazyLock<Arc<Image>> = LazyLock::new(|| {
     Arc::new(Image::from_bytes(
@@ -35,24 +34,4 @@ pub fn register_brand_fonts(cx: &App) -> anyhow::Result<()> {
         Cow::Borrowed(include_bytes!("../assets/fonts/caudex/Caudex-Regular.ttf").as_slice()),
         Cow::Borrowed(include_bytes!("../assets/fonts/caudex/Caudex-Bold.ttf").as_slice()),
     ])
-}
-
-pub(super) fn brand(cx: &App) -> impl IntoElement + use<> {
-    let theme = cx.theme();
-    let image = logo(cx).size(px(18.0)).object_fit(ObjectFit::Contain);
-    div()
-        .flex()
-        .flex_none()
-        .items_center()
-        .gap_2()
-        .pl_1p5()
-        .text_color(theme.colors.fg)
-        .child(image)
-        .child(
-            div()
-                .font_family("Caudex")
-                .text_size(theme.text_size(TextSize::Lg) * 1.1)
-                .font_medium()
-                .child("Corpora"),
-        )
 }

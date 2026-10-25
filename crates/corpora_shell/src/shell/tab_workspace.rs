@@ -7,8 +7,7 @@ use gpui_kit::component::resizable::ResizableState;
 pub(crate) struct TabWorkspace {
     pub pages: Pages,
     pub error_page: Option<Entity<RenderErrorPage>>,
-    pub sidebar_visible: bool,
-    pub inspector_visible: bool,
+    pub panels: super::pane_visibility::PaneVisibility,
     pub inspector_width: gpui::Rems,
     pub split: Entity<ResizableState>,
     pub content_split: Entity<ResizableState>,
@@ -19,18 +18,19 @@ pub(crate) struct TabWorkspace {
 }
 
 impl TabWorkspace {
-    pub fn new(window: &mut Window, cx: &mut App) -> Self {
+    pub fn new(path: &str, window: &mut Window, cx: &mut App) -> Self {
         Self {
             pages: Pages {
+                #[cfg(debug_assertions)]
                 ui: cx.new(|cx| crate::routes::ui::Ui::new(window, cx)),
+                #[cfg(debug_assertions)]
                 button: cx.new(|_| crate::routes::ui::button::ButtonShowcase::new()),
                 notifications: cx.new(|cx| NotificationsPage::new(window, cx)),
                 diagnostics: cx.new(|cx| DiagnosticsPage::new(window, cx)),
                 about: cx.new(|_| AboutPage::new()),
             },
             error_page: None,
-            sidebar_visible: true,
-            inspector_visible: true,
+            panels: super::pane_visibility::PaneVisibility::new(path),
             inspector_width: gpui::rems(20.0),
             split: cx.new(|_| ResizableState::default()),
             content_split: cx.new(|_| ResizableState::default()),

@@ -1,4 +1,5 @@
 use corpora_ui::ely::theme::{ControlSize, TextSize};
+use gpui::px;
 
 use super::*;
 
@@ -35,14 +36,14 @@ pub(super) fn tabs(
             let select_id = tab.id.clone();
             let close_owner = workspace.clone();
             let close_id = tab.id.clone();
-            let label = format!("New tab {}", tab.number);
+            let label = if tab.closable {
+                format!("New tab {}", tab.number)
+            } else {
+                "UI".to_string()
+            };
             let button = Button::new(format!("select-tab-{}", tab.id), label.clone())
                 .icon(IconName::AppWindow)
-                .variant(if selected {
-                    ButtonVariant::Secondary
-                } else {
-                    ButtonVariant::Ghost
-                })
+                .variant(ButtonVariant::Ghost)
                 .on_click(move |_, _, cx| {
                     select_owner
                         .update(cx, |state, cx| {
@@ -56,6 +57,8 @@ pub(super) fn tabs(
                 button,
                 StyleRefinement::default()
                     .pr_6()
+                    .bg(gpui::transparent_black())
+                    .text_color(cx.theme().colors.fg)
                     .min_w(tab_min)
                     .text_size(text_size),
                 window,
@@ -63,6 +66,7 @@ pub(super) fn tabs(
             );
             let close = IconButton::new(format!("close-tab-{}", tab.id), IconName::X)
                 .size(ControlSize::Sm)
+                .disabled(!tab.closable)
                 .tooltip(format!("Close {label}"))
                 .on_click(move |_, _, cx| {
                     cx.stop_propagation();
@@ -82,13 +86,21 @@ pub(super) fn tabs(
                 .id(format!("workspace-tab-{}", tab.id))
                 .relative()
                 .group(group.clone())
+                .when(selected, |tab| {
+                    tab.child(
+                        div()
+                            .absolute()
+                            .inset_0()
+                            .child(corpora_ui::ui::glass::clear(px(8.))),
+                    )
+                })
                 .child(button)
                 .child(
                     div()
                         .absolute()
                         .right_1()
                         .top(close_top)
-                        .when(!selected, |slot| {
+                        .when(!selected && tab.closable, |slot| {
                             slot.invisible().group_hover(group, |style| style.visible())
                         })
                         .child(close),

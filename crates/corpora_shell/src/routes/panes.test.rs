@@ -21,6 +21,6 @@ fn route_pages_keep_one_content_pane_on_every_subpath() {
         split: false,
         dock: false,
     };
-    assert_eq!(panes("/"), page);
+    assert_eq!(panes("/"), Panes::default());
     assert_eq!(panes("/projects/detail/one"), page);
 }

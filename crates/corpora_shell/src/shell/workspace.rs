@@ -90,11 +90,19 @@ impl Workspace {
             active_path = navigation::HOME.to_string();
             crate::app_state::update_config(cx, |config| config.active_path = active_path.clone());
         }
+        if !cfg!(debug_assertions) && active_path.split('/').nth(1) == Some("ui") {
+            active_path = navigation::HOME.to_string();
+        }
         let devtools = super::Devtools::mount(&active_path, false, window, cx);
         let mut tabs = WorkspaceTabs::default();
+        #[cfg(debug_assertions)]
+        tabs.pin(
+            "/ui",
+            super::tab_workspace::TabWorkspace::new("/ui", window, cx),
+        );
         tabs.open(
             &active_path,
-            super::tab_workspace::TabWorkspace::new(window, cx),
+            super::tab_workspace::TabWorkspace::new(&active_path, window, cx),
         );
         // Startup deep links were queued before this window existed.
         let drain = cx.entity().downgrade();
@@ -175,6 +183,9 @@ impl Workspace {
             return;
         }
         self.tabs.show(&path);
+        if let Some(tab) = self.tabs.active_mut() {
+            tab.state.panels.navigate(&path);
+        }
         self.routing_to = Some(path.clone());
         self.pending_path = Some(path);
         cx.notify();
@@ -189,7 +200,7 @@ impl Workspace {
     }
 
     pub(crate) fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let state = super::tab_workspace::TabWorkspace::new(window, cx);
+        let state = super::tab_workspace::TabWorkspace::new(EMPTY_TAB_PREFIX, window, cx);
         let path = self.tabs.new_empty(state);
         self.navigate(path, cx);
     }
@@ -308,6 +319,9 @@ impl Workspace {
         }
         self.routing_to = None;
         self.tabs.navigated(path);
+        if let Some(tab) = self.tabs.active_mut() {
+            tab.state.panels.navigate(path);
+        }
         if self.persisted_path == path {
             return;
         }
@@ -362,7 +376,7 @@ impl Render for Workspace {
                             return false;
                         }
                         if !this.tabs.show(&path) {
-                            let state = super::tab_workspace::TabWorkspace::new(window, cx);
+                            let state = super::tab_workspace::TabWorkspace::new(&path, window, cx);
                             this.tabs.open(&path, state);
                             cx.notify();
                         }
@@ -405,8 +419,10 @@ impl Render for Workspace {
             .h(window.viewport_size().height)
             .on_action(cx.listener(
                 |this, _: &super::tab_workspace::ToggleSidebar, window, cx| {
-                    if let Some(tab) = this.tabs.active_mut() {
-                        tab.state.sidebar_visible = !tab.state.sidebar_visible;
+                    if let Some(tab) = this.tabs.active_mut()
+                        && routes::panes(&tab.path).sidebar
+                    {
+                        tab.state.panels.sidebar_visible = !tab.state.panels.sidebar_visible;
                     }
                     window.focus(&this.focus, cx);
                     cx.notify();
@@ -414,8 +430,10 @@ impl Render for Workspace {
             ))
             .on_action(cx.listener(
                 |this, _: &super::tab_workspace::ToggleInspector, window, cx| {
-                    if let Some(tab) = this.tabs.active_mut() {
-                        tab.state.inspector_visible = !tab.state.inspector_visible;
+                    if let Some(tab) = this.tabs.active_mut()
+                        && routes::panes(&tab.path).inspector
+                    {
+                        tab.state.panels.inspector_visible = !tab.state.panels.inspector_visible;
                     }
                     window.focus(&this.focus, cx);
                     cx.notify();

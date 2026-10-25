@@ -19,6 +19,7 @@ const PAGE: Panes = Panes {
 /// The panes `path` offers. Workspace tabs get every pane; route pages are listed here.
 pub fn panes(path: &str) -> Panes {
     match path.split('/').nth(1).unwrap_or_default() {
+        "" => Panes::default(),
         "tabs" => Panes {
             split: true,
             dock: true,

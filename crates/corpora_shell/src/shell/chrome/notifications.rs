@@ -1,12 +1,8 @@
+use corpora_ui::atoms::badge::UnreadBadge;
 use corpora_ui::ely::buttons::IconButton;
-use corpora_ui::ely::theme::{ControlSize, TextSize};
-use gpui::FontWeight;
 use gpui_kit::{Anchor, base::Selectable, component::popover::Popover, px};
 
 use super::*;
-
-/// Unread counts above this read as `99+`.
-const MAX_UNREAD: usize = 99;
 
 /// The bell with its unread count. Kit's `Popover` marks it selected while open,
 /// which Ely's `IconButton` has no state for, so this owns that flag. Ely's
@@ -30,42 +26,11 @@ impl Selectable for NotificationsTrigger {
 
 impl RenderOnce for NotificationsTrigger {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let theme = cx.theme();
         let variant = if self.selected {
             ButtonVariant::Subtle
         } else {
             ButtonVariant::Ghost
         };
-        let fill = theme.colors.danger;
-        let foreground = corpora_ui::styles::palette::color(
-            "on-danger",
-            if theme.is_dark() {
-                corpora_ui::ely::theme::Mode::Dark
-            } else {
-                corpora_ui::ely::theme::Mode::Light
-            },
-        );
-        let height = theme.control_height(ControlSize::Sm) * 0.67;
-        let count = if self.unread > MAX_UNREAD {
-            format!("{MAX_UNREAD}+")
-        } else {
-            self.unread.to_string()
-        };
-        // One step below Ely's smallest size, which Ely's rolling digits cannot go under.
-        let text_size = theme.text_size(TextSize::Xs) * (10.0 / 11.0);
-        let pill = div()
-            .flex()
-            .items_center()
-            .justify_center()
-            .min_w(height)
-            .h(height)
-            .px_1()
-            .rounded_full()
-            .bg(fill)
-            .text_color(foreground)
-            .text_size(text_size)
-            .font_weight(FontWeight::MEDIUM)
-            .child(count);
         div()
             .relative()
             .flex_none()
@@ -77,7 +42,13 @@ impl RenderOnce for NotificationsTrigger {
                 cx,
             ))
             .when(self.unread > 0, |bell| {
-                bell.child(div().absolute().top_neg_1().right_neg_1().child(pill))
+                bell.child(
+                    div()
+                        .absolute()
+                        .top_neg_1()
+                        .right_neg_1()
+                        .child(UnreadBadge::new(self.unread)),
+                )
             })
     }
 }

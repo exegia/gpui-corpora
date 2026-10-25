@@ -46,6 +46,7 @@ mod navigate_to_section;
 mod notify_on;
 mod open_palette;
 mod pages;
+mod pane_visibility;
 mod tab_workspace;
 mod workspace;
 mod workspace_handle;

@@ -2,7 +2,7 @@
 use super::*;
 
 pub fn search() -> impl IntoElement {
-    page("Search", "Explore the texts in your workspace.")
+    page("Explore", "Explore the texts in your workspace.")
         .h_full()
         .child(
             div()

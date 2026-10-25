@@ -13,7 +13,7 @@ use gpui_kit::base::{
 
 use crate::ely::theme::ActiveTheme;
 
-mod glass;
+use crate::ui::glass;
 
 const TAB_WIDTH: f32 = 63.;
 const TAB_HEIGHT: f32 = 53.;
@@ -146,7 +146,7 @@ impl RenderOnce for Tabs {
                     .w(px(TAB_WIDTH))
                     .h(px(TAB_HEIGHT))
                     .rounded(px(14.))
-                    .child(glass::clear(dark)),
+                    .child(glass::clear(px(14.))),
             );
         }
         for (index, item) in self.items.into_iter().enumerate() {

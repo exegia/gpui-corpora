@@ -40,14 +40,13 @@ pub fn frame(
             let tab = owner.tabs.active()?;
             Some((
                 routes::panes(&tab.path),
-                tab.state.sidebar_visible,
-                tab.state.inspector_visible,
+                tab.state.panels.sidebar_visible,
+                tab.state.panels.inspector_visible,
                 tab.state.scroll.clone(),
             ))
         })
         .unwrap_or_default();
     let titlebar = TitleBar::new("titlebar")
-        .child(brand::brand(cx))
         .child(tabs)
         .action(round(
             panels::toggle(false, sidebar_visible).disabled(!panes.sidebar),

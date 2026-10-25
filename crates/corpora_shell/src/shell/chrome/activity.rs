@@ -89,6 +89,26 @@ pub(super) fn activity(
         .w(side)
         .h_full()
         .py_1()
-        .child(div().flex().flex_col().children(ITEMS.map(entry)))
+        .child(
+            div()
+                .flex()
+                .flex_col()
+                .child(
+                    div()
+                        .id("activity-brand")
+                        .role(gpui::Role::Image)
+                        .aria_label("Corpora")
+                        .size(side)
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .child(
+                            super::brand::logo(cx)
+                                .size(mark)
+                                .object_fit(gpui::ObjectFit::Contain),
+                        ),
+                )
+                .children(ITEMS.map(entry)),
+        )
         .child(div().flex().flex_col().children(FOOTER.map(entry)))
 }

@@ -1,17 +1,29 @@
 use crate::ely::theme::ActiveTheme;
 
-use gpui::{Corners, IntoElement, Styled, canvas, px};
+use gpui::{Corners, Hsla, IntoElement, Pixels, Styled, canvas, px};
 
-pub(super) fn clear(dark: bool) -> impl IntoElement {
+/// Clear glass tinted by the active theme's highlight color.
+pub fn clear(radius: Pixels) -> impl IntoElement {
+    surface(radius, None)
+}
+
+/// Glass with a translucent semantic tint supplied by the caller.
+pub fn tinted(radius: Pixels, tint: Hsla) -> impl IntoElement {
+    surface(radius, Some(tint))
+}
+
+fn surface(radius: Pixels, tint: Option<Hsla>) -> impl IntoElement {
     canvas(
         |_, _, _| (),
         move |bounds, _, window, cx| {
-            let corners = Corners::all(px(14.));
-            let tint =
+            let dark = cx.theme().is_dark();
+            let corners = Corners::all(radius);
+            let tint = tint.unwrap_or_else(|| {
                 cx.theme()
                     .colors
                     .on_media
-                    .opacity(if dark { 16. / 255. } else { 18.8 / 255. });
+                    .opacity(if dark { 16. / 255. } else { 18.8 / 255. })
+            });
             #[cfg(target_os = "macos")]
             window.paint_layer(bounds, |window| {
                 let half_extent = bounds.size.width.min(bounds.size.height) / 2.;

@@ -44,7 +44,7 @@ impl Render for NotificationsPage {
                             .child(crate::i18n::localize("notifications_title")),
                     )
                     .when(unread > 0, |header| {
-                        header.child(Badge::new(unread.to_string()).tone(Tone::Accent))
+                        header.child(corpora_ui::atoms::badge::UnreadBadge::new(unread))
                     })
                     .child(div().flex_1())
                     .when(!empty, |header| {

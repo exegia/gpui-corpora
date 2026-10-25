@@ -6,6 +6,7 @@ pub(crate) struct WorkspaceTab<T> {
     pub id: String,
     pub number: u64,
     pub path: String,
+    pub closable: bool,
     pub state: T,
 }
 
@@ -29,8 +30,14 @@ impl<T> Default for WorkspaceTabs<T> {
     }
 }
 
-fn is_tab(path: &str) -> bool {
-    path.starts_with(EMPTY_TAB_PREFIX)
+fn tab_id(path: &str) -> Option<&str> {
+    if path.starts_with(EMPTY_TAB_PREFIX) {
+        Some(path)
+    } else if cfg!(debug_assertions) && path.split('/').nth(1) == Some("ui") {
+        Some("/ui")
+    } else {
+        None
+    }
 }
 
 impl<T> WorkspaceTabs<T> {
@@ -62,8 +69,13 @@ impl<T> WorkspaceTabs<T> {
     /// Activates the view for `path`: its tab for a tab path, else the route view.
     /// Returns false when that view does not exist yet; create it with `open`.
     pub(crate) fn show(&mut self, path: &str) -> bool {
-        if is_tab(path) {
-            return self.select(path).is_some();
+        if let Some(id) = tab_id(path) {
+            let Some(tab) = self.entries.iter_mut().find(|tab| tab.id == id) else {
+                return false;
+            };
+            tab.path = path.to_string();
+            self.active = Some(tab.id.clone());
+            return true;
         }
         let Some(route) = &mut self.route else {
             return false;
@@ -75,11 +87,15 @@ impl<T> WorkspaceTabs<T> {
 
     /// Creates the view `show` could not find for `path` and activates it.
     pub(crate) fn open(&mut self, path: &str, state: T) {
-        if !is_tab(path) {
+        if self.show(path) {
+            return;
+        }
+        if tab_id(path).is_none() {
             self.route = Some(WorkspaceTab {
                 id: ROUTE_VIEW.to_string(),
                 number: 0,
                 path: path.to_string(),
+                closable: false,
                 state,
             });
             self.active = Some(ROUTE_VIEW.to_string());
@@ -95,9 +111,27 @@ impl<T> WorkspaceTabs<T> {
 
     /// Records where the route view's router went; tabs keep their own path.
     pub(crate) fn navigated(&mut self, path: &str) {
-        if let Some(route) = self.active_mut().filter(|view| view.id == ROUTE_VIEW) {
+        if let Some(route) = self
+            .active_mut()
+            .filter(|view| view.id == ROUTE_VIEW || tab_id(path) == Some(view.id.as_str()))
+        {
             route.path = path.to_string();
         }
+    }
+
+    /// Adds a permanent developer tab without changing the current view.
+    #[cfg(debug_assertions)]
+    pub(crate) fn pin(&mut self, path: &str, state: T) {
+        if self.entries.iter().any(|tab| tab.id == path) {
+            return;
+        }
+        self.entries.push(WorkspaceTab {
+            id: path.to_string(),
+            number: 0,
+            path: path.to_string(),
+            closable: false,
+            state,
+        });
     }
 
     pub(crate) fn new_empty(&mut self, state: T) -> String {
@@ -111,6 +145,7 @@ impl<T> WorkspaceTabs<T> {
             id: id.clone(),
             number,
             path: id.clone(),
+            closable: true,
             state,
         });
         self.active = Some(id.clone());
@@ -127,6 +162,9 @@ impl<T> WorkspaceTabs<T> {
     /// view, and returns that path; with neither left the window is empty.
     pub(crate) fn close(&mut self, id: &str) -> Option<String> {
         let index = self.entries.iter().position(|tab| tab.id == id)?;
+        if !self.entries[index].closable {
+            return None;
+        }
         self.entries.remove(index);
         if self.active_id() != Some(id) {
             return None;

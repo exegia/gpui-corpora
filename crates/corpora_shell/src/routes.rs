@@ -8,6 +8,7 @@ use crate::{
 
 mod panes;
 mod section;
+#[cfg(debug_assertions)]
 pub mod ui;
 mod view;
 
