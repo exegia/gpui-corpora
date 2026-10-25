@@ -1,9 +1,10 @@
-use corpora_ui::ely::{
-    primitives::Icon,
-    theme::{ControlSize, IconSize, Radius, TextSize},
+use corpora_ui::{
+    atoms::tab::{Tab, TabVariant, Tabs},
+    ely::{
+        primitives::Icon,
+        theme::{ControlSize, IconSize},
+    },
 };
-use gpui::px;
-use gpui_kit::base::{Button as NativeButton, Transition, motion::Presence};
 
 use super::*;
 
@@ -22,122 +23,76 @@ pub(super) fn tabs(
             )
         })
         .unwrap_or_default();
-    let close_side = cx.theme().control_height(ControlSize::Sm) * 0.75;
-    let close_top = (cx.theme().control_height(ControlSize::Md) - close_side) * 0.5;
-    let tab_min = cx.theme().tab_width().0;
-    let text_size = cx.theme().text_size(TextSize::Sm);
-    let new_tab_owner = workspace.clone();
-    div()
-        .id("workspace-tabs")
-        .flex()
-        .items_center()
-        .gap_1()
-        .min_w_0()
-        .children(entries.into_iter().map(|tab| {
-            let selected = active.as_deref() == Some(tab.id.as_str());
-            let group = gpui::SharedString::from(format!("workspace-tab-{}", tab.id));
-            let motion = gpui_kit::component::Theme::global(cx).motion_tokens();
-            let glass = Presence::new((group.clone(), "glass-selection"), selected)
-                .transition(
-                    Transition::new(motion.duration_fast).easing(motion.easing_move.clone()),
-                )
-                .sample(window, cx);
-            let select_owner = workspace.clone();
-            let select_id = tab.id.clone();
-            let close_owner = workspace.clone();
-            let close_id = tab.id.clone();
-            let label = if tab.closable {
-                format!("New tab {}", tab.number)
+    let selected = active
+        .as_deref()
+        .and_then(|id| entries.iter().position(|tab| tab.id == id));
+    let colors = cx.theme().colors.clone();
+    let items = entries
+        .iter()
+        .enumerate()
+        .map(|(index, entry)| {
+            let label = if entry.closable {
+                format!("New tab {}", entry.number)
             } else {
                 "UI".to_string()
             };
-            let colors = cx.theme().colors.clone();
-            // Tabs grow to fit the full label; no shrink, no truncation.
-            let button = NativeButton::new(format!("select-tab-{}", tab.id))
-                .accessibility_label(label.clone())
-                .h(cx.theme().control_height(ControlSize::Md))
-                .px(cx.theme().control_padding(ControlSize::Md))
-                .pr_6()
-                .min_w(tab_min)
-                .gap_1p5()
-                .rounded(cx.theme().radius(Radius::Md))
-                .border_1()
-                .border_color(gpui::transparent_black())
-                .text_color(if selected {
-                    colors.fg
-                } else {
-                    colors.fg.opacity(0.6)
-                })
-                .text_size(text_size)
-                .font_weight(gpui::FontWeight::MEDIUM)
-                .cursor_pointer()
-                .hover(move |style| style.bg(colors.hover))
-                .active(move |style| style.bg(colors.active).text_color(colors.fg))
-                .focus_visible(move |style| style.border_color(colors.accent))
-                .child(
+            let active = selected == Some(index);
+            Tab::new(label)
+                .icon(
                     Icon::new(IconName::AppWindow)
                         .size(IconSize::Sm)
-                        .color(if selected {
+                        .color(if active {
                             colors.fg
                         } else {
                             colors.fg.opacity(0.6)
                         }),
                 )
-                .child(label.clone())
-                .on_click(move |_, _, cx| {
+                .closable(entry.closable)
+        })
+        .collect::<Vec<_>>();
+    let paths = entries
+        .iter()
+        .map(|entry| entry.path.clone())
+        .collect::<Vec<_>>();
+    let ids = entries
+        .iter()
+        .map(|entry| entry.id.clone())
+        .collect::<Vec<_>>();
+    let select_owner = workspace.clone();
+    let close_owner = workspace.clone();
+    let new_tab_owner = workspace.clone();
+
+    div()
+        .flex()
+        .items_center()
+        .gap_1()
+        .min_w_0()
+        .child(
+            Tabs::new("workspace-tabs")
+                .label("Workspace tabs")
+                .variant(TabVariant::Horizontal)
+                .selected_index(selected)
+                .items(items)
+                .on_change(move |index, _, cx| {
+                    let Some(path) = paths.get(*index).cloned() else {
+                        return;
+                    };
                     select_owner
-                        .update(cx, |state, cx| {
-                            if let Some(path) = state.tabs.path(&select_id) {
-                                state.navigate(path, cx);
-                            }
-                        })
+                        .update(cx, |state, cx| state.navigate(path, cx))
                         .ok();
-                });
-            let close = IconButton::new(format!("close-tab-{}", tab.id), IconName::X)
-                .size(ControlSize::Sm)
-                .disabled(!tab.closable)
-                .tooltip(format!("Close {label}"))
-                .on_click(move |_, _, cx| {
-                    cx.stop_propagation();
-                    close_owner
-                        .update(cx, |state, cx| {
-                            state.close_tab(&close_id, cx);
-                        })
-                        .ok();
-                });
-            let close = style_chrome(
-                close,
-                StyleRefinement::default().size(close_side),
-                window,
-                cx,
-            );
-            div()
-                .id(format!("workspace-tab-{}", tab.id))
-                .relative()
-                .group(group.clone())
-                .when(glass.should_render(), |tab| {
-                    tab.child(
-                        div()
-                            .absolute()
-                            .inset_0()
-                            .opacity(glass.progress)
-                            .child(corpora_ui::ui::glass::clear(px(8.))),
-                    )
                 })
-                .child(button)
-                .child(
-                    div()
-                        .absolute()
-                        .right_1()
-                        .top(close_top)
-                        .when(!selected && tab.closable, |slot| {
-                            slot.invisible().group_hover(group, |style| style.visible())
-                        })
-                        .child(close),
-                )
-        }))
+                .on_close(move |index, _, cx| {
+                    let Some(id) = ids.get(*index) else {
+                        return;
+                    };
+                    close_owner
+                        .update(cx, |state, cx| state.close_tab(id, cx))
+                        .ok();
+                }),
+        )
         .child(round(
             IconButton::new("new-workspace-tab", IconName::Plus)
+                .size(ControlSize::Sm)
                 .tooltip("New tab")
                 .on_click(move |_, window, cx| {
                     new_tab_owner

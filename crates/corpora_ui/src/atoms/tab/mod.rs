@@ -1,10 +1,10 @@
-//! Controlled icon tabs with a shared moving glass selection surface.
+//! Controlled tabs with horizontal and vertical glass layouts.
 
 mod appearance;
 mod semantics;
 mod size;
 
-pub use semantics::Tab;
+pub use semantics::{Tab, TabVariant, Tabs};
 
 use std::{rc::Rc, time::Duration};
 
@@ -12,30 +12,25 @@ use gpui::{
     App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role, SharedString,
     StyleRefinement, Styled, Window, div, prelude::*, px,
 };
-use gpui_kit::base::{
-    StyledExt, Tab as NativeTab, TestSupportExt,
-    motion::{Spring, spring},
+use gpui_kit::{
+    base::{
+        Button as NativeButton, StyledExt, Tab as NativeTab, TestSupportExt, Transition,
+        motion::{Presence, Spring, spring},
+    },
+    component::Theme as KitTheme,
 };
 
-use crate::ely::theme::ActiveTheme;
-use crate::ui::glass;
+use crate::{
+    ely::{
+        primitives::{Icon, IconName},
+        theme::{ActiveTheme, ControlSize, IconSize, Radius, TextSize},
+    },
+    ui::glass,
+};
 
-use appearance::{TAB_LABEL_SIZE, TAB_RADIUS, label_color};
-use size::{TAB_GAP, TAB_HEIGHT, TAB_WIDTH};
+use appearance::{VERTICAL_TAB_LABEL_SIZE, VERTICAL_TAB_RADIUS, content_color};
 
-type ChangeHandler = Rc<dyn Fn(&usize, &mut Window, &mut App)>;
-
-/// A centered tab list. Callers retain selection and render the associated panel.
-#[derive(IntoElement)]
-pub struct Tabs {
-    id: ElementId,
-    label: SharedString,
-    items: Vec<Tab>,
-    selected: usize,
-    autofocus: bool,
-    on_change: Option<ChangeHandler>,
-    style: StyleRefinement,
-}
+use size::{VERTICAL_TAB_GAP, VERTICAL_TAB_HEIGHT, VERTICAL_TAB_WIDTH};
 
 impl Tabs {
     pub fn new(id: impl Into<ElementId>) -> Self {
@@ -43,10 +38,12 @@ impl Tabs {
             id: id.into(),
             label: "Tabs".into(),
             items: Vec::new(),
-            selected: 0,
+            selected: Some(0),
             autofocus: false,
             on_change: None,
+            on_close: None,
             style: StyleRefinement::default(),
+            variant: TabVariant::default(),
         }
     }
 
@@ -60,12 +57,12 @@ impl Tabs {
         self
     }
 
-    pub fn selected_index(mut self, index: usize) -> Self {
-        self.selected = index;
+    pub fn selected_index(mut self, index: impl Into<Option<usize>>) -> Self {
+        self.selected = index.into();
         self
     }
 
-    /// Focuses the selected tab when the caller requests entry into this list.
+    /// Focuses the roving tab when the caller requests entry into this list.
     pub fn autofocus(mut self, autofocus: bool) -> Self {
         self.autofocus = autofocus;
         self
@@ -73,6 +70,16 @@ impl Tabs {
 
     pub fn on_change(mut self, handler: impl Fn(&usize, &mut Window, &mut App) + 'static) -> Self {
         self.on_change = Some(Rc::new(handler));
+        self
+    }
+
+    pub fn on_close(mut self, handler: impl Fn(&usize, &mut Window, &mut App) + 'static) -> Self {
+        self.on_close = Some(Rc::new(handler));
+        self
+    }
+
+    pub fn variant(mut self, variant: TabVariant) -> Self {
+        self.variant = variant;
         self
     }
 }
@@ -85,116 +92,236 @@ impl Styled for Tabs {
 
 impl RenderOnce for Tabs {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let count = self.items.len();
-        let selected = self.selected.min(count.saturating_sub(1));
+        let Tabs {
+            id,
+            label,
+            items,
+            selected,
+            autofocus,
+            on_change,
+            on_close,
+            style,
+            variant,
+        } = self;
+        let count = items.len();
+        let selected = selected.map(|index| index.min(count.saturating_sub(1)));
+        let focus_index = selected.unwrap_or_default();
         let focuses: Vec<FocusHandle> = (0..count)
             .map(|index| {
                 window
                     .use_keyed_state(
-                        (
-                            self.id.clone(),
-                            SharedString::from(format!("focus-{index}")),
-                        ),
+                        (id.clone(), SharedString::from(format!("focus-{index}"))),
                         cx,
                         |_, cx| cx.focus_handle(),
                     )
                     .read(cx)
                     .clone()
-                    .tab_stop(index == selected)
+                    .tab_stop(index == focus_index)
             })
             .collect();
-        if self.autofocus
-            && let Some(focus) = focuses.get(selected)
-        {
+        if autofocus && let Some(focus) = focuses.get(focus_index) {
             focus.focus(window, cx);
         }
-        let theme = cx.theme();
-        let colors = theme.colors.clone();
-        let dark = theme.is_dark();
+
+        let (
+            colors,
+            horizontal_height,
+            horizontal_padding,
+            horizontal_min_width,
+            horizontal_radius,
+            horizontal_text_size,
+            close_side,
+        ) = {
+            let theme = cx.theme();
+            (
+                theme.colors.clone(),
+                theme.control_height(ControlSize::Md),
+                theme.control_padding(ControlSize::Md),
+                theme.tab_width().0,
+                theme.radius(Radius::Md),
+                theme.text_size(TextSize::Sm),
+                theme.control_height(ControlSize::Sm) * 0.8,
+            )
+        };
+        let vertical = variant == TabVariant::Vertical;
+        let close_top = (horizontal_height - close_side) * 0.5;
+        let (selection_duration, selection_easing) = {
+            let motion = KitTheme::global(cx).motion_tokens();
+            (motion.duration_fast, motion.easing_move.clone())
+        };
         let x = spring(
-            (self.id.clone(), "selection-position"),
-            px(selected as f32 * (TAB_WIDTH + TAB_GAP)),
+            (id.clone(), "selection-position"),
+            px(focus_index as f32 * (VERTICAL_TAB_WIDTH + VERTICAL_TAB_GAP)),
             Spring::new(Duration::from_millis(320)).with_epsilon(0.1),
             window,
             cx,
         );
-        let mut list = div().relative().flex().gap(px(TAB_GAP)).h(px(TAB_HEIGHT));
-        if count > 0 {
+        let mut list = div().relative().flex().when(vertical, |list| {
+            list.gap(px(VERTICAL_TAB_GAP)).h(px(VERTICAL_TAB_HEIGHT))
+        });
+        if vertical && count > 0 && selected.is_some() {
             list = list.child(
                 div()
-                    .id((self.id.clone(), "selected-indicator"))
+                    .id((id.clone(), "selected-indicator"))
                     .test_support()
                     .absolute()
                     .left(x)
                     .top_0()
-                    .w(px(TAB_WIDTH))
-                    .h(px(TAB_HEIGHT))
-                    .rounded(px(TAB_RADIUS))
-                    .child(glass::clear_deep(px(TAB_RADIUS))),
+                    .w(px(VERTICAL_TAB_WIDTH))
+                    .h(px(VERTICAL_TAB_HEIGHT))
+                    .rounded(px(VERTICAL_TAB_RADIUS))
+                    .child(glass::clear_deep(px(VERTICAL_TAB_RADIUS))),
             );
         }
-        for (index, item) in self.items.into_iter().enumerate() {
+
+        for (index, item) in items.into_iter().enumerate() {
             let focus = focuses[index].clone();
             let key_focuses = focuses.clone();
-            let click = self.on_change.clone();
-            let key_change = self.on_change.clone();
-            let active = index == selected;
-            list = list.child(
-                NativeTab::new(index)
-                    .selected(active)
-                    .set_position(index + 1, count)
-                    .accessibility_label(item.label.clone())
-                    .track_focus(&focus)
-                    .flex_none()
+            let click = on_change.clone();
+            let key_change = on_change.clone();
+            let active = selected == Some(index);
+            let color = content_color(&colors, active);
+            let closable = item.closable;
+            let item_label = item.label.clone();
+            let tab = NativeTab::new(index)
+                .selected(active)
+                .set_position(index + 1, count)
+                .accessibility_label(item.label.clone())
+                .track_focus(&focus)
+                .flex_none()
+                // .border_1()
+                // .border_color(gpui::transparent_black())
+                .text_color(color)
+                .cursor_pointer()
+                .focus_visible(move |style| style.border_color(colors.accent))
+                .hover(move |style| {
+                    if active {
+                        style.bg(gpui::transparent_black())
+                    } else {
+                        style.bg(colors.fg_subtle.opacity(0.4))
+                    }
+                })
+                .active(move |style| style.bg(colors.active).text_color(colors.fg))
+                .on_click(move |_, window, cx| {
+                    focus.focus(window, cx);
+                    if let Some(change) = &click {
+                        change(&index, window, cx);
+                    }
+                })
+                .on_key_down(move |event, window, cx| {
+                    let next = match event.keystroke.key.as_str() {
+                        "left" => (index + count - 1) % count,
+                        "right" => (index + 1) % count,
+                        "home" => 0,
+                        "end" => count - 1,
+                        "enter" | "space" => index,
+                        _ => return,
+                    };
+                    window.prevent_default();
+                    cx.stop_propagation();
+                    key_focuses[next].focus(window, cx);
+                    if let Some(change) = &key_change {
+                        change(&next, window, cx);
+                    }
+                });
+            let tab = match variant {
+                TabVariant::Vertical => tab
                     .flex_col()
                     .gap(px(4.))
-                    .w(px(TAB_WIDTH))
-                    .h(px(TAB_HEIGHT))
-                    .rounded(px(TAB_RADIUS))
+                    .w(px(VERTICAL_TAB_WIDTH))
+                    .h(px(VERTICAL_TAB_HEIGHT))
+                    .rounded(px(VERTICAL_TAB_RADIUS))
+                    .text_size(px(VERTICAL_TAB_LABEL_SIZE))
+                    .font_weight(gpui::FontWeight::BOLD),
+                TabVariant::Horizontal => tab
+                    .flex()
+                    .items_center()
+                    .h(horizontal_height)
+                    .px(horizontal_padding)
+                    .when(closable, |tab| tab.pr_6())
+                    .min_w(horizontal_min_width)
+                    .gap_1p5()
+                    .rounded(horizontal_radius)
+                    .text_size(horizontal_text_size)
+                    .font_weight(gpui::FontWeight::MEDIUM),
+            }
+            .children(item.icon)
+            .child(item.label);
+
+            if vertical {
+                list = list.child(tab);
+                continue;
+            }
+
+            let group = SharedString::from(format!("tab-{index}"));
+            let selection = Presence::new((id.clone(), format!("selection-{index}")), active)
+                .transition(Transition::new(selection_duration).easing(selection_easing.clone()))
+                .sample(window, cx);
+            let mut wrapper = div()
+                .id((id.clone(), format!("item-{index}")))
+                .relative()
+                .group(group.clone())
+                .flex_none();
+            if selection.should_render() {
+                wrapper = wrapper.child(
+                    div()
+                        .absolute()
+                        .inset_0()
+                        .rounded(horizontal_radius)
+                        .opacity(selection.progress)
+                        .child(glass::clear_deep(px(8.))),
+                );
+            }
+            wrapper = wrapper.child(tab);
+            if closable {
+                let close = on_close.clone();
+                let close_button = NativeButton::new((id.clone(), format!("close-{index}")))
+                    .accessibility_label(format!("Close {item_label}"))
+                    .disabled(close.is_none())
+                    .tab_stop(active && close.is_some())
+                    .w(close_side)
+                    .h(close_side)
+
+                    .rounded_full()
                     .border_1()
                     .border_color(gpui::transparent_black())
-                    .text_size(px(TAB_LABEL_SIZE))
-                    .font_weight(gpui::FontWeight::BOLD)
-                    .text_color(label_color(&colors, dark, active))
+                    .text_color(color)
                     .cursor_pointer()
                     .focus_visible(move |style| style.border_color(colors.accent))
-                    // .hover(move |style| style.bg(colors.fg_muted.opacity(0.04)))
+                    .hover(move |style| style.bg(colors.fg_subtle.opacity(0.3)))
+                    .active(move |style| style.bg(colors.active).text_color(colors.fg))
+                    .child(Icon::new(IconName::X).size(IconSize::Xs).color(color))
                     .on_click(move |_, window, cx| {
-                        focus.focus(window, cx);
-                        if let Some(change) = &click {
-                            change(&index, window, cx);
-                        }
-                    })
-                    .on_key_down(move |event, window, cx| {
-                        let next = match event.keystroke.key.as_str() {
-                            "left" => (index + count - 1) % count,
-                            "right" => (index + 1) % count,
-                            "home" => 0,
-                            "end" => count - 1,
-                            "enter" | "space" => index,
-                            _ => return,
-                        };
-                        window.prevent_default();
                         cx.stop_propagation();
-                        key_focuses[next].focus(window, cx);
-                        if let Some(change) = &key_change {
-                            change(&next, window, cx);
+                        if let Some(close) = &close {
+                            close(&index, window, cx);
                         }
-                    })
-                    .children(item.icon)
-                    .child(item.label),
-            );
+                    });
+                wrapper = wrapper.child(
+                    div()
+                        .absolute()
+                        .right_1()
+                        .top(close_top)
+                        .when(!active, |slot| {
+                            slot.invisible().group_hover(group, |style| style.visible())
+                        })
+                        .child(close_button),
+                );
+            }
+            list = list.child(wrapper);
         }
+
         div()
-            .id(self.id)
+            .id(id)
             .test_support()
             .role(Role::TabList)
-            .aria_label(self.label)
+            .aria_label(label)
             .flex()
-            .justify_center()
+            .gap_x_2()
+            .when(vertical, |tabs| tabs.justify_center())
             .min_w_0()
             .child(list)
-            .refine_style(&self.style)
+            .refine_style(&style)
     }
 }
 

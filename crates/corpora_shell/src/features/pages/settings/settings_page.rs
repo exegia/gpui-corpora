@@ -119,7 +119,7 @@ impl SettingsPage {
 
 impl Render for SettingsPage {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        use corpora_ui::atoms::tab::{Tab, Tabs};
+        use corpora_ui::atoms::tab::{Tab, TabVariant, Tabs};
         use gpui_kit::base::TestSupportExt;
 
         let page = self.page();
@@ -137,15 +137,16 @@ impl Render for SettingsPage {
                 div().flex_none().pt(px(6.)).pb(px(10.)).px(px(7.)).child(
                     Tabs::new("settings-tabs")
                         .label(crate::i18n::localize("settings_title"))
+                        .variant(TabVariant::Vertical)
                         .selected_index(self.selected)
                         .autofocus(self.focus.is_focused(window))
                         .items(SECTIONS.iter().enumerate().map(|(index, (_, name, icon))| {
                             let icon = gpui::svg()
                                 .data(icon)
                                 .text_color(if index == self.selected {
-                                    if dark { colors.fg } else { colors.on_accent }
+                                    colors.fg
                                 } else {
-                                    colors.fg_muted
+                                    colors.fg.opacity(0.6)
                                 })
                                 .size(px(if index == 0 { 18. } else { 16. }))
                                 .flex_none()

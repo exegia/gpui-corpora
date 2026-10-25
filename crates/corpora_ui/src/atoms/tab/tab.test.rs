@@ -5,6 +5,7 @@ use super::*;
 
 struct Harness {
     selected: usize,
+    closed: Option<usize>,
 }
 
 impl Render for Harness {
@@ -25,7 +26,30 @@ impl Render for Harness {
                         cx.notify();
                     })),
             )
+            .child(
+                Tabs::new("horizontal-tabs")
+                    .variant(TabVariant::Horizontal)
+                    .items([
+                        Tab::new("UI").icon(div().size_2()),
+                        Tab::new("New tab 1").icon(div().size_2()).closable(true),
+                        Tab::new("New tab 2").icon(div().size_2()).closable(true),
+                    ])
+                    .selected_index(self.selected)
+                    .on_change(cx.listener(|this, index, _, cx| {
+                        this.selected = *index;
+                        cx.notify();
+                    }))
+                    .on_close(cx.listener(|this, index, _, cx| {
+                        this.closed = Some(*index);
+                        cx.notify();
+                    })),
+            )
             .child(Tabs::new("other-tabs").items([Tab::new("Independent")]))
+            .child(
+                Tabs::new("unselected-tabs")
+                    .selected_index(None::<usize>)
+                    .items([Tab::new("Available")]),
+            )
             .child(Tabs::new("empty-tabs"))
     }
 }
@@ -36,7 +60,10 @@ fn setup(cx: &mut TestAppContext, reduced: bool) -> (gpui::AnyWindowHandle, gpui
         gpui_agentation::init_for_tests(cx);
         cx.set_reduce_motion(reduced);
         gpui_kit::open_window(Default::default(), cx, |_, cx| {
-            cx.new(|_| Harness { selected: 0 })
+            cx.new(|_| Harness {
+                selected: 0,
+                closed: None,
+            })
         })
         .expect("open tabs harness")
     })
@@ -64,7 +91,7 @@ fn pointer_and_keyboard_select_tabs_with_roving_focus(cx: &mut TestAppContext) {
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
         let hover_bounds = window.within("tabs").find(1usize).bounds();
-        window.hover(1usize, cx);
+        window.within("tabs").hover(1usize, cx);
         window.render_frame(cx);
         let hover_fill = window
             .painted_quads()
@@ -73,7 +100,7 @@ fn pointer_and_keyboard_select_tabs_with_roving_focus(cx: &mut TestAppContext) {
             .filter_map(|quad| quad.background.as_solid())
             .last()
             .expect("tab hover paints a muted fill");
-        assert_eq!(hover_fill, cx.theme().colors.fg_muted.opacity(0.04));
+        assert_eq!(hover_fill, cx.theme().colors.hover);
         window.within("tabs").click(1usize, cx);
         assert_eq!(view.read(cx).selected, 1);
         window.press("right", cx);
@@ -97,6 +124,10 @@ fn pointer_and_keyboard_select_tabs_with_roving_focus(cx: &mut TestAppContext) {
         assert_eq!(window.within("tabs").find(2usize).selected(), Some(true));
         assert_eq!(window.within("tabs").find(1usize).selected(), Some(false));
         assert_eq!(
+            window.within("unselected-tabs").find(0usize).selected(),
+            Some(false)
+        );
+        assert_eq!(
             indicator(window),
             window.within("tabs").find(2usize).bounds()
         );
@@ -104,6 +135,37 @@ fn pointer_and_keyboard_select_tabs_with_roving_focus(cx: &mut TestAppContext) {
             .find((ElementId::from("other-tabs"), "selected-indicator"))
             .bounds();
         assert_eq!(other, window.within("other-tabs").find(0usize).bounds());
+    })
+    .unwrap();
+}
+
+#[gpui::test]
+fn horizontal_tabs_render_glass_and_close_the_requested_item(cx: &mut TestAppContext) {
+    let (handle, view) = setup(cx, true);
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        window.within("horizontal-tabs").click(1usize, cx);
+        window.render_frame(cx);
+
+        let tab = window.within("horizontal-tabs").find(1usize);
+        assert_eq!(tab.label(), Some("New tab 1"));
+        assert_eq!(tab.selected(), Some(true));
+        #[cfg(target_os = "macos")]
+        let bounds = tab.bounds().scale(window.scale_factor());
+        #[cfg(target_os = "macos")]
+        assert!(
+            window
+                .painted_backdrop_blurs()
+                .iter()
+                .any(|glass| glass.bounds == bounds && glass.magnify > 1.3)
+        );
+
+        let close_id = (ElementId::from("horizontal-tabs"), "close-1");
+        let close = window.find(close_id.clone());
+        assert_eq!(close.role(), Some(Role::Button));
+        assert_eq!(close.label(), Some("Close New tab 1"));
+        window.click(close_id, cx);
+        assert_eq!(view.read(cx).closed, Some(1));
     })
     .unwrap();
 }

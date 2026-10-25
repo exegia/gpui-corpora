@@ -48,7 +48,7 @@ corpora_runtime = { path = "crates/corpora_runtime" }
 corpora_services = { path = "crates/corpora_services" }
 corpora_shell = { path = "crates/corpora_shell" }
 corpora_ui = { path = "crates/corpora_ui" }
-gpui-agentation = { version = "=0.5.1", default-features = false, features = [
+gpui-agentation = { version = "=6.0.0", default-features = false, features = [
     "native",
 ] }
 

@@ -1,5 +1,8 @@
 use super::*;
-use gpui::{AppContext, Bounds, Pixels, TestAppContext, WindowBounds, WindowOptions, px, size};
+use gpui::{
+    AppContext, Bounds, ElementId, Pixels, Role, TestAppContext, WindowBounds, WindowOptions, px,
+    size,
+};
 use gpui_kit::test::TestWindowExt;
 
 fn setup(cx: &mut TestAppContext, reduced: bool) -> (gpui::AnyWindowHandle, Entity<Workspace>) {
@@ -411,27 +414,51 @@ fn resizing_a_moving_inspector_starts_at_its_displayed_width(cx: &mut TestAppCon
 }
 
 #[gpui::test]
-fn tab_hover_keeps_the_glass_visible_and_keyboard_activation_routes(cx: &mut TestAppContext) {
+fn horizontal_tab_close_action_removes_the_workspace_tab(cx: &mut TestAppContext) {
+    let (handle, view) = setup(cx, true);
+    cx.update_window(handle, |_, window, cx| {
+        view.update(cx, |view, cx| view.new_tab(window, cx));
+    })
+    .unwrap();
+    cx.run_until_parked();
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).tabs.entries().len(), 2);
+        assert_eq!(
+            window.within("workspace-tabs").find(1usize).selected(),
+            Some(true)
+        );
+        window.click((ElementId::from("workspace-tabs"), "close-1"), cx);
+    })
+    .unwrap();
+    cx.run_until_parked();
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).tabs.entries().len(), 1);
+        assert_eq!(view.read(cx).tabs.active_id(), Some("/ui"));
+    })
+    .unwrap();
+}
+
+#[gpui::test]
+fn tab_atom_keeps_selection_stable_and_keyboard_activation_routes(cx: &mut TestAppContext) {
     let (handle, view) = setup(cx, true);
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
         gpui_router::use_navigate(window, cx).push("/ui");
         window.render_frame(cx);
-        let id = "select-tab-/ui";
-        let bounds = window.find(id).bounds();
-        window.hover(id, cx);
+        let bounds = window.within("workspace-tabs").find(0usize).bounds();
+        window.within("workspace-tabs").hover(0usize, cx);
         window.render_frame(cx);
-        assert_eq!(window.find(id).bounds(), bounds);
-        let scaled = bounds.scale(window.scale_factor());
-        let fill = window
-            .painted_quads()
-            .into_iter()
-            .filter(|quad| quad.bounds == scaled)
-            .filter_map(|quad| quad.background.as_solid())
-            .last()
-            .expect("tab hover paints a muted fill");
-        assert_eq!(fill, cx.theme().colors.hover);
-        window.click(id, cx);
+        let tab = window.within("workspace-tabs").find(0usize);
+        assert_eq!(tab.bounds(), bounds);
+        assert_eq!(tab.role(), Some(Role::Tab));
+        assert_eq!(tab.selected(), Some(true));
+        #[cfg(target_os = "macos")]
+        assert!(window.painted_backdrop_blurs().iter().any(|glass| {
+            glass.bounds == bounds.scale(window.scale_factor()) && glass.magnify > 1.3
+        }));
+        window.within("workspace-tabs").click(0usize, cx);
         view.update(cx, |view, cx| view.navigate("/projects", cx));
     })
     .unwrap();
@@ -439,6 +466,10 @@ fn tab_hover_keeps_the_glass_visible_and_keyboard_activation_routes(cx: &mut Tes
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
         assert_eq!(view.read(cx).tabs.active().unwrap().path, "/projects");
+        assert_eq!(
+            window.within("workspace-tabs").find(0usize).selected(),
+            Some(false)
+        );
         window.press("enter", cx);
     })
     .unwrap();
