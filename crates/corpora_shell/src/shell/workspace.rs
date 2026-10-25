@@ -204,11 +204,28 @@ impl Workspace {
     }
 
     pub(crate) fn close_tab(&mut self, id: &str, cx: &mut Context<Self>) {
+        if self.closing_tabs.iter().any(|closing| closing == id)
+            || !self
+                .tabs
+                .entries()
+                .iter()
+                .any(|tab| tab.id == id && tab.closable)
+        {
+            return;
+        }
         if self.tabs.active_id() == Some(id)
-            && let Some(path) = self.tabs.path_after_close(id)
+            || self.tabs.path(id).as_deref() == self.routing_to.as_deref()
         {
             self.closing_tabs.push(id.to_string());
-            self.navigate(path, cx);
+            if let Some(path) = self.tabs.path_after_close(id, &self.closing_tabs) {
+                self.navigate(path, cx);
+            } else {
+                for id in std::mem::take(&mut self.closing_tabs) {
+                    self.tabs.close(&id);
+                }
+                self.pending_path = None;
+                self.routing_to = None;
+            }
         } else {
             self.tabs.close(id);
             if self.tabs.active().is_none() {

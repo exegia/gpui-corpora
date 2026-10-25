@@ -166,18 +166,15 @@ impl<T> WorkspaceTabs<T> {
         path
     }
 
-    pub(crate) fn path_after_close(&self, id: &str) -> Option<String> {
+    pub(crate) fn path_after_close(&self, id: &str, closing: &[String]) -> Option<String> {
         let index = self
             .entries
             .iter()
             .position(|tab| tab.id == id && tab.closable)?;
-        self.entries
-            .get(index + 1)
-            .or_else(|| {
-                index
-                    .checked_sub(1)
-                    .and_then(|index| self.entries.get(index))
-            })
+        self.entries[index + 1..]
+            .iter()
+            .chain(self.entries[..index].iter().rev())
+            .find(|tab| !closing.contains(&tab.id))
             .or(self.route.as_ref())
             .map(|tab| tab.path.clone())
     }

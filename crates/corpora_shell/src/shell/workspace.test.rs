@@ -294,3 +294,159 @@ fn tab_switching_continues_the_current_panel_animation(cx: &mut TestAppContext) 
     })
     .unwrap();
 }
+
+#[gpui::test]
+fn closing_the_pending_neighbor_does_not_reopen_either_tab(cx: &mut TestAppContext) {
+    let (handle, view) = setup(cx, true);
+    let (first, second) = cx
+        .update_window(handle, |_, window, cx| {
+            window.render_frame(cx);
+            view.update(cx, |view, cx| {
+                view.new_tab(window, cx);
+                let first = view.pending_path.clone().unwrap();
+                view.new_tab(window, cx);
+                let second = view.pending_path.clone().unwrap();
+                view.navigate(first.clone(), cx);
+                (first, second)
+            })
+        })
+        .unwrap();
+    cx.run_until_parked();
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).tabs.active_id(), Some(first.as_str()));
+        view.update(cx, |view, cx| {
+            view.close_tab(&first, cx);
+            view.close_tab(&second, cx);
+        });
+    })
+    .unwrap();
+    cx.run_until_parked();
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        let state = view.read(cx);
+        assert!(state.tabs.path(&first).is_none());
+        assert!(state.tabs.path(&second).is_none());
+        let path = &gpui_router::use_location(cx).pathname;
+        assert_ne!(path.as_ref(), first);
+        assert_ne!(path.as_ref(), second);
+    })
+    .unwrap();
+}
+
+#[gpui::test]
+fn resizing_a_moving_inspector_starts_at_its_displayed_width(cx: &mut TestAppContext) {
+    let (handle, view) = setup(cx, false);
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        gpui_router::use_navigate(window, cx).push("/projects");
+        window.render_frame(cx);
+        view.update(cx, |view, cx| {
+            view.tabs
+                .active_mut()
+                .unwrap()
+                .state
+                .panels
+                .inspector_visible = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+    })
+    .unwrap();
+    cx.executor().advance_clock(Duration::from_millis(80));
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        let middle = inspector_width(window);
+        assert!(middle > px(192.) && middle < px(320.), "{middle:?}");
+        let bounds = window.find("workspace-inspector").bounds();
+        let from = gpui::point(bounds.left() + px(2.), bounds.top() + px(100.));
+        window.drag(from, from - gpui::point(px(20.), px(0.)), cx);
+        window.render_frame(cx);
+        cx.set_reduce_motion(true);
+        window.render_frame(cx);
+        let resized = inspector_width(window);
+        assert!(
+            resized > middle && resized <= middle + px(20.),
+            "{middle:?} -> {resized:?}"
+        );
+        cx.set_reduce_motion(false);
+        view.update(cx, |view, cx| {
+            view.tabs
+                .active_mut()
+                .unwrap()
+                .state
+                .panels
+                .inspector_visible = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+    })
+    .unwrap();
+    cx.executor().advance_clock(Duration::from_millis(10));
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        let middle = inspector_width(window);
+        assert!(middle > px(192.) && middle < px(320.), "{middle:?}");
+        let bounds = window.find("workspace-inspector").bounds();
+        let from = gpui::point(bounds.left() + px(2.), bounds.top() + px(100.));
+        window.drag(from, from - gpui::point(px(20.), px(0.)), cx);
+        cx.set_reduce_motion(true);
+        window.render_frame(cx);
+        let resized = inspector_width(window);
+        assert!(
+            resized > middle && resized <= middle + px(20.),
+            "{middle:?} -> {resized:?}"
+        );
+        assert!(
+            view.read(cx)
+                .tabs
+                .active()
+                .unwrap()
+                .state
+                .panels
+                .inspector_visible
+        );
+    })
+    .unwrap();
+}
+
+#[gpui::test]
+fn tab_hover_keeps_the_glass_visible_and_keyboard_activation_routes(cx: &mut TestAppContext) {
+    let (handle, view) = setup(cx, true);
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        gpui_router::use_navigate(window, cx).push("/ui");
+        window.render_frame(cx);
+        let id = "select-tab-/ui";
+        let bounds = window.find(id).bounds();
+        window.hover(id, cx);
+        window.render_frame(cx);
+        assert_eq!(window.find(id).bounds(), bounds);
+        let scaled = bounds.scale(window.scale_factor());
+        let fill = window
+            .painted_quads()
+            .into_iter()
+            .filter(|quad| quad.bounds == scaled)
+            .filter_map(|quad| quad.background.as_solid())
+            .last()
+            .expect("tab hover paints a translucent fill");
+        assert!(fill.a > 0. && fill.a < 0.1, "{fill:?}");
+        window.click(id, cx);
+        view.update(cx, |view, cx| view.navigate("/projects", cx));
+    })
+    .unwrap();
+    cx.run_until_parked();
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).tabs.active().unwrap().path, "/projects");
+        window.press("enter", cx);
+    })
+    .unwrap();
+    cx.run_until_parked();
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).tabs.active_id(), Some("/ui"));
+        assert_eq!(gpui_router::use_location(cx).pathname.as_ref(), "/ui");
+    })
+    .unwrap();
+}

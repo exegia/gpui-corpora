@@ -1,6 +1,9 @@
-use corpora_ui::ely::theme::{ControlSize, TextSize};
+use corpora_ui::ely::{
+    primitives::Icon,
+    theme::{ControlSize, IconSize, Radius, TextSize},
+};
 use gpui::px;
-use gpui_kit::base::{Transition, motion::Presence};
+use gpui_kit::base::{Button as NativeButton, Transition, motion::Presence};
 
 use super::*;
 
@@ -48,9 +51,27 @@ pub(super) fn tabs(
             } else {
                 "UI".to_string()
             };
-            let button = Button::new(format!("select-tab-{}", tab.id), label.clone())
-                .icon(IconName::AppWindow)
-                .variant(ButtonVariant::Ghost)
+            let colors = cx.theme().colors.clone();
+            let button = NativeButton::new(format!("select-tab-{}", tab.id))
+                .accessibility_label(label.clone())
+                .h(cx.theme().control_height(ControlSize::Md))
+                .px(cx.theme().control_padding(ControlSize::Md))
+                .pr_6()
+                .min_w(tab_min)
+                .flex_shrink_1()
+                .gap_1p5()
+                .rounded(cx.theme().radius(Radius::Md))
+                .border_1()
+                .border_color(gpui::transparent_black())
+                .text_color(colors.fg)
+                .text_size(text_size)
+                .font_weight(gpui::FontWeight::MEDIUM)
+                .cursor_pointer()
+                .hover(move |style| style.bg(colors.fg.opacity(0.04)))
+                .active(move |style| style.bg(colors.fg.opacity(0.08)))
+                .focus_visible(move |style| style.border_color(colors.accent))
+                .child(Icon::new(IconName::AppWindow).size(IconSize::Sm))
+                .child(div().min_w_0().truncate().child(label.clone()))
                 .on_click(move |_, _, cx| {
                     select_owner
                         .update(cx, |state, cx| {
@@ -60,17 +81,6 @@ pub(super) fn tabs(
                         })
                         .ok();
                 });
-            let button = style_chrome(
-                button,
-                StyleRefinement::default()
-                    .pr_6()
-                    .bg(gpui::transparent_black())
-                    .text_color(cx.theme().colors.fg)
-                    .min_w(tab_min)
-                    .text_size(text_size),
-                window,
-                cx,
-            );
             let close = IconButton::new(format!("close-tab-{}", tab.id), IconName::X)
                 .size(ControlSize::Sm)
                 .disabled(!tab.closable)

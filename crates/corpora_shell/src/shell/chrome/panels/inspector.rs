@@ -42,6 +42,7 @@ pub(super) fn layout(
 ) -> gpui::AnyElement {
     let dark = cx.theme().is_dark();
     let saved_width = width(&tab.state.inspector_width, window);
+    let resize_owner = workspace.clone();
     let content = div()
         .id("inspector-content")
         .size_full()
@@ -96,10 +97,24 @@ pub(super) fn layout(
                             DragInspector {
                                 tab: tab.id.clone(),
                                 start_x: Cell::new(px(0.)),
-                                width: saved_width,
+                                width: visible_width,
                             },
-                            |drag, _, window, cx| {
+                            move |drag, _, window, cx| {
                                 drag.start_x.set(window.mouse_position().x);
+                                let range = limits(window);
+                                let value = drag.width.clamp(range.start, range.end);
+                                resize_owner
+                                    .update(cx, |owner, cx| {
+                                        if let Some(tab) =
+                                            owner.tabs.active_mut().filter(|tab| tab.id == drag.tab)
+                                        {
+                                            tab.state.inspector_width =
+                                                rems(value / window.rem_size());
+                                            tab.state.panels.inspector_visible = true;
+                                            cx.notify();
+                                        }
+                                    })
+                                    .ok();
                                 cx.stop_propagation();
                                 cx.new(|_| DragPreview)
                             },
