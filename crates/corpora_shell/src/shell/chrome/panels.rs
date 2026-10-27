@@ -138,6 +138,32 @@ pub(super) fn layout(
     } else {
         routes::section(&tab.path)
     };
+    let component_sidebar = tab.path == "/ui" || tab.path.starts_with("/ui/");
+    let sidebar_title = if component_sidebar {
+        "Components"
+    } else {
+        "Workspace"
+    };
+    let sidebar_items = if component_sidebar {
+        [
+            ("/ui/breadcrumb", "Breadcrumb", None),
+            ("/ui/button", "Button", None),
+            ("/ui/glass", "Glass", None),
+        ]
+    } else {
+        [
+            ("/", "Home", Some(IconName::House)),
+            ("/explore", "Explore", Some(IconName::Compass)),
+            ("/projects", "Projects", Some(IconName::Folder)),
+        ]
+    };
+    let selected_sidebar_path = if tab.path == "/ui" {
+        "/ui/breadcrumb"
+    } else if component_sidebar {
+        tab.path.as_str()
+    } else {
+        selected
+    };
     let sidebar_content = div()
         .id(format!("{}-sidebar-content", tab.id))
         .size_full()
@@ -147,28 +173,39 @@ pub(super) fn layout(
         .flex()
         .flex_col()
         .gap_1()
-        .child(div().text_sm().font_semibold().mb_2().child("Workspace"))
-        .children(
-            [
-                ("/", "Home", IconName::House),
-                ("/explore", "Explore", IconName::Compass),
-                ("/projects", "Projects", IconName::Folder),
-            ]
-            .into_iter()
-            .map(|(path, label, icon)| {
-                let owner = workspace.clone();
-                Button::new(format!("sidebar-{label}"), label)
-                    .icon(icon)
-                    .variant(if selected == path {
-                        ButtonVariant::Subtle
-                    } else {
-                        ButtonVariant::Ghost
-                    })
-                    .on_click(move |_, _, cx| {
-                        owner.update(cx, |state, cx| state.navigate(path, cx)).ok();
-                    })
-            }),
-        );
+        .items_start()
+        .justify_start()
+        .child(
+            div()
+                .id("sidebar-title")
+                .text_sm()
+                .font_semibold()
+                .mb_2()
+                .child(sidebar_title),
+        )
+        .children(sidebar_items.into_iter().map(|(path, label, icon)| {
+            let owner = workspace.clone();
+            div()
+                .id(format!("sidebar-{label}"))
+                .test_support()
+                .w_full()
+                .child(style_chrome(
+                    Button::new(format!("sidebar-{label}-button"), label)
+                        .full_width()
+                        .when_some(icon, |button, icon| button.icon(icon))
+                        .variant(if selected_sidebar_path == path {
+                            ButtonVariant::Primary
+                        } else {
+                            ButtonVariant::Ghost
+                        })
+                        .on_click(move |_, _, cx| {
+                            owner.update(cx, |state, cx| state.navigate(path, cx)).ok();
+                        }),
+                    StyleRefinement::default().justify_start(),
+                    window,
+                    cx,
+                ))
+        }));
     // Only panes that meet the window's right edge keep square right corners.
     let flush = inspector <= gpui::px(0.);
     let primary = layout::main(dark, content).flush_right(flush && !panes.split);
