@@ -37,6 +37,9 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
                     Route::new()
                         .path("button")
                         .element(page(|p| p.button.clone().into_any_element())),
+                    Route::new()
+                        .path("glass")
+                        .element(page(|p| p.glass.clone().into_any_element())),
                 ]),
                 Route::new().index().element(|_, _| pages::home()),
                 Route::new()

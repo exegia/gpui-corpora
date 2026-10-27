@@ -9,7 +9,7 @@ pub use semantics::{Tab, TabVariant, Tabs};
 use std::{rc::Rc, time::Duration};
 
 use gpui::{
-    App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role, SharedString, GlassEffect,
+    App, ElementId, FocusHandle, IntoElement, ParentElement, RenderOnce, Role, SharedString,
     StyleRefinement, Styled, Window, div, prelude::*, px,
 };
 use gpui_kit::{
@@ -286,7 +286,6 @@ impl RenderOnce for Tabs {
                     .tab_stop(active && close.is_some())
                     .w(close_side)
                     .h(close_side)
-
                     .rounded_full()
                     .border_1()
                     .border_color(gpui::transparent_black())

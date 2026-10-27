@@ -236,7 +236,7 @@ impl Render for ButtonShowcase {
             .flex()
             .flex_col()
             .gap_8()
-            .child(super::component_navigation(true))
+            .child(super::component_navigation(super::Showcase::Button))
             .child(
                 div()
                     .flex()
