@@ -19,38 +19,6 @@ use gpui_kit::base::{Button, StyledExt};
 pub mod button;
 pub mod glass;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Showcase {
-    Breadcrumb,
-    Button,
-    Glass,
-}
-
-fn component_navigation(selected: Showcase) -> gpui::Div {
-    use corpora_ui::atoms::button::{Button as AtomButton, ButtonVariant};
-    div().flex().flex_wrap().gap_2().children(
-        [
-            (
-                "ui-breadcrumb-link",
-                "Breadcrumb",
-                "/ui/breadcrumb",
-                Showcase::Breadcrumb,
-            ),
-            ("ui-button-link", "Button", "/ui/button", Showcase::Button),
-            ("ui-glass-link", "Glass", "/ui/glass", Showcase::Glass),
-        ]
-        .map(|(id, label, path, page)| {
-            AtomButton::new(id, label)
-                .variant(if selected == page {
-                    ButtonVariant::Secondary
-                } else {
-                    ButtonVariant::Ghost
-                })
-                .on_click(move |_, window, cx| gpui_router::use_navigate(window, cx).push(path))
-        }),
-    )
-}
-
 const CONTENTS: &[&str] = &["Item variants", "Preconfigured components"];
 const SECTIONS: &[&str] = &["Usage", "Examples", "API notes"];
 const CHAPTERS: &[&str] = &["Genesis 1", "Genesis 2"];
@@ -274,7 +242,6 @@ impl Render for Ui {
                     .child(BreadcrumbItem::page("composition-page", page)),
             );
         div().id("ui-showcase").w_full().min_w_0().flex().flex_col().gap_8()
-            .child(component_navigation(Showcase::Breadcrumb))
             .child(div().flex().flex_col().gap_2().child(Heading::h1("Breadcrumb"))
                 .child(Paragraph::new("Composed navigation with links, a table of contents, and searchable menus.")))
             .child(example("All item variants", "Open Contents or Sections to choose a location.", trail, cx))
