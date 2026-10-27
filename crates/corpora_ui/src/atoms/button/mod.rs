@@ -23,9 +23,12 @@ use gpui_kit::{
     component::{Sizable, Size, spinner::Spinner},
 };
 
-use crate::ely::{
-    primitives::IconName,
-    theme::{ActiveTheme, Radius},
+use crate::{
+    ely::{
+        primitives::IconName,
+        theme::{ActiveTheme, Radius},
+    },
+    ui::material::GlassSurfaceExt as _,
 };
 
 #[derive(Default)]
@@ -135,6 +138,12 @@ fn timing(milliseconds: u64) -> Transition {
 impl RenderOnce for Button {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let inert = self.disabled || self.loading;
+        let accessibility_label = self.label.clone();
+        let accessibility_role = if self.href.is_some() {
+            Role::Link
+        } else {
+            Role::Button
+        };
         let state = window.use_keyed_state((self.id.clone(), "interaction"), cx, |_, _| {
             Interaction::default()
         });
@@ -156,6 +165,7 @@ impl RenderOnce for Button {
             window,
             cx,
         );
+        let glass = self.variant.glass_spec(cx.theme(), colors.glass_tint);
         let height = transition(
             (self.id.clone(), "height"),
             metrics.height / 16.,
@@ -195,7 +205,7 @@ impl RenderOnce for Button {
         let shape = self.shape.is_default();
         let radius = cx
             .theme()
-            .radius(if shape { Radius::Lg } else { Radius::Md });
+            .radius(if shape { Radius::Xl } else { Radius::Lg });
         let rem = window.rem_size();
         let icon_scale = transition(
             (self.id.clone(), "icon-hover"),
@@ -236,6 +246,7 @@ impl RenderOnce for Button {
                 .with_size(Size::Size(rem * (metrics.icon / 16.)))
                 .color(colors.foreground)
         };
+
         let mut button = NativeButton::new(self.id.clone())
             .accessibility_label(self.label)
             .disabled(inert)
@@ -246,12 +257,12 @@ impl RenderOnce for Button {
             .h(rems(height))
             .px(rems(padding))
             .gap(rems(metrics.gap / 16.))
-            .bg(colors.background)
+            // .bg(colors.background)
             .rounded(radius)
             .border_1()
             .border_color(colors.border)
             .when(!inline_link, |button| {
-                button.border_1().border_color(gpui::transparent_black())
+                button.border_1().border_color(colors.border.alpha(0.))
             })
             .text_size(rems(metrics.font / 16.))
             .font_weight(gpui::FontWeight::MEDIUM)
@@ -383,8 +394,14 @@ impl RenderOnce for Button {
         });
         // Caller overrides win over the variant/size defaults set above.
         button = button.refine_style(&self.style);
+        let button = match glass {
+            Some(spec) => button.glass_with(spec).into_any_element(),
+            None => button.into_any_element(),
+        };
         semantics::ButtonSemantics::new(
-            button.render(window, cx).into_element(),
+            button,
+            accessibility_label,
+            accessibility_role,
             inert,
             self.loading,
         )

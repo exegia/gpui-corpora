@@ -1,6 +1,8 @@
 use crate::ely::theme::{Mix, Palette, Radius, Theme};
 use crate::styles::utils::ColorExt as _;
+use crate::ui::material::GlassSpec;
 use gpui::{Hsla, transparent_black};
+use gpui_agentation::ely::theme::Mode;
 
 /// A Button's visual treatment. Colors come from the active theme's semantic roles.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -62,6 +64,30 @@ impl ButtonVariant {
         }
     }
 
+    /// The variant's glass material. `tint` is the (animated) semantic color for
+    /// the current pointer state. It is applied at the preset's tint strength;
+    /// when the variant defines no tint (transparent), the preset's own tint stays.
+    pub(super) fn glass_spec(self, theme: &Theme, tint: Hsla) -> Option<GlassSpec> {
+        let mode = if theme.is_dark() {
+            Mode::Dark
+        } else {
+            Mode::Light
+        };
+        let spec = match self {
+            Self::Default => GlassSpec::accent(mode, None),
+            Self::Secondary | Self::Outline => GlassSpec::secondary(mode, None),
+            Self::Destructive | Self::DestructiveOutline => GlassSpec::destructive(mode, None),
+            Self::Ghost | Self::Link => return None,
+        };
+        Some(GlassSpec {
+            tint: match spec.tint {
+                Some(preset) if tint.a > 0. => Some(tint.opacity(preset.a)),
+                other => other,
+            },
+            ..spec
+        })
+    }
+
     /// The variant's colors in the active theme, adjusted for pointer state.
     pub(super) fn colors(self, theme: &Theme, hovered: bool, pressed: bool) -> Colors {
         let palette = &theme.colors;
@@ -76,18 +102,38 @@ impl ButtonVariant {
     fn light(self, c: &Palette) -> Colors {
         let base = Colors::base(c);
         match self {
-            Self::Default | Self::Secondary | Self::Destructive => Colors {
-                background: c.accent,
+            Self::Default => Colors {
+                // background: c.accent,
                 foreground: c.on_accent,
+                 // glass_tint: c.accent,
                 ..base
             },
-            Self::Outline | Self::DestructiveOutline => Colors {
-                background: c.bg.lighten(0.5),
+            Self::Secondary => Colors {
+                // background: c.surface,
                 foreground: c.fg,
+                // glass_tint: c.surface,
+                ..base
+            },
+            Self::Destructive => Colors {
+                // background: c.danger,
+                foreground: c.on_accent,
+                // glass_tint: c.danger,
+                ..base
+            },
+            Self::Outline => Colors {
+                // background: c.bg.lighten(0.5),
+                foreground: c.fg,
+                // glass_tint: c.glass,
+                ..base
+            },
+            Self::DestructiveOutline => Colors {
+                // background: c.bg.lighten(0.5),
+                foreground: c.fg,
+                // glass_tint: c.danger,
                 ..base
             },
             Self::Ghost => Colors {
-                background: transparent_black(),
+                // background: transparent_black(),
                 foreground: c.fg,
                 ..base
             },
@@ -101,19 +147,41 @@ impl ButtonVariant {
     fn dark(self, c: &Palette) -> Colors {
         let base = Colors::base(c);
         match self {
-            Self::Default | Self::Secondary => Colors {
-                background: c.accent,
-                foreground: c.on_accent,
-                border: c.accent.lighten(0.1),
+            Self::Default => Colors {
+                 // background: c.accent,
+                foreground: c.on_media,
+                // border: c.accent.alpha(0.),
+                // glass_tint: c.accent.alpha(0.),
+                ..base
+            },
+            Self::Secondary => Colors {
+                // background: c.surface,
+                foreground: c.fg,
+                // border: c.border,
+                // glass_tint: c.surface,
                 ..base
             },
             Self::Destructive => Colors {
-                background: c.accent,
-                foreground: c.on_accent,
+                // background: c.danger,
+                foreground: c.on_media,
+                // border: c.danger.alpha(0.1),
+                // glass_tint: c.danger.alpha(0.),
                 ..base
             },
-            Self::Outline | Self::DestructiveOutline | Self::Ghost => Colors {
-                border: c.accent,
+            Self::Outline => Colors {
+                // border: c.accent,
+                foreground: c.fg,
+                // glass_tint: c.glass,
+                ..base
+            },
+            Self::DestructiveOutline => Colors {
+                // border: c.danger,
+                foreground: c.fg,
+                // glass_tint: c.danger,
+                ..base
+            },
+            Self::Ghost => Colors {
+                // border: c.accent,
                 foreground: c.fg,
                 ..base
             },
@@ -132,6 +200,7 @@ pub(super) struct Colors {
     pub border: Hsla,
     pub shadow: Hsla,
     pub bevel: Hsla,
+    pub glass_tint: Hsla,
 }
 
 impl Colors {
@@ -143,6 +212,7 @@ impl Colors {
             border: c.bg.darken(0.2),
             shadow: transparent_black(),
             bevel: transparent_black(),
+            glass_tint: transparent_black(),
         }
     }
 
@@ -157,6 +227,7 @@ impl Colors {
         };
         Self {
             background: self.background.opacity(fade),
+            glass_tint: self.glass_tint.opacity(self.glass_tint.a * fade),
             ..self
         }
     }
@@ -170,6 +241,7 @@ impl gpui_kit::base::motion::Interpolate for Colors {
             border: self.border.mix(&target.border, progress),
             shadow: self.shadow.mix(&target.shadow, progress),
             bevel: self.bevel.mix(&target.bevel, progress),
+            glass_tint: self.glass_tint.mix(&target.glass_tint, progress),
         }
     }
 }

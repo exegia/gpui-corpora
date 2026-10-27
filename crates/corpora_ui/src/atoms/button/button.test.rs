@@ -92,6 +92,37 @@ fn every_variant_activates_once_with_mouse_enter_and_space(cx: &mut TestAppConte
     }
 }
 
+#[cfg(target_os = "macos")]
+#[gpui::test]
+fn filled_and_outlined_variants_paint_glass(cx: &mut TestAppContext) {
+    let (handle, view) = setup(cx, 960., true);
+    for variant in ButtonVariant::ALL {
+        cx.update_window(handle, |_, window, cx| {
+            view.update(cx, |view, cx| {
+                view.variant = variant;
+                cx.notify();
+            });
+            window.render_frame(cx);
+        })
+        .unwrap();
+        cx.executor().advance_clock(Duration::from_millis(200));
+        cx.update_window(handle, |_, window, cx| {
+            window.render_frame(cx);
+            let bounds = window.find("target").bounds().scale(window.scale_factor());
+            let paints_glass = window
+                .painted_backdrop_blurs()
+                .iter()
+                .any(|glass| glass.bounds == bounds);
+            assert_eq!(
+                paints_glass,
+                !matches!(variant, ButtonVariant::Ghost | ButtonVariant::Link),
+                "{variant:?}",
+            );
+        })
+        .unwrap();
+    }
+}
+
 #[gpui::test]
 fn disabled_and_loading_buttons_reject_activation_and_tab_focus(cx: &mut TestAppContext) {
     let (handle, view) = setup(cx, 960., true);
@@ -266,14 +297,22 @@ fn accessibility_exposes_disabled_busy_and_link_semantics(cx: &mut TestAppContex
 fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppContext) {
     fn background(window: &Window) -> gpui::Hsla {
         let bounds = window.find("target").bounds().scale(window.scale_factor());
+        #[cfg(target_os = "macos")]
+        return window
+            .painted_backdrop_blurs()
+            .iter()
+            .find(|glass| glass.bounds == bounds)
+            .expect("button paints glass inside its bounds")
+            .tint;
+        #[cfg(not(target_os = "macos"))]
         window
             .painted_quads()
             .iter()
             .find(|quad| quad.bounds == bounds)
-            .expect("button paints its background inside its bounds")
+            .expect("button paints its fallback inside its bounds")
             .background
             .as_solid()
-            .expect("button uses a solid semantic background")
+            .expect("button fallback uses a solid semantic tint")
     }
 
     let (handle, view) = setup(cx, 960., false);

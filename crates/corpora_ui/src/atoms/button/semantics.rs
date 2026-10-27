@@ -1,19 +1,29 @@
 use gpui::{
     App, Bounds, Element, ElementId, GlobalElementId, InspectorElementId, IntoElement, LayoutId,
-    Pixels, Window, accesskit,
+    Pixels, Role, SharedString, Window, accesskit,
 };
 
 /// Kit's unstyled button gates activation but does not expose disabled or busy metadata.
 pub(super) struct ButtonSemantics<E> {
     inner: E,
+    label: SharedString,
+    role: Role,
     disabled: bool,
     busy: bool,
 }
 
 impl<E: Element> ButtonSemantics<E> {
-    pub(super) fn new(inner: E, disabled: bool, busy: bool) -> Self {
+    pub(super) fn new(
+        inner: E,
+        label: SharedString,
+        role: Role,
+        disabled: bool,
+        busy: bool,
+    ) -> Self {
         Self {
             inner,
+            label,
+            role,
             disabled,
             busy,
         }
@@ -71,10 +81,11 @@ impl<E: Element> Element for ButtonSemantics<E> {
             .paint(id, inspector, bounds, state, prepaint, window, cx);
     }
     fn a11y_role(&self) -> Option<accesskit::Role> {
-        self.inner.a11y_role()
+        Some(self.role)
     }
     fn write_a11y_info(&self, node: &mut accesskit::Node) {
         self.inner.write_a11y_info(node);
+        node.set_label(self.label.to_string());
         if self.disabled {
             node.set_disabled();
         }
