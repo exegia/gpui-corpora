@@ -44,9 +44,6 @@ fn direct_router_navigation_leaves_the_tab_layout_and_keeps_tab_state(cx: &mut T
     cx.run_until_parked();
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
-    })
-    .unwrap();
-    cx.update_window(handle, |_, window, cx| {
         let tab = view.read(cx).tabs.active().unwrap().path.clone();
         assert!(tab.starts_with(EMPTY_TAB_PREFIX));
         gpui_router::use_navigate(window, cx).push("/explore");
@@ -59,6 +56,34 @@ fn direct_router_navigation_leaves_the_tab_layout_and_keeps_tab_state(cx: &mut T
         window.render_frame(cx);
         assert_eq!(view.read(cx).tabs.active_id(), Some("/ui"));
         assert_eq!(view.read(cx).tabs.active().unwrap().path, "/ui/button");
+        assert!(
+            view.read(cx)
+                .tabs
+                .active()
+                .unwrap()
+                .state
+                .panels
+                .sidebar_visible
+        );
+    })
+    .unwrap();
+
+    cx.executor().advance_clock(Duration::from_millis(400));
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        assert!(window.try_find("workspace-sidebar").is_some());
+        assert!(window.try_find("sidebar-Breadcrumb").is_some());
+        assert!(window.try_find("sidebar-Button").is_some());
+        assert!(window.try_find("sidebar-Glass").is_some());
+        assert!(window.try_find("sidebar-Home").is_none());
+        view.update(cx, |view, cx| view.navigate("/ui/glass", cx));
+        window.render_frame(cx);
+    })
+    .unwrap();
+    cx.run_until_parked();
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).tabs.active().unwrap().path, "/ui/glass");
     })
     .unwrap();
 }
