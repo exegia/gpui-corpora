@@ -123,6 +123,76 @@ fn filled_and_outlined_variants_paint_glass(cx: &mut TestAppContext) {
     }
 }
 
+#[cfg(target_os = "macos")]
+#[gpui::test]
+fn pressed_glass_scales_down_about_the_center_and_restores(cx: &mut TestAppContext) {
+    fn glass_size(window: &Window) -> (f32, f32) {
+        let bounds = window.find("target").bounds().scale(window.scale_factor());
+        let blurs = window.painted_backdrop_blurs();
+        let glass = blurs
+            .iter()
+            .find(|glass| {
+                (glass.bounds.center().x.0 - bounds.center().x.0).abs() < 0.5
+                    && (glass.bounds.center().y.0 - bounds.center().y.0).abs() < 0.5
+                    && glass.bounds.size.width.0 <= bounds.size.width.0 + 0.5
+            })
+            .expect("button paints glass about its center");
+        (glass.bounds.size.width.0, glass.bounds.size.height.0)
+    }
+
+    let (handle, _view) = setup(cx, 960., false);
+    cx.executor().advance_clock(Duration::from_millis(400));
+    let (resting, center) = cx
+        .update_window(handle, |_, window, cx| {
+            window.render_frame(cx);
+            let bounds = window.find("target").bounds();
+            let scaled = bounds.scale(window.scale_factor());
+            assert_eq!(glass_size(window), (scaled.size.width.0, scaled.size.height.0));
+            window.hover("target", cx);
+            window.dispatch_event(
+                gpui::MouseDownEvent {
+                    button: MouseButton::Left,
+                    position: bounds.center(),
+                    modifiers: Default::default(),
+                    click_count: 1,
+                    first_mouse: false,
+                }
+                .to_platform_input(),
+                cx,
+            );
+            window.render_frame(cx);
+            (glass_size(window), bounds.center())
+        })
+        .unwrap();
+    cx.executor().advance_clock(Duration::from_millis(200));
+    let pressed = cx
+        .update_window(handle, |_, window, cx| {
+            window.render_frame(cx);
+            let pressed = glass_size(window);
+            assert!(pressed.0 < resting.0 && pressed.1 < resting.1, "{pressed:?} vs {resting:?}");
+            window.dispatch_event(
+                gpui::MouseUpEvent {
+                    button: MouseButton::Left,
+                    position: center,
+                    modifiers: Default::default(),
+                    click_count: 1,
+                }
+                .to_platform_input(),
+                cx,
+            );
+            window.render_frame(cx);
+            pressed
+        })
+        .unwrap();
+    cx.executor().advance_clock(Duration::from_millis(200));
+    cx.update_window(handle, |_, window, cx| {
+        window.render_frame(cx);
+        let released = glass_size(window);
+        assert!(released.0 > pressed.0 && released.1 > pressed.1, "{released:?} vs {pressed:?}");
+    })
+    .unwrap();
+}
+
 #[gpui::test]
 fn disabled_and_loading_buttons_reject_activation_and_tab_focus(cx: &mut TestAppContext) {
     let (handle, view) = setup(cx, 960., true);
@@ -301,7 +371,19 @@ fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppC
         return window
             .painted_backdrop_blurs()
             .iter()
-            .find(|glass| glass.bounds == bounds)
+            .find(|glass| {
+                // Pressed glass shrinks about the button's center.
+                let (gx, gy) = (glass.bounds.origin.x.0, glass.bounds.origin.y.0);
+                let (gw, gh) = (glass.bounds.size.width.0, glass.bounds.size.height.0);
+                let (x, y) = (bounds.origin.x.0, bounds.origin.y.0);
+                let (w, h) = (bounds.size.width.0, bounds.size.height.0);
+                gx >= x - 0.5
+                    && gy >= y - 0.5
+                    && gx + gw <= x + w + 0.5
+                    && gy + gh <= y + h + 0.5
+                    && gw >= w * 0.9
+                    && gh >= h * 0.9
+            })
             .expect("button paints glass inside its bounds")
             .tint;
         #[cfg(not(target_os = "macos"))]

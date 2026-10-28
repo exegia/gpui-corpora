@@ -1,8 +1,7 @@
 //! Glass surface wrapper adapted from Bezel's MIT-licensed `ui::surface` module.
 
 use gpui::{
-    AbsoluteLength, AnyElement, App, Bounds, Corners, Element, GlobalElementId, Hsla,
-    InspectorElementId, IntoElement, LayoutId, Pixels, Styled, Window, px,
+    AbsoluteLength, AnyElement, App, Bounds, Corners, Element, GlobalElementId, Hsla, InspectorElementId, IntoElement, LayoutId, Pixels, Styled, Window, px, transparent_black,
 };
 use gpui_agentation::ely::theme::{Mode, Palette};
 use crate::styles::{tokens::DefaultTheme};
@@ -43,19 +42,20 @@ impl GlassSpec {
     /// Glass for the default action, with a visible semantic tint.
     pub fn accent(mode: Mode, overrides: Option<GlassOverrides>) -> Self {
         let scheme: Palette = Self::theme(mode);
-        let tint = scheme.accent.alpha(0.580);
+        let tint = scheme.accent.alpha(0.8);
         let base = GlassSpec {
-            blur_radius: px(1.8),
-            lens: px(1.0),
+            blur_radius: px(0.8),
+            lens: px(10.0),
             magnify: 10.00,
             dispersion: 0.000,
-            gain_light: 0.149,
-            gain_dark: 0.149,
-            saturation: 1.38,
+            gain_light: 0.549,
+            gain_dark: 0.549,
+            saturation: 1.0,
+            reach: px(10.0),
             tint: Some(tint),
-            edge: 0.24,
-            edge_width: px(4.7),
-            edge_aa: px(0.5),
+            edge: 0.2,
+            edge_width: px(2.7),
+            edge_aa: px(0.8),
             ..GlassSpec::default()
         };
         Self::render(base, scheme.accent, overrides)
@@ -70,14 +70,15 @@ impl GlassSpec {
             magnify: 16.00,
             dispersion: 0.000,
             gain_light: 0.149,
+            tint: Some(scheme.overlay),
             gain_dark: 0.149,
-            saturation: 1.38,
+            saturation: 1.,
             edge: 0.27,
             edge_width: px(0.4),
             edge_aa: px(0.5),
             ..GlassSpec::default()
         };
-        Self::render(base, scheme.accent, overrides)
+        Self::render(base, transparent_black(), overrides)
     }
 
     /// Glass for a destructive action, with a visible danger tint and rim.
@@ -168,6 +169,7 @@ impl<E: Styled + IntoElement> GlassSurfaceExt for E {}
 pub struct GlassSurface {
     corners: Corners<AbsoluteLength>,
     spec: GlassSpec,
+    scale: f32,
     child: AnyElement,
 }
 
@@ -176,8 +178,16 @@ impl GlassSurface {
         Self {
             corners,
             spec,
+            scale: 1.,
             child: child.into_any_element(),
         }
+    }
+
+    /// Paints the glass scaled about its center. Layout, hit testing, and the
+    /// child subtree are unaffected.
+    pub fn scale(mut self, scale: f32) -> Self {
+        self.scale = scale;
+        self
     }
 
     fn resolved_corners(&self, bounds: Bounds<Pixels>, rem: Pixels) -> Corners<Pixels> {
@@ -235,9 +245,29 @@ impl Element for GlassSurface {
         window: &mut Window,
         cx: &mut App,
     ) {
-        let corners = self.resolved_corners(bounds, window.rem_size());
+        let mut corners = self.resolved_corners(bounds, window.rem_size());
+        let mut glass_bounds = bounds;
+        if self.scale != 1. {
+            let size = gpui::size(
+                bounds.size.width * self.scale,
+                bounds.size.height * self.scale,
+            );
+            glass_bounds = Bounds {
+                origin: gpui::point(
+                    bounds.origin.x + (bounds.size.width - size.width) / 2.,
+                    bounds.origin.y + (bounds.size.height - size.height) / 2.,
+                ),
+                size,
+            };
+            corners = Corners {
+                top_left: corners.top_left * self.scale,
+                top_right: corners.top_right * self.scale,
+                bottom_right: corners.bottom_right * self.scale,
+                bottom_left: corners.bottom_left * self.scale,
+            };
+        }
         window.paint_layer(bounds, |window| {
-            glass::paint(bounds, corners, self.spec, window, cx);
+            glass::paint(glass_bounds, corners, self.spec, window, cx);
             self.child.paint(window, cx);
         });
     }

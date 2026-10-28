@@ -86,6 +86,15 @@ fn surface(radius: Pixels, spec: GlassSpec) -> impl IntoElement {
     .size_full()
 }
 
+/// The tint a glass surface paints when its spec supplies none.
+pub(crate) fn neutral_tint(theme: &crate::ely::theme::Theme) -> Hsla {
+    theme.colors.on_media.opacity(if theme.is_dark() {
+        16. / 255.
+    } else {
+        18.8 / 255.
+    })
+}
+
 pub(super) fn paint(
     bounds: Bounds<Pixels>,
     corners: Corners<Pixels>,
@@ -94,12 +103,7 @@ pub(super) fn paint(
     cx: &mut App,
 ) {
     let dark = cx.theme().is_dark();
-    let tint = spec.tint.unwrap_or_else(|| {
-        cx.theme()
-            .colors
-            .on_media
-            .opacity(if dark { 16. / 255. } else { 18.8 / 255. })
-    });
+    let tint = spec.tint.unwrap_or_else(|| neutral_tint(cx.theme()));
 
     #[cfg(target_os = "macos")]
     {

@@ -1,7 +1,7 @@
 use crate::ely::theme::{Mix, Palette, Radius, Theme};
 use crate::styles::utils::ColorExt as _;
-use crate::ui::material::GlassSpec;
-use gpui::{Hsla, transparent_black};
+use crate::ui::material::{GlassOverrides, GlassSpec};
+use gpui::{Hsla, px, transparent_black};
 use gpui_agentation::ely::theme::Mode;
 
 /// A Button's visual treatment. Colors come from the active theme's semantic roles.
@@ -67,7 +67,8 @@ impl ButtonVariant {
     /// The variant's glass material. `tint` is the (animated) semantic color for
     /// the current pointer state. It is applied at the preset's tint strength;
     /// when the variant defines no tint (transparent), the preset's own tint stays.
-    pub(super) fn glass_spec(self, theme: &Theme, tint: Hsla) -> Option<GlassSpec> {
+    /// `engage` scales the tint and rim: above 1 on hover, below 1 while pressed.
+    pub(super) fn glass_spec(self, theme: &Theme, tint: Hsla, engage: f32) -> Option<GlassSpec> {
         let mode = if theme.is_dark() {
             Mode::Dark
         } else {
@@ -75,15 +76,37 @@ impl ButtonVariant {
         };
         let spec = match self {
             Self::Default => GlassSpec::accent(mode, None),
-            Self::Secondary | Self::Outline => GlassSpec::secondary(mode, None),
-            Self::Destructive | Self::DestructiveOutline => GlassSpec::destructive(mode, None),
+            Self::Secondary => GlassSpec::secondary(mode, Some(GlassOverrides {
+                 tint_opacity: Some(0.2),
+                 edge: Some(0.1),
+                ..Default::default()
+            })),
+            Self::Outline => GlassSpec::accent(mode, Some(GlassOverrides {
+                 tint_opacity: Some(0.05),
+                 edge: Some(0.5),
+                ..Default::default()
+            })),
+            Self::Destructive => GlassSpec::destructive(mode, None),
+            Self::DestructiveOutline => GlassSpec::destructive(mode, Some(GlassOverrides {
+                tint_opacity: Some(0.1),
+                edge: Some(0.5),
+                gain_dark: Some(1.),
+                edge_width: Some(px(2.)),
+                ..Default::default()
+            })),
             Self::Ghost | Self::Link => return None,
         };
+        let base = match spec.tint {
+            Some(preset) if tint.a > 0. => tint.opacity(preset.a),
+            Some(preset) => preset,
+            None => crate::ui::glass::neutral_tint(theme),
+        };
         Some(GlassSpec {
-            tint: match spec.tint {
-                Some(preset) if tint.a > 0. => Some(tint.opacity(preset.a)),
-                other => other,
-            },
+            tint: Some(Hsla {
+                a: (base.a * engage * 1.2).clamp(0., 1.),
+                ..base
+            }),
+            edge: spec.edge * engage,
             ..spec
         })
     }
@@ -149,13 +172,13 @@ impl ButtonVariant {
         match self {
             Self::Default => Colors {
                  // background: c.accent,
-                foreground: c.on_media,
+                foreground: c.bg,
                 // border: c.accent.alpha(0.),
                 // glass_tint: c.accent.alpha(0.),
                 ..base
             },
             Self::Secondary => Colors {
-                // background: c.surface,
+                 background: c.surface,
                 foreground: c.fg,
                 // border: c.border,
                 // glass_tint: c.surface,
@@ -201,6 +224,10 @@ pub(super) struct Colors {
     pub shadow: Hsla,
     pub bevel: Hsla,
     pub glass_tint: Hsla,
+    /// Glass strength multiplier: 1 at rest, higher on hover, lower while pressed.
+    pub engage: f32,
+    /// Opacity of a foreground-colored wash for variants with no glass.
+    pub highlight: f32,
 }
 
 impl Colors {
@@ -213,6 +240,8 @@ impl Colors {
             shadow: transparent_black(),
             bevel: transparent_black(),
             glass_tint: transparent_black(),
+            engage: 1.,
+            highlight: 0.,
         }
     }
 
@@ -225,9 +254,18 @@ impl Colors {
         } else {
             1.0
         };
+        let (engage, highlight) = if pressed {
+            (0.85, 0.14)
+        } else if hovered {
+            (1.3, 0.08)
+        } else {
+            (1., 0.)
+        };
         Self {
             background: self.background.opacity(fade),
             glass_tint: self.glass_tint.opacity(self.glass_tint.a * fade),
+            engage,
+            highlight,
             ..self
         }
     }
@@ -242,6 +280,8 @@ impl gpui_kit::base::motion::Interpolate for Colors {
             shadow: self.shadow.mix(&target.shadow, progress),
             bevel: self.bevel.mix(&target.bevel, progress),
             glass_tint: self.glass_tint.mix(&target.glass_tint, progress),
+            engage: self.engage + (target.engage - self.engage) * progress,
+            highlight: self.highlight + (target.highlight - self.highlight) * progress,
         }
     }
 }

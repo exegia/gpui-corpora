@@ -10,9 +10,7 @@ pub use size::ButtonSize;
 use std::time::Duration;
 
 use gpui::{
-    AnyElement, App, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton, ParentElement,
-    RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div, prelude::*, relative,
-    rems,
+    AnyElement, App, BoxShadow, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton, ParentElement, RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div, prelude::*, px, relative, rems,
 };
 use gpui_kit::{
     base::{
@@ -27,8 +25,7 @@ use crate::{
     ely::{
         primitives::IconName,
         theme::{ActiveTheme, Radius},
-    },
-    ui::material::GlassSurfaceExt as _,
+    }, styles::utils::ColorExt, ui::material::GlassSurfaceExt as _,
 };
 
 #[derive(Default)]
@@ -165,7 +162,9 @@ impl RenderOnce for Button {
             window,
             cx,
         );
-        let glass = self.variant.glass_spec(cx.theme(), colors.glass_tint);
+        let glass = self
+                    .variant
+                    .glass_spec(cx.theme(), colors.glass_tint, colors.engage);
         let height = transition(
             (self.id.clone(), "height"),
             metrics.height / 16.,
@@ -194,7 +193,7 @@ impl RenderOnce for Button {
         let scale = transition(
             (self.id.clone(), "press"),
             if pressed && !cx.reduce_motion() {
-                0.99_f32
+                0.97_f32
             } else {
                 1.
             },
@@ -205,7 +204,7 @@ impl RenderOnce for Button {
         let shape = self.shape.is_default();
         let radius = cx
             .theme()
-            .radius(if shape { Radius::Xl } else { Radius::Lg });
+            .radius(Radius::Xl);
         let rem = window.rem_size();
         let icon_scale = transition(
             (self.id.clone(), "icon-hover"),
@@ -257,7 +256,9 @@ impl RenderOnce for Button {
             .h(rems(height))
             .px(rems(padding))
             .gap(rems(metrics.gap / 16.))
-            // .bg(colors.background)
+            .when(self.variant == ButtonVariant::Ghost, |button| {
+                button.bg(colors.foreground.opacity(colors.highlight))
+            })
             .rounded(radius)
             .border_1()
             .border_color(colors.border)
@@ -312,6 +313,8 @@ impl RenderOnce for Button {
                     )
                     .children(content),
             )
+
+
             .when(self.size.is_icon() && self.loading, |button| {
                 button.child(div().absolute().child(spinner()))
             });
@@ -393,9 +396,10 @@ impl RenderOnce for Button {
             }
         });
         // Caller overrides win over the variant/size defaults set above.
-        button = button.refine_style(&self.style);
+        button = button
+         .refine_style(&self.style);
         let button = match glass {
-            Some(spec) => button.glass_with(spec).into_any_element(),
+            Some(spec) => button.glass_with(spec).scale(scale).into_any_element(),
             None => button.into_any_element(),
         };
         semantics::ButtonSemantics::new(
