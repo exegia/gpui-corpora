@@ -147,7 +147,10 @@ fn pressed_glass_scales_down_about_the_center_and_restores(cx: &mut TestAppConte
             window.render_frame(cx);
             let bounds = window.find("target").bounds();
             let scaled = bounds.scale(window.scale_factor());
-            assert_eq!(glass_size(window), (scaled.size.width.0, scaled.size.height.0));
+            assert_eq!(
+                glass_size(window),
+                (scaled.size.width.0, scaled.size.height.0)
+            );
             window.hover("target", cx);
             window.dispatch_event(
                 gpui::MouseDownEvent {
@@ -169,7 +172,10 @@ fn pressed_glass_scales_down_about_the_center_and_restores(cx: &mut TestAppConte
         .update_window(handle, |_, window, cx| {
             window.render_frame(cx);
             let pressed = glass_size(window);
-            assert!(pressed.0 < resting.0 && pressed.1 < resting.1, "{pressed:?} vs {resting:?}");
+            assert!(
+                pressed.0 < resting.0 && pressed.1 < resting.1,
+                "{pressed:?} vs {resting:?}"
+            );
             window.dispatch_event(
                 gpui::MouseUpEvent {
                     button: MouseButton::Left,
@@ -188,7 +194,10 @@ fn pressed_glass_scales_down_about_the_center_and_restores(cx: &mut TestAppConte
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
         let released = glass_size(window);
-        assert!(released.0 > pressed.0 && released.1 > pressed.1, "{released:?} vs {pressed:?}");
+        assert!(
+            released.0 > pressed.0 && released.1 > pressed.1,
+            "{released:?} vs {pressed:?}"
+        );
     })
     .unwrap();
 }
@@ -422,13 +431,12 @@ fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppC
     })
     .unwrap();
     cx.executor().advance_clock(Duration::from_millis(150));
-    let (resting, sibling, resting_background) = cx
+    let (resting, sibling) = cx
         .update_window(handle, |_, window, cx| {
             window.render_frame(cx);
             let resting = window.find("target").bounds();
             assert_eq!(resting.size.height, px(40.));
             let sibling = window.find("other").bounds();
-            let resting_background = background(window);
             window.hover("target", cx);
             window.dispatch_event(
                 gpui::MouseDownEvent {
@@ -442,7 +450,7 @@ fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppC
                 cx,
             );
             window.render_frame(cx);
-            (resting, sibling, resting_background)
+            (resting, sibling)
         })
         .unwrap();
     cx.executor().advance_clock(Duration::from_millis(150));
@@ -452,10 +460,7 @@ fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppC
             assert_eq!(window.find("target").bounds().size, resting.size);
             assert_eq!(window.find("other").bounds(), sibling);
             let pressed_background = background(window);
-            assert!(
-                pressed_background.a > 0. && pressed_background.a < resting_background.a,
-                "pressed {pressed_background:?}, resting {resting_background:?}",
-            );
+            assert!(pressed_background.a > 0., "pressed {pressed_background:?}",);
             window.dispatch_event(
                 gpui::MouseUpEvent {
                     button: MouseButton::Left,
@@ -473,7 +478,7 @@ fn resizing_and_press_feedback_preserve_the_surrounding_layout(cx: &mut TestAppC
     cx.executor().advance_clock(Duration::from_millis(150));
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
-        assert!(background(window).a > pressed_background.a);
+        assert_eq!(background(window), pressed_background);
         assert_eq!(window.find("target").bounds().size, resting.size);
         assert_eq!(window.find("other").bounds(), sibling);
     })
@@ -502,6 +507,86 @@ fn composed_icons_and_labels_stay_inside_the_button_box(cx: &mut TestAppContext)
                     content.left() >= root.left() && content.right() <= root.right(),
                     "{variant:?} {size:?}: {root:?} {content:?}"
                 );
+            })
+            .unwrap();
+        }
+    }
+}
+
+#[gpui::test]
+fn light_button_colors_match_figma_and_reach_the_glass(cx: &mut TestAppContext) {
+    let (handle, _) = setup(cx, 960., true);
+    cx.update_window(handle, |_, _, cx| {
+        crate::ely::theme::Theme::set_mode_now(crate::ely::theme::Mode::Light, cx);
+        let theme = cx.theme().clone();
+        for (variant, hex, alpha, foreground) in [
+            (ButtonVariant::Default, 0xffcc00, 0.95, 0x401600),
+            (ButtonVariant::Secondary, 0x1a1a1a, 0.87, 0xf1f1f1),
+            (ButtonVariant::Destructive, 0xe7000b, 0.83, 0xf1f1f1),
+            (ButtonVariant::DestructiveOutline, 0xae0000, 0.01, 0x7a0006),
+        ] {
+            let resting = variant.colors(&theme, false, false);
+            assert_eq!(
+                resting.glass_tint,
+                gpui::Hsla::from(gpui::rgb(hex)).opacity(alpha)
+            );
+            assert_eq!(resting.foreground, gpui::Hsla::from(gpui::rgb(foreground)));
+            let spec = variant
+                .glass_spec(&theme, resting.glass_tint, resting.engage)
+                .unwrap();
+            assert_eq!(spec.tint, Some(resting.glass_tint));
+            assert_eq!(spec.gain_light, 1. - alpha);
+            let hovered = variant.colors(&theme, true, false);
+            assert!(hovered == variant.colors(&theme, false, true));
+            assert!(hovered.glass_tint != resting.glass_tint);
+        }
+        let outline = ButtonVariant::Outline.colors(&theme, false, false);
+        assert_eq!(outline.border.a, 0.16);
+        assert_eq!(
+            ButtonVariant::Outline.colors(&theme, true, false).border.a,
+            0.41
+        );
+        assert_eq!(
+            ButtonVariant::Ghost
+                .colors(&theme, true, false)
+                .background
+                .a,
+            0.42
+        );
+    })
+    .unwrap();
+}
+
+#[gpui::test]
+fn icon_only_buttons_center_content_at_every_size(cx: &mut TestAppContext) {
+    let (handle, view) = setup(cx, 960., true);
+    for size in ButtonSize::ALL.into_iter().filter(|size| size.is_icon()) {
+        for loading in [false, true] {
+            cx.update_window(handle, |_, window, cx| {
+                view.update(cx, |view, cx| {
+                    view.size = size;
+                    view.loading = loading;
+                    cx.notify();
+                });
+                window.render_frame(cx);
+                let root = window.find("target").bounds();
+                let content = window.find((ElementId::from("target"), "content")).bounds();
+                assert_eq!(root.size.width, root.size.height, "{size:?}");
+                assert!(
+                    (content.center().x - root.center().x).abs() < px(0.1),
+                    "{size:?}"
+                );
+                assert!(
+                    (content.center().y - root.center().y).abs() < px(0.1),
+                    "{size:?}"
+                );
+                #[cfg(target_os = "macos")]
+                {
+                    let bounds = root.scale(window.scale_factor());
+                    let blurs = window.painted_backdrop_blurs();
+                    let glass = blurs.iter().find(|glass| glass.bounds == bounds).unwrap();
+                    assert_eq!(glass.corner_radii.top_left, bounds.size.height / 2.);
+                }
             })
             .unwrap();
         }

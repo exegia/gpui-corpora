@@ -53,7 +53,7 @@ pub(super) fn activity(
             })
             .child(
                 Icon::new(icon)
-                    .size(IconSize::Lg)
+                    .size(IconSize::Xl)
                     .color(color)
                     .group_hover_color(group, if is_selected { color } else { colors.fg }),
             )
@@ -88,7 +88,7 @@ pub(super) fn activity(
         .justify_between()
         .w(side)
         .h_full()
-        .py_1()
+        .pb_1()
         .child(
             div()
                 .flex()
