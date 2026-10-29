@@ -10,7 +10,7 @@ pub use size::ButtonSize;
 use std::time::Duration;
 
 use gpui::{
-    AnyElement, App, BoxShadow, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton, ParentElement, RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div, prelude::*, px, relative, rems,
+    AnyElement, App, ClickEvent, ElementId, FocusHandle, IntoElement, MouseButton, ParentElement, RenderOnce, Role, SharedString, StyleRefinement, Styled, Window, div, prelude::*, relative, rems,
 };
 use gpui_kit::{
     base::{
@@ -25,7 +25,7 @@ use crate::{
     ely::{
         primitives::IconName,
         theme::{ActiveTheme, Radius},
-    }, styles::utils::ColorExt, ui::material::GlassSurfaceExt as _,
+    }, ui::material::GlassSurfaceExt as _,
 };
 
 #[derive(Default)]
@@ -260,8 +260,8 @@ impl RenderOnce for Button {
                 button.bg(colors.foreground.opacity(colors.highlight))
             })
             .rounded(radius)
-            .border_1()
-            .border_color(colors.border)
+            // .border_1()
+            // .border_color(colors.border)
             .when(!inline_link, |button| {
                 button.border_1().border_color(colors.border.alpha(0.))
             })

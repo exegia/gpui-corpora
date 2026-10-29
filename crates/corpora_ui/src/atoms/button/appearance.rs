@@ -77,8 +77,10 @@ impl ButtonVariant {
         let spec = match self {
             Self::Default => GlassSpec::accent(mode, None),
             Self::Secondary => GlassSpec::secondary(mode, Some(GlassOverrides {
-                 tint_opacity: Some(0.2),
-                 edge: Some(0.1),
+                tint: Some(tint.lighten(0.2)),
+                blur_radius: Some(px(1.)),
+                tint_opacity: Some(0.2),
+                edge: Some(0.1),
                 ..Default::default()
             })),
             Self::Outline => GlassSpec::accent(mode, Some(GlassOverrides {
@@ -102,10 +104,10 @@ impl ButtonVariant {
             None => crate::ui::glass::neutral_tint(theme),
         };
         Some(GlassSpec {
-            tint: Some(Hsla {
-                a: (base.a * engage * 1.2).clamp(0., 1.),
-                ..base
-            }),
+            // tint: Some(Hsla {
+            //     a: (base.a * engage * 1.2).clamp(0., 1.),
+            //     ..base
+            // }),
             edge: spec.edge * engage,
             ..spec
         })
@@ -178,10 +180,10 @@ impl ButtonVariant {
                 ..base
             },
             Self::Secondary => Colors {
-                 background: c.surface,
+                 background: c.surface.alpha(0.5),
                 foreground: c.fg,
                 // border: c.border,
-                // glass_tint: c.surface,
+                 glass_tint: c.surface.alpha(0.5),
                 ..base
             },
             Self::Destructive => Colors {
