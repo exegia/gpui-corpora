@@ -70,7 +70,7 @@ impl GlassSpec {
             magnify: 16.00,
             dispersion: 0.000,
             gain_light: 0.149,
-            tint: Some(scheme.overlay),
+            tint: Some(scheme.sunken),
             gain_dark: 0.149,
             saturation: 1.,
             edge: 0.27,
@@ -99,7 +99,7 @@ impl GlassSpec {
             edge_aa: px(0.5),
             ..GlassSpec::default()
         };
-        Self::render(base, scheme.danger, overrides)
+        Self::render(base, scheme.danger.alpha(0.580), overrides)
     }
 
     /// Applies any provided overrides on top of a preset's `base` spec.
