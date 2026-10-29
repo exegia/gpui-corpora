@@ -164,6 +164,7 @@ pub(super) fn layout(
     } else {
         selected
     };
+    let sidebar_radius = cx.theme().radius(corpora_ui::ely::theme::Radius::Xl);
     let sidebar_content = div()
         .id(format!("{}-sidebar-content", tab.id))
         .size_full()
@@ -201,7 +202,10 @@ pub(super) fn layout(
                         .on_click(move |_, _, cx| {
                             owner.update(cx, |state, cx| state.navigate(path, cx)).ok();
                         }),
-                    StyleRefinement::default().justify_start(),
+                    // Match the corpora_ui Button atom's corners.
+                    StyleRefinement::default()
+                        .justify_start()
+                        .rounded(sidebar_radius),
                     window,
                     cx,
                 ))

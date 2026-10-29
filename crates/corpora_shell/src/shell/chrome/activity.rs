@@ -27,7 +27,7 @@ pub(super) fn activity(
     let theme = cx.theme();
     let colors = &theme.colors;
     let side = theme.rail_width();
-    let mark = theme.icon_size(IconSize::Lg);
+    let mark = theme.icon_size(IconSize::Xl);
     let grow = motion::duration(motion::BASE, cx);
     let entry = |(path, icon, label): (&'static str, IconName, &'static str)| {
         let is_selected = selected == path;
@@ -53,7 +53,7 @@ pub(super) fn activity(
             })
             .child(
                 Icon::new(icon)
-                    .size(IconSize::Xl)
+                    .size(IconSize::Lg)
                     .color(color)
                     .group_hover_color(group, if is_selected { color } else { colors.fg }),
             )
@@ -103,9 +103,10 @@ pub(super) fn activity(
                         .items_center()
                         .justify_center()
                         .child(
-                            super::brand::logo(cx)
-                                .size(mark)
-                                .object_fit(gpui::ObjectFit::Contain),
+                            super::brand::logo()
+                                .flex_none()
+                                .size(mark * 1.2)
+                                .text_color(colors.fg),
                         ),
                 )
                 .children(ITEMS.map(entry)),

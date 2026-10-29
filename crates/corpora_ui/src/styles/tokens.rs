@@ -58,7 +58,7 @@ pub fn sync_kit_theme(cx: &mut App) {
         };
         theme.colors = crate::styles::kit::colors(mode);
         theme.highlight_theme = std::sync::Arc::new(crate::styles::kit::highlight(mode));
-        theme.transparent = crate::styles::palette::color("shadow", mode).opacity(0.0);
+        theme.transparent = crate::styles::palette::color("shadow", mode).opacity(0.1);
         theme.focus_ring = false;
     });
 }

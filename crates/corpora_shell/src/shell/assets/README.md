@@ -12,10 +12,13 @@ Regenerate the platform app icons on macOS:
 python3 scripts/export-brand-assets.py
 ```
 
-The dev app uses `light.icns`. Set `CORPORA_ICON_VARIANT=dark` when running
-`just mac` to choose the dark variant. The earlier beta icon remains available
-with `CORPORA_ICON_VARIANT=beta`. `corpora.icns`, `corpora.ico`, and the Linux
-hicolor PNGs use the light artwork.
+The dev app uses `app-icon/Corpora.icon`, the Icon Composer source for the
+macOS 26 glass, dark, and tinted icon. `scripts/macos-dev-app.sh` compiles it
+with `actool` (Xcode 26+) into `Assets.car` and a fallback `Corpora.icns`, and
+sets `CFBundleIconName` to `Corpora`. If `actool` fails, it falls back to
+`light.icns`. Set `CORPORA_ICON_VARIANT=light`, `dark`, or `beta` when running
+`just mac` to use a flat `.icns` instead. `corpora.icns`, `corpora.ico`, and the
+Linux hicolor PNGs use the light artwork.
 
 The startup splash retains Ely's title, tagline, status, progress, and entrance
 animation. Only its placeholder mark is replaced by the approved icon.

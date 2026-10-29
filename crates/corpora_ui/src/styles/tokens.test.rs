@@ -5,8 +5,8 @@ use crate::styles::palette::resolve;
 fn palettes_keep_custom_backgrounds_and_accents() {
     let theme = DefaultTheme::new();
     assert_eq!(theme.light.bg, resolve("slate.200"));
-    assert_eq!(theme.light.accent, resolve("amber.500"));
-    assert_eq!(theme.dark.accent, resolve("amber.300"));
+    assert_eq!(theme.light.accent, resolve("indigo.600"));
+    assert_eq!(theme.dark.accent, resolve("indigo.300"));
     assert_eq!(theme.dark.bg, resolve("neutral.800"));
     assert_eq!(theme.dark.syntax.keyword, resolve("#c28b12"));
 }

@@ -19,7 +19,7 @@ mod panels;
 mod style_chrome;
 mod tabs;
 
-pub use brand::{logo, logo_image, register_brand_fonts};
+pub use brand::{LOGO_SVG, logo, register_brand_fonts};
 pub use frame::frame;
 pub(super) use style_chrome::style_chrome;
 

@@ -1,0 +1,284 @@
+{
+  "features" : [
+    "refractivity",
+    "specular-location"
+  ],
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.19295,0.10592,0.38626,1.00000",
+      "display-p3:0.11607,0.09882,0.69856,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 1
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0
+      }
+    }
+  },
+  "groups" : [
+    {
+      "blend-mode" : "plus-lighter",
+      "blur-material" : null,
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "linear-gradient" : [
+              "gray:1.00000,1.00000",
+              "gray:0.83847,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.7453244220958055,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 1
+              }
+            }
+          },
+          "hidden" : true,
+          "image-name" : "Foreground 2.png",
+          "name" : "Foreground 2",
+          "opacity" : 1,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -37.32000000000005,
+              -11.999999999999943
+            ]
+          }
+        },
+        {
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:0.70557,1.00000,0.87518,1.00000",
+                  "display-p3:1.00000,1.00000,1.00000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:0.21958,0.38083,0.94626,1.00000",
+                  "display-p3:0.43949,0.39516,1.00000,1.00000"
+                ]
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : "automatic"
+            }
+          ],
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "corpora.svg",
+          "name" : "corpora",
+          "opacity-specializations" : [
+            {
+              "value" : 1
+            },
+            {
+              "appearance" : "tinted",
+              "value" : 0.7
+            }
+          ],
+          "position" : {
+            "scale" : 2.7,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "name" : "beta",
+      "refractivity" : {
+        "depth" : 0.1812109375,
+        "enabled" : true,
+        "strength" : 0.8808984375
+      },
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.060000000000000234
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.53
+      }
+    },
+    {
+      "blend-mode" : "plus-lighter",
+      "blur-material" : null,
+      "layers" : [
+        {
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "circle.svg",
+          "name" : "circle",
+          "opacity" : 0.14,
+          "position" : {
+            "scale" : 3,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "name" : "default",
+      "refractivity" : {
+        "depth" : 1,
+        "enabled" : true,
+        "strength" : -0.382734375
+      },
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "specular" : "inside",
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.3
+      }
+    },
+    {
+      "blend-mode" : "normal",
+      "blur-material" : null,
+      "hidden" : false,
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "srgb:0.00000,0.00000,0.10085,1.00000"
+          },
+          "hidden" : true,
+          "image-name" : "grid.png",
+          "name" : "grid",
+          "opacity" : 0.05,
+          "position" : {
+            "scale" : 3,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+          },
+          "hidden" : true,
+          "image-name" : "corpora-back 2.png",
+          "name" : "corpora-back 2",
+          "opacity" : 0.8,
+          "position" : {
+            "scale" : 0.9,
+            "translation-in-points" : [
+              -180.075,
+              0
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00039,0.73997,0.28775,1.00000",
+              "srgb:1.00000,0.51744,0.00000,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5470776125095347,
+                "y" : 0.1433155608214849
+              },
+              "stop" : {
+                "x" : 0.5883322436526098,
+                "y" : 1
+              }
+            }
+          },
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "Foreground 2.png",
+          "name" : "Foreground 2",
+          "position" : {
+            "scale" : 0.95,
+            "translation-in-points" : [
+              -168,
+              0
+            ]
+          }
+        },
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.47939,0.49256,0.81471,1.00000",
+              "display-p3:0.25112,0.16809,0.80588,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.8344314967834959,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0,
+                "y" : 1
+              }
+            }
+          },
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "Foreground 2.png",
+          "name" : "Foreground 2",
+          "position" : {
+            "scale" : 1.1199999999999999,
+            "translation-in-points" : [
+              -18,
+              -12
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "name" : "prod",
+      "position" : {
+        "scale" : 1.07,
+        "translation-in-points" : [
+          0,
+          0
+        ]
+      },
+      "refractivity" : {
+        "depth" : 0.4277734375,
+        "enabled" : false,
+        "strength" : -0.6133984375
+      },
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

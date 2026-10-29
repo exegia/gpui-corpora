@@ -481,7 +481,7 @@ fn tab_atom_keeps_selection_stable_and_keyboard_activation_routes(cx: &mut TestA
         assert_eq!(tab.selected(), Some(true));
         #[cfg(target_os = "macos")]
         assert!(window.painted_backdrop_blurs().iter().any(|glass| {
-            glass.bounds == bounds.scale(window.scale_factor()) && glass.magnify > 1.3
+            glass.bounds == bounds.scale(window.scale_factor()) && glass.blur_radius.0 > 0.
         }));
         window.within("workspace-tabs").click(0usize, cx);
         view.update(cx, |view, cx| view.navigate("/projects", cx));

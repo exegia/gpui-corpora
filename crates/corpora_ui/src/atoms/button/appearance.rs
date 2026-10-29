@@ -120,13 +120,11 @@ impl ButtonVariant {
         let (tint, foreground, border) = match self {
             Self::Default => (
                 if active {
-                    color(0xffcc00, 1.)
-                        .mix(&color(0xffb700, 1.), 0.61 / (0.61 + 0.67 * 0.39))
-                        .opacity(0.61 + 0.67 * 0.39)
+                    c.accent_hover.opacity(0.61 + 0.67 * 0.39)
                 } else {
-                    color(0xffcc00, 0.95)
+                    c.accent.opacity(0.95)
                 },
-                color(0x401600, 1.),
+                c.on_accent,
                 transparent_black(),
             ),
             Self::Secondary => (

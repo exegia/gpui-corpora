@@ -68,18 +68,18 @@ dark = "neutral.600"
 # Accent and the content that sits on top of it.
 [colors.accent]
 description = "Primary accent for emphasis and active controls."
-light = "amber.500"
-dark = "amber.300"
+light = "indigo.600"
+dark = "indigo.300"
 
 [colors.accent-hover]
 description = "Accent under the pointer."
-light = "amber.600"
-dark = "amber.200"
+light = "indigo.500"
+dark = "indigo.200"
 
 [colors.on-accent]
 description = "Text and icons placed on an accent fill."
-light = "amber.950"
-dark = "amber.950"
+light = "white"
+dark = "neutral.950"
 
 # Status colors and their tinted backgrounds.
 [colors.success]
@@ -125,18 +125,18 @@ dark = "sky.950"
 # Interaction cues.
 [colors.focus]
 description = "Focus ring on keyboard-focused controls."
-light = "amber.500"
-dark = "amber.300"
+light = "indigo.600"
+dark = "indigo.300"
 
 [colors.link]
 description = "Hyperlinks and inline navigation."
-light = "amber.800"
-dark = "amber.300"
+light = "indigo.700"
+dark = "indigo.300"
 
 [colors.selection]
 description = "Highlight behind selected text."
-light = "amber.200"
-dark = "amber.900"
+light = "indigo.200"
+dark = "indigo.900"
 
 
 # Material, inverse text, and document colors.

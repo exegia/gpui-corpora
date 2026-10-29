@@ -158,7 +158,7 @@ fn horizontal_tabs_render_glass_and_close_the_requested_item(cx: &mut TestAppCon
             window
                 .painted_backdrop_blurs()
                 .iter()
-                .any(|glass| glass.bounds == bounds && glass.magnify > 1.3)
+                .any(|glass| glass.bounds == bounds && glass.blur_radius.0 > 0.)
         );
 
         let close_id = (ElementId::from("horizontal-tabs"), "close-1");

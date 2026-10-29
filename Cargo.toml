@@ -91,15 +91,21 @@ notify-rust = "4.17.0"
 objc2 = { version = "0.6", features = ["exception"] }
 objc2-app-kit = { version = "0.3", default-features = false, features = [
     "NSAppearance",
+    "NSApplication",
     "NSGraphics",
+    "NSImage",
     "NSResponder",
     "NSView",
     "NSVisualEffectView",
+    "NSWindow",
     "std",
 ] }
 objc2-foundation = { version = "0.3.0", default-features = false, features = [
+    "NSArray",
     "NSBundle",
+    "NSData",
     "NSError",
+    "NSGeometry",
     "NSString",
     "std",
 ] }

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use corpora_ui::ely::{
     motion::{self, ProgressBar},
     primitives::FocusScope,
@@ -7,15 +5,13 @@ use corpora_ui::ely::{
     typography::{Caption, Title},
 };
 use gpui_kit::{
-    Animation, AnimationExt, App, AppContext, Bounds, Context, FocusHandle, Image, ObjectFit,
-    ParentElement, Render, Styled, StyledImage, Window, WindowBounds, WindowHandle, WindowOptions,
-    div, img, relative,
+    Animation, AnimationExt, App, AppContext, Bounds, Context, FocusHandle, ParentElement, Render,
+    Styled, Window, WindowBounds, WindowHandle, WindowOptions, div, relative,
 };
 
-use corpora_shell::shell::logo_image;
+use corpora_shell::shell::logo;
 
 pub(super) struct SplashArtwork {
-    image: Arc<Image>,
     focus: FocusHandle,
 }
 
@@ -42,9 +38,10 @@ impl Render for SplashArtwork {
                     .items_center()
                     .gap_3()
                     .child(
-                        img(self.image.clone())
+                        logo()
+                            .flex_none()
                             .size(theme.control_height(ControlSize::Lg) * 2.0)
-                            .object_fit(ObjectFit::Contain),
+                            .text_color(theme.colors.fg),
                     )
                     .child(
                         div()
@@ -86,7 +83,6 @@ impl Render for SplashArtwork {
 }
 
 pub(super) fn open(cx: &mut App) -> anyhow::Result<WindowHandle<SplashArtwork>> {
-    let image = logo_image(cx);
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
             None,
@@ -102,6 +98,6 @@ pub(super) fn open(cx: &mut App) -> anyhow::Result<WindowHandle<SplashArtwork>> 
     cx.open_window(options, |window, cx| {
         let focus = cx.focus_handle();
         window.focus(&focus, cx);
-        cx.new(|_| SplashArtwork { image, focus })
+        cx.new(|_| SplashArtwork { focus })
     })
 }

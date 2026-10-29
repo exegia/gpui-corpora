@@ -16,12 +16,12 @@ fn resolves_a_scale_step_through_oklch() {
 #[test]
 fn build_maps_roles_onto_palette_fields() {
     let light = build(Mode::Light);
-    assert_eq!(light.accent, resolve("amber.500"));
+    assert_eq!(light.accent, resolve("indigo.600"));
     assert_eq!(light.bg, resolve("slate.200"));
     assert_eq!(light.fg, resolve("neutral.950"));
 
     let dark = build(Mode::Dark);
-    assert_eq!(dark.accent, resolve("amber.300"));
+    assert_eq!(dark.accent, resolve("indigo.300"));
     assert_eq!(dark.syntax.keyword, resolve("#c28b12"));
 }
 

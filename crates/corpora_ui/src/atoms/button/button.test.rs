@@ -517,20 +517,21 @@ fn composed_icons_and_labels_stay_inside_the_button_box(cx: &mut TestAppContext)
 fn light_button_colors_match_figma_and_reach_the_glass(cx: &mut TestAppContext) {
     let (handle, _) = setup(cx, 960., true);
     cx.update_window(handle, |_, _, cx| {
+        let palette = crate::styles::tokens::DefaultTheme::new().light;
+        crate::styles::tokens::DefaultTheme::new().install(cx);
         crate::ely::theme::Theme::set_mode_now(crate::ely::theme::Mode::Light, cx);
         let theme = cx.theme().clone();
-        for (variant, hex, alpha, foreground) in [
-            (ButtonVariant::Default, 0xffcc00, 0.95, 0x401600),
-            (ButtonVariant::Secondary, 0x1a1a1a, 0.87, 0xf1f1f1),
-            (ButtonVariant::Destructive, 0xe7000b, 0.83, 0xf1f1f1),
-            (ButtonVariant::DestructiveOutline, 0xae0000, 0.01, 0x7a0006),
+        let rgb = |hex| gpui::Hsla::from(gpui::rgb(hex));
+        for (variant, tint, alpha, foreground) in [
+            // Default follows the theme's accent roles, not fixed hex values.
+            (ButtonVariant::Default, palette.accent, 0.95, palette.on_accent),
+            (ButtonVariant::Secondary, rgb(0x1a1a1a), 0.87, rgb(0xf1f1f1)),
+            (ButtonVariant::Destructive, rgb(0xe7000b), 0.83, rgb(0xf1f1f1)),
+            (ButtonVariant::DestructiveOutline, rgb(0xae0000), 0.01, rgb(0x7a0006)),
         ] {
             let resting = variant.colors(&theme, false, false);
-            assert_eq!(
-                resting.glass_tint,
-                gpui::Hsla::from(gpui::rgb(hex)).opacity(alpha)
-            );
-            assert_eq!(resting.foreground, gpui::Hsla::from(gpui::rgb(foreground)));
+            assert_eq!(resting.glass_tint, tint.opacity(alpha));
+            assert_eq!(resting.foreground, foreground);
             let spec = variant
                 .glass_spec(&theme, resting.glass_tint, resting.engage)
                 .unwrap();

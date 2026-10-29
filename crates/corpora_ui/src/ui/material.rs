@@ -4,7 +4,7 @@ use gpui::{
     AbsoluteLength, AnyElement, App, Bounds, Corners, Element, GlobalElementId, Hsla, InspectorElementId, IntoElement, LayoutId, Pixels, Styled, Window, px, transparent_black,
 };
 use gpui_agentation::ely::theme::{Mode, Palette};
-use crate::styles::{tokens::DefaultTheme};
+use crate::styles::{tokens::DefaultTheme, palette::color};
 
 use super::glass;
 
@@ -32,7 +32,7 @@ pub struct GlassOverrides {
 
 impl GlassSpec {
     fn theme(mode: Mode) -> Palette {
-        let default = DefaultTheme::default();
+        let default = DefaultTheme::new();
         match mode {
             Mode::Light => default.light,
             Mode::Dark => default.dark,
@@ -41,8 +41,7 @@ impl GlassSpec {
 
     /// Glass for the default action, with a visible semantic tint.
     pub fn accent(mode: Mode, overrides: Option<GlassOverrides>) -> Self {
-        let scheme: Palette = Self::theme(mode);
-        let tint = scheme.accent.alpha(0.8);
+        let tint = color("accent", mode).alpha(0.8);
         let base = GlassSpec {
             blur_radius: px(0.8),
             lens: px(10.0),
@@ -58,7 +57,7 @@ impl GlassSpec {
             edge_aa: px(0.8),
             ..GlassSpec::default()
         };
-        Self::render(base, scheme.accent, overrides)
+        Self::render(base, color("accent", mode), overrides)
     }
 
     /// Glass for a secondary action, with a quieter semantic tint.

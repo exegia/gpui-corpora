@@ -38,7 +38,7 @@ use crate::{
 
 pub(crate) use chrome::TITLEBAR_PADDING;
 pub use chrome::frame;
-pub use chrome::{logo, logo_image, register_brand_fonts};
+pub use chrome::{LOGO_SVG, logo, register_brand_fonts};
 pub use frame_time::last_frame_time_us;
 
 mod command_value;

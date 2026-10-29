@@ -52,6 +52,9 @@ pub mod platform {
     pub(crate) use corpora_platform::platform::*;
 
     pub mod input;
+    mod tray_icon;
+
+    pub use tray_icon::{apply_tray_icon, tray_icon_png};
 }
 
 pub mod services {
