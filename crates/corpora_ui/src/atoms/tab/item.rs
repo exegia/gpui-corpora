@@ -16,9 +16,7 @@ use gpui_kit::{
 };
 
 use super::{
-    appearance::{
-        VERTICAL_TAB_LABEL_SIZE, VERTICAL_TAB_RADIUS, content_color, glass_spec,
-    },
+    appearance::{VERTICAL_TAB_LABEL_SIZE, VERTICAL_TAB_RADIUS, content_color, glass_spec},
     semantics::{Tab, TabHandler, TabVariant},
     size::{VERTICAL_TAB_HEIGHT, VERTICAL_TAB_WIDTH},
 };

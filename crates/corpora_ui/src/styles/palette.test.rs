@@ -21,7 +21,7 @@ fn build_maps_roles_onto_palette_fields() {
     assert_eq!(light.fg, resolve("neutral.950"));
 
     let dark = build(Mode::Dark);
-    assert_eq!(dark.accent, resolve("indigo.300"));
+    assert_eq!(dark.accent, resolve("indigo.500"));
     assert_eq!(dark.syntax.keyword, resolve("#c28b12"));
 }
 

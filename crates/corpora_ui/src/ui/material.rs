@@ -56,7 +56,6 @@ impl GlassSpec {
             edge: 0.2,
             edge_width: px(2.7),
             edge_aa: px(0.8),
-            ..GlassSpec::default()
         };
         Self::render(base, color("accent", mode), overrides)
     }

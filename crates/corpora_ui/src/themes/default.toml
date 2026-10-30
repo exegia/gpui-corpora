@@ -79,7 +79,7 @@ dark = "indigo.400"
 [colors.on-accent]
 description = "Text and icons placed on an accent fill."
 light = "white"
-dark = "neutral.950"
+dark = "black"
 
 # Status colors and their tinted backgrounds.
 [colors.success]

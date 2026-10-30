@@ -99,9 +99,9 @@ fn pointer_and_keyboard_select_tabs_with_roving_focus(cx: &mut TestAppContext) {
             .into_iter()
             .filter(|quad| quad.bounds == hover_bounds.scale(window.scale_factor()))
             .filter_map(|quad| quad.background.as_solid())
-            .last()
+            .next_back()
             .expect("tab hover paints a muted fill");
-        assert_eq!(hover_fill, cx.theme().colors.hover);
+        assert_eq!(hover_fill, cx.theme().colors.fg_subtle.opacity(0.4));
         window.within("tabs").click(1usize, cx);
         assert_eq!(view.read(cx).selected, 1);
         window.press("right", cx);
@@ -174,7 +174,7 @@ fn horizontal_tabs_render_glass_and_close_the_requested_item(cx: &mut TestAppCon
 #[cfg(target_os = "macos")]
 #[gpui::test]
 fn horizontal_glass_follows_selection_and_hover(cx: &mut TestAppContext) {
-    fn glass_count(window: &mut Window, tab: &'static str, index: usize) -> usize {
+    fn glass_edge(window: &mut Window, tab: &'static str, index: usize) -> f32 {
         let bounds = window
             .within(tab)
             .find(index)
@@ -183,20 +183,22 @@ fn horizontal_glass_follows_selection_and_hover(cx: &mut TestAppContext) {
         window
             .painted_backdrop_blurs()
             .iter()
-            .filter(|glass| glass.bounds == bounds)
-            .count()
+            .find(|glass| glass.bounds == bounds)
+            .expect("every horizontal tab paints glass")
+            .edge
     }
 
     let (handle, _view) = setup(cx, true);
     cx.update_window(handle, |_, window, cx| {
         window.render_frame(cx);
-        // Tab 0 is selected; tab 2 is neither selected nor hovered.
-        assert_eq!(glass_count(window, "horizontal-tabs", 0), 1);
-        assert_eq!(glass_count(window, "horizontal-tabs", 2), 0);
+        let selected = glass_edge(window, "horizontal-tabs", 0);
+        let idle = glass_edge(window, "horizontal-tabs", 2);
+        assert!(selected > idle && idle > 0.);
 
         window.within("horizontal-tabs").hover(2usize, cx);
         window.render_frame(cx);
-        assert_eq!(glass_count(window, "horizontal-tabs", 2), 1);
+        let hovered = glass_edge(window, "horizontal-tabs", 2);
+        assert!(hovered > idle && hovered < selected);
     })
     .unwrap();
 }

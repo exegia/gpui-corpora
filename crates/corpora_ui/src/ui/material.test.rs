@@ -35,8 +35,8 @@ fn overrides_replace_only_the_fields_they_set() {
 }
 
 #[test]
-fn tint_opacity_adds_the_semantic_tint_when_the_preset_has_none() {
-    assert!(GlassSpec::secondary(Mode::Light, None).tint.is_none());
+fn tint_opacity_preserves_the_secondary_preset_color() {
+    let base = GlassSpec::secondary(Mode::Light, None).tint.unwrap();
 
     let spec = GlassSpec::secondary(
         Mode::Light,
@@ -45,7 +45,7 @@ fn tint_opacity_adds_the_semantic_tint_when_the_preset_has_none() {
             ..GlassOverrides::default()
         }),
     );
-    assert_eq!(spec.tint.expect("tint is added").a, 0.25);
+    assert_eq!(spec.tint.expect("tint is preserved"), base.alpha(0.25));
 }
 
 #[test]

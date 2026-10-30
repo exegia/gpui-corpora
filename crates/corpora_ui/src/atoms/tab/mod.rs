@@ -20,7 +20,7 @@ use gpui_kit::base::{
 
 use crate::ui::glass;
 
-use appearance::{VERTICAL_TAB_RADIUS, HORIZONTAL_TAB_GAP};
+use appearance::{HORIZONTAL_TAB_GAP, VERTICAL_TAB_RADIUS};
 use item::TabItem;
 use size::{VERTICAL_TAB_GAP, VERTICAL_TAB_HEIGHT, VERTICAL_TAB_WIDTH};
 
@@ -129,9 +129,7 @@ impl RenderOnce for Tabs {
             .when(vertical, |list| {
                 list.gap(px(VERTICAL_TAB_GAP)).h(px(VERTICAL_TAB_HEIGHT))
             })
-            .when(!vertical, |list| {
-                list.gap(px(HORIZONTAL_TAB_GAP))
-            });
+            .when(!vertical, |list| list.gap(px(HORIZONTAL_TAB_GAP)));
 
         if vertical && count > 0 && selected.is_some() {
             list = list.child(
@@ -150,8 +148,7 @@ impl RenderOnce for Tabs {
 
         let focuses = Rc::new(focuses);
         for (index, item) in items.into_iter().enumerate() {
-            list = list
-                .child(TabItem {
+            list = list.child(TabItem {
                 id: id.clone(),
                 index,
                 count,

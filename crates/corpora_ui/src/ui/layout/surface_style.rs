@@ -13,7 +13,11 @@ pub(super) fn style(colors: &Palette, dark: bool, flush_right: bool) -> StyleRef
     };
     let style = StyleRefinement::default();
     let style = if flush_right {
-        style.rounded_tr_none().rounded_br_none().rounded_tl_xl().rounded_bl_xl()
+        style
+            .rounded_tr_none()
+            .rounded_br_none()
+            .rounded_tl_xl()
+            .rounded_bl_xl()
     } else {
         style.rounded_xl()
     };

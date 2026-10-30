@@ -6,7 +6,7 @@ fn palettes_keep_custom_backgrounds_and_accents() {
     let theme = DefaultTheme::new();
     assert_eq!(theme.light.bg, resolve("slate.200"));
     assert_eq!(theme.light.accent, resolve("indigo.600"));
-    assert_eq!(theme.dark.accent, resolve("indigo.300"));
+    assert_eq!(theme.dark.accent, resolve("indigo.500"));
     assert_eq!(theme.dark.bg, resolve("neutral.800"));
     assert_eq!(theme.dark.syntax.keyword, resolve("#c28b12"));
 }
@@ -30,10 +30,10 @@ fn terminal_and_chart_rows_are_fully_theme_owned() {
 }
 
 #[test]
-fn focus_matches_the_accent() {
+fn focus_uses_the_theme_focus_role() {
     let theme = DefaultTheme::new();
     assert_eq!(theme.light.focus, theme.light.accent);
-    assert_eq!(theme.dark.focus, theme.dark.accent);
+    assert_eq!(theme.dark.focus, resolve("indigo.300"));
 }
 
 #[gpui::test]

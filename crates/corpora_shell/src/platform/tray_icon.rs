@@ -16,7 +16,9 @@ pub fn tray_icon_png() -> anyhow::Result<Vec<u8>> {
         .as_bytes(0)
         .ok_or_else(|| anyhow::anyhow!("the logo rendered no frame"))?;
     let pixels = bytes
-        .chunks_exact(4)
+        .as_chunks::<4>()
+        .0
+        .iter()
         .flat_map(|pixel| [0, 0, 0, pixel[3]])
         .collect();
     let buffer = image::RgbaImage::from_raw(size.width.0 as u32, size.height.0 as u32, pixels)

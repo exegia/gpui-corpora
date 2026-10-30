@@ -37,7 +37,7 @@ mod tests {
         // The ring is opaque; the corner outside the circle is transparent.
         assert_eq!(alpha(w * 3 / 100, h / 2), 0xFF);
         assert_eq!(alpha(0, 0), 0);
-        let visible = bytes.chunks_exact(4).filter(|p| p[3] > 0).count();
+        let visible = bytes.as_chunks::<4>().0.iter().filter(|p| p[3] > 0).count();
         assert!(visible > w * h / 2, "disc covers most of the canvas");
     }
 }
