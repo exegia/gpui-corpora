@@ -223,7 +223,7 @@ impl Render for SettingsPage {
             .rounded(px(15.))
             .overflow_hidden()
             .text_color(colors.fg)
-            .child(corpora_ui::ui::layout::window_background(&colors))
+            .child(corpora_ui::ui::layout::window_background(&colors, dark))
             .child(
                 TitleBar::new()
                     .relative()

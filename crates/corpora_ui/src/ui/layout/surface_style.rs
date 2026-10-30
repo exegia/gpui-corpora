@@ -9,11 +9,11 @@ pub(super) fn style(colors: &Palette, dark: bool, flush_right: bool) -> StyleRef
     };
     let fill = Hsla {
         a: 1.0,
-        ..colors.surface.darken(if dark { 0.1 } else { 0.0 })
+        ..colors.surface.darken(if dark { 0.2 } else { 0.0 })
     };
     let style = StyleRefinement::default();
     let style = if flush_right {
-        style.rounded_tr(px(0.0)).rounded_br(px(0.0))
+        style.rounded_tr_none().rounded_br_none().rounded_tl_xl().rounded_bl_xl()
     } else {
         style.rounded_xl()
     };
