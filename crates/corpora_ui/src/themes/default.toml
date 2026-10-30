@@ -11,8 +11,8 @@ dark = "neutral.800"
 
 [colors.surface]
 description = "Cards, panels, and sidebars raised off the canvas."
-light = "slate.100"
-dark = "neutral.900"
+light = "neutral.100"
+dark = "neutral.800"
 
 [colors.elevated]
 description = "Menus, popovers, and dialogs floating above surfaces."

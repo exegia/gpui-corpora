@@ -1,4 +1,4 @@
-use crate::ely::theme::Palette;
+use crate::{ely::theme::Palette, styles::utils::ColorExt};
 use gpui::{BoxShadow, Hsla, StyleRefinement, prelude::*, px};
 
 pub(super) fn style(colors: &Palette, dark: bool, flush_right: bool) -> StyleRefinement {
@@ -9,13 +9,13 @@ pub(super) fn style(colors: &Palette, dark: bool, flush_right: bool) -> StyleRef
     };
     let fill = Hsla {
         a: 1.0,
-        ..colors.surface
+        ..colors.surface.darken(if dark { 0.1 } else { 0.0 })
     };
     let style = StyleRefinement::default();
     let style = if flush_right {
         style.rounded_tr(px(0.0)).rounded_br(px(0.0))
     } else {
-        style
+        style.rounded_xl()
     };
     style
         .border_0()

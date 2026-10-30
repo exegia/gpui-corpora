@@ -184,10 +184,10 @@ impl RenderOnce for TabItem {
         let strength = selection.progress.max(hover_progress);
 
         let tab: AnyElement = if strength > MIN_GLASS_STRENGTH {
-            tab.glass_with(glass_spec(cx.theme(), strength))
+            tab.glass_with(glass_spec(cx.theme(), strength * 1.5))
                 .into_any_element()
         } else {
-            tab.glass_with(glass_spec(cx.theme(), MIN_GLASS_STRENGTH))
+            tab.glass_with(glass_spec(cx.theme(), MIN_GLASS_STRENGTH * 1.5))
                 .into_any_element()
         };
 
