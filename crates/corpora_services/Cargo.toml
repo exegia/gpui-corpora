@@ -1,0 +1,50 @@
+[package]
+name = "corpora_services"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license = "MIT"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/corpora_services.rs"
+
+[features]
+default = []
+
+[dependencies]
+corpora_config.workspace = true
+corpora_foundation.workspace = true
+corpora_persistence.workspace = true
+corpora_platform.workspace = true
+corpora_runtime.workspace = true
+
+anyhow.workspace = true
+arboard.workspace = true
+async-trait.workspace = true
+base64.workspace = true
+chrono.workspace = true
+ed25519-dalek.workspace = true
+futures-util.workspace = true
+gpui.workspace = true
+notify.workspace = true
+open.workspace = true
+reqwest.workspace = true
+rfd.workspace = true
+rusqlite.workspace = true
+semver.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-appender.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

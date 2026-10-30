@@ -1,0 +1,38 @@
+[package]
+name = "corpora_runtime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license = "MIT"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/corpora_runtime.rs"
+
+[features]
+default = []
+otlp = ["dep:opentelemetry-otlp", "dep:opentelemetry_sdk"]
+
+[dependencies]
+corpora_foundation.workspace = true
+corpora_platform.workspace = true
+corpora_ui.workspace = true
+
+flume.workspace = true
+futures-util.workspace = true
+gpui.workspace = true
+keyring.workspace = true
+network-interface.workspace = true
+opentelemetry.workspace = true
+opentelemetry-otlp = { workspace = true, optional = true }
+opentelemetry_sdk = { workspace = true, optional = true }
+reqwest.workspace = true
+rust-i18n.workspace = true
+serde.workspace = true
+sys-locale.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
