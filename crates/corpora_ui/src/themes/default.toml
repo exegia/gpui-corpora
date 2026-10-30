@@ -69,12 +69,12 @@ dark = "neutral.600"
 [colors.accent]
 description = "Primary accent for emphasis and active controls."
 light = "indigo.600"
-dark = "indigo.300"
+dark = "indigo.500"
 
 [colors.accent-hover]
 description = "Accent under the pointer."
 light = "indigo.500"
-dark = "indigo.200"
+dark = "indigo.400"
 
 [colors.on-accent]
 description = "Text and icons placed on an accent fill."
@@ -110,7 +110,7 @@ dark = "red.400"
 [colors.danger-subtle]
 description = "Tinted background for an error message."
 light = "red.100"
-dark = "red.950"
+dark = "red.700"
 
 [colors.info]
 description = "Neutral informational state."

@@ -1,10 +1,11 @@
 //! Glass surface wrapper adapted from Bezel's MIT-licensed `ui::surface` module.
 
+use crate::styles::{palette::color, tokens::DefaultTheme};
 use gpui::{
-    AbsoluteLength, AnyElement, App, Bounds, Corners, Element, GlobalElementId, Hsla, InspectorElementId, IntoElement, LayoutId, Pixels, Styled, Window, px, transparent_black,
+    AbsoluteLength, AnyElement, App, Bounds, Corners, Element, GlobalElementId, Hsla,
+    InspectorElementId, IntoElement, LayoutId, Pixels, Styled, Window, px, transparent_black,
 };
 use gpui_agentation::ely::theme::{Mode, Palette};
-use crate::styles::{tokens::DefaultTheme, palette::color};
 
 use super::glass;
 
@@ -169,6 +170,7 @@ pub struct GlassSurface {
     corners: Corners<AbsoluteLength>,
     spec: GlassSpec,
     scale: f32,
+    bezel: Option<(Hsla, Hsla, Hsla)>,
     child: AnyElement,
 }
 
@@ -178,14 +180,20 @@ impl GlassSurface {
             corners,
             spec,
             scale: 1.,
+            bezel: None,
             child: child.into_any_element(),
         }
     }
 
-    /// Paints the glass scaled about its center. Layout, hit testing, and the
-    /// child subtree are unaffected.
+    /// Scales the complete painted subtree about its center, preserving layout and hitboxes.
     pub fn scale(mut self, scale: f32) -> Self {
         self.scale = scale;
+        self
+    }
+
+    /// Adds a lit upper inset, a dim lower inset, and an outline inside the surface.
+    pub fn bezel(mut self, lit: Hsla, dim: Hsla, border: Hsla) -> Self {
+        self.bezel = Some((lit, dim, border));
         self
     }
 
@@ -244,30 +252,31 @@ impl Element for GlassSurface {
         window: &mut Window,
         cx: &mut App,
     ) {
-        let mut corners = self.resolved_corners(bounds, window.rem_size());
-        let mut glass_bounds = bounds;
-        if self.scale != 1. {
-            let size = gpui::size(
-                bounds.size.width * self.scale,
-                bounds.size.height * self.scale,
-            );
-            glass_bounds = Bounds {
-                origin: gpui::point(
-                    bounds.origin.x + (bounds.size.width - size.width) / 2.,
-                    bounds.origin.y + (bounds.size.height - size.height) / 2.,
-                ),
-                size,
-            };
-            corners = Corners {
-                top_left: corners.top_left * self.scale,
-                top_right: corners.top_right * self.scale,
-                bottom_right: corners.bottom_right * self.scale,
-                bottom_left: corners.bottom_left * self.scale,
-            };
-        }
-        window.paint_layer(bounds, |window| {
-            glass::paint(glass_bounds, corners, self.spec, window, cx);
-            self.child.paint(window, cx);
+        let corners = self.resolved_corners(bounds, window.rem_size());
+        window.with_paint_scale(bounds.center(), self.scale, |window| {
+            window.paint_layer(bounds, |window| {
+                glass::paint(bounds, corners, self.spec, window, cx);
+                if let Some((lit, dim, border)) = self.bezel {
+                    window.paint_inset_shadows(
+                        bounds,
+                        corners,
+                        &[
+                            gpui::BoxShadow::new(px(0.), px(1.), lit)
+                                .blur_radius(px(1.4))
+                                .inset(),
+                            gpui::BoxShadow::new(px(0.), px(-1.), dim)
+                                .blur_radius(px(1.4))
+                                .inset(),
+                        ],
+                    );
+                    window.paint_quad(
+                        gpui::outline(bounds, border, gpui::BorderStyle::Solid)
+                            .corner_radii(corners)
+                            .border_widths(px(1.5)),
+                    );
+                }
+                self.child.paint(window, cx);
+            });
         });
     }
 }

@@ -35,6 +35,7 @@ use crate::{
 struct Interaction {
     hovered: bool,
     pressed: bool,
+    keyboard_pressed: bool,
 }
 
 /// A labeled native button. Supplied children replace the default text content.
@@ -154,7 +155,10 @@ impl RenderOnce for Button {
                 .clone()
         });
         let hovered = !inert && state.read(cx).hovered;
-        let pressed = !inert && state.read(cx).pressed && (hovered || focus.is_focused(window));
+        let interaction = state.read(cx);
+        let pressed = !inert
+            && ((interaction.pressed && hovered)
+                || (interaction.keyboard_pressed && focus.is_focused(window)));
         let compact = window.viewport_size().width >= window.rem_size() * 40.;
         let metrics = self.size.metrics(compact);
         let inline_link = self.variant == ButtonVariant::Link && !self.size.is_icon();
@@ -196,7 +200,7 @@ impl RenderOnce for Button {
         let scale = transition(
             (self.id.clone(), "press"),
             if pressed && !cx.reduce_motion() {
-                0.97_f32
+                0.98_f32
             } else {
                 1.
             },
@@ -227,8 +231,7 @@ impl RenderOnce for Button {
                     .when(!self.size.is_icon(), |icon| icon.mx(rems(-0.5 / 16.)))
                     .text_color(colors.foreground.opacity(0.8))
                     .with_transformation(gpui::Transformation::scale(gpui::size(
-                        icon_scale * scale,
-                        icon_scale * scale,
+                        icon_scale, icon_scale,
                     )))
                     .into_any_element(),
             );
@@ -256,12 +259,11 @@ impl RenderOnce for Button {
             .h(rems(height))
             .px(rems(padding))
             .gap(rems(metrics.gap / 16.))
-            .when(self.variant == ButtonVariant::Ghost, |button| {
-                button.bg(colors.background)
-            })
             .rounded(radius)
             .when(!inline_link, |button| {
-                button.border(gpui::px(1.5)).border_color(colors.border)
+                button
+                    .border(gpui::px(1.5))
+                    .border_color(gpui::transparent_black())
             })
             .text_size(rems(metrics.font / 16.))
             .font_weight(gpui::FontWeight::MEDIUM)
@@ -377,10 +379,12 @@ impl RenderOnce for Button {
                     })
                 })
                 .capture_key_down(move |event, _, cx| {
-                    if matches!(event.keystroke.key.as_str(), "enter" | "space") {
+                    if matches!(event.keystroke.key.as_str(), "enter" | "space")
+                        && !event.keystroke.modifiers.modified()
+                    {
                         key_down.update(cx, |state, cx| {
-                            if !state.pressed {
-                                state.pressed = true;
+                            if !state.keyboard_pressed {
+                                state.keyboard_pressed = true;
                                 cx.notify();
                             }
                         });
@@ -389,8 +393,8 @@ impl RenderOnce for Button {
                 .capture_key_up(move |event, _, cx| {
                     if matches!(event.keystroke.key.as_str(), "enter" | "space") {
                         key_up.update(cx, |state, cx| {
-                            if state.pressed {
-                                state.pressed = false;
+                            if state.keyboard_pressed {
+                                state.keyboard_pressed = false;
                                 cx.notify();
                             }
                         });
@@ -409,10 +413,11 @@ impl RenderOnce for Button {
         });
         // Caller overrides win over the variant/size defaults set above.
         button = button.refine_style(&self.style);
-        let button = match glass {
-            Some(spec) => button.glass_with(spec).scale(scale).into_any_element(),
-            None => button.into_any_element(),
-        };
+        let button = button
+            .glass_with(glass)
+            .scale(scale)
+            .bezel(colors.bevel, colors.shadow, colors.border)
+            .into_any_element();
         semantics::ButtonSemantics::new(
             button,
             accessibility_label,

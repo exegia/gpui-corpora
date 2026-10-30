@@ -6,8 +6,8 @@ use crate::Inspector;
 use crate::profiler;
 use crate::{
     Action, AnyDrag, AnyElement, AnyImageCache, AnyTooltip, AnyView, App, AppContext, Arena, Asset,
-    AsyncWindowContext, AtlasTile, AvailableSpace, BackdropBlur, Background, BorderStyle, Bounds, BoxShadow,
-    Capslock, Context, Corners, CursorHideMode, CursorStyle, Decorations, DevicePixels,
+    AsyncWindowContext, AtlasTile, AvailableSpace, BackdropBlur, Background, BorderStyle, Bounds,
+    BoxShadow, Capslock, Context, Corners, CursorHideMode, CursorStyle, Decorations, DevicePixels,
     DispatchActionListener, DispatchNodeId, DispatchTree, DisplayId, Edges, Effect, Entity,
     EntityId, EventEmitter, FileDropEvent, FontId, Global, GlobalElementId, GlyphId, GpuSpecs,
     Hsla, InputHandler, InputPreference, IsZero, KeyBinding, KeyContext, KeyDownEvent, KeyEvent,
@@ -2800,6 +2800,28 @@ impl Window {
         self.rendered_frame.scene.backdrop_blurs.clone()
     }
 
+    /// Returns glyph and SVG sprite geometry from the most recently rendered frame.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn painted_monochrome_sprites(&self) -> Vec<crate::MonochromeSprite> {
+        let mut sprites = self.rendered_frame.scene.monochrome_sprites.clone();
+        sprites.extend(
+            self.rendered_frame
+                .scene
+                .subpixel_sprites
+                .iter()
+                .map(|sprite| MonochromeSprite {
+                    order: sprite.order,
+                    pad: sprite.pad,
+                    bounds: sprite.bounds,
+                    content_mask: sprite.content_mask,
+                    color: sprite.color,
+                    tile: sprite.tile,
+                    transformation: sprite.transformation,
+                }),
+        );
+        sprites
+    }
+
     /// Returns the underlines in the most recently rendered frame's scene.
     #[cfg(any(test, feature = "test-support"))]
     pub fn painted_underlines(&self) -> Vec<Underline> {
@@ -4425,6 +4447,27 @@ impl Window {
             prepaint_range: PrepaintStateIndex::default()..PrepaintStateIndex::default(),
             paint_range: PaintIndex::default()..PaintIndex::default(),
         });
+    }
+
+    /// Scales paint commands about `center` without changing layout, hitboxes, or accessibility.
+    /// `scale` must be finite and positive. Deferred overlays keep their own paint geometry.
+    pub fn with_paint_scale<R>(
+        &mut self,
+        center: Point<Pixels>,
+        scale: f32,
+        f: impl FnOnce(&mut Self) -> R,
+    ) -> R {
+        self.invalidator.debug_assert_paint();
+        assert!(scale.is_finite() && scale > 0.);
+        if scale == 1. {
+            return f(self);
+        }
+        let center = center.scale(self.scale_factor());
+        let clip = self.snapped_content_mask();
+        self.next_frame.scene.push_scale(center, scale, clip);
+        let result = f(self);
+        self.next_frame.scene.pop_scale();
+        result
     }
 
     /// Creates a new painting layer for the specified bounds. A "layer" is a batch

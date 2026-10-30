@@ -1,7 +1,7 @@
 use crate::ely::theme::{Mix, Palette, Radius, Theme};
+use crate::styles::tokens::ButtonPalette;
 use crate::ui::material::GlassSpec;
 use gpui::{Hsla, px, transparent_black};
-use gpui_agentation::ely::theme::Mode;
 
 /// A Button's visual treatment. Colors come from the active theme's semantic roles.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -63,60 +63,48 @@ impl ButtonVariant {
         }
     }
 
-    /// Composites the animated tint over the backdrop at its specified opacity.
-    pub(super) fn glass_spec(self, theme: &Theme, tint: Hsla, engage: f32) -> Option<GlassSpec> {
-        if matches!(self, Self::Ghost | Self::Link) {
-            return None;
-        }
-        let mode = if theme.is_dark() {
-            Mode::Dark
-        } else {
-            Mode::Light
-        };
-        let spec = match self {
-            Self::Default | Self::Outline => GlassSpec::accent(mode, None),
-            Self::Secondary => GlassSpec::secondary(mode, None),
-            Self::Destructive | Self::DestructiveOutline => GlassSpec::destructive(mode, None),
-            Self::Ghost | Self::Link => unreachable!(),
-        };
-        if theme.is_dark() {
-            return Some(GlassSpec {
-                tint: Some(if tint.a > 0. {
-                    tint
-                } else {
-                    spec.tint.unwrap_or(theme.colors.glass)
-                }),
-                edge: spec.edge * engage,
-                ..spec
-            });
-        }
-        Some(GlassSpec {
+    /// Composites the animated tint over native glass, with a solid fallback elsewhere.
+    pub(super) fn glass_spec(self, _theme: &Theme, tint: Hsla, engage: f32) -> GlassSpec {
+        let filled = matches!(self, Self::Default | Self::Secondary | Self::Destructive);
+        GlassSpec {
             tint: Some(tint),
             gain_light: 1. - tint.a,
             gain_dark: 1. - tint.a,
             saturation: 1.,
-            edge: if theme.is_dark() {
-                spec.edge * engage
-            } else {
-                0.08
-            },
+            blur_radius: px(1.2),
+            lens: px(2.),
+            reach: px(4.),
+            magnify: 1.15,
+            dispersion: 0.,
+            edge: if filled { 0.08 * engage } else { 0. },
             edge_width: px(1.),
-            ..spec
-        })
+            ..GlassSpec::default()
+        }
     }
 
     /// The variant's colors in the active theme, adjusted for pointer state.
     pub(super) fn colors(self, theme: &Theme, hovered: bool, pressed: bool) -> Colors {
-        if theme.is_dark() {
-            self.dark(&theme.colors).engaged(hovered, pressed)
+        let mut colors = if theme.is_dark() {
+            self.dark(&theme.colors, hovered || pressed)
         } else {
             self.light(&theme.colors, hovered || pressed)
-        }
+        };
+        let palette = ButtonPalette::new(&theme.colors, theme.is_dark());
+        colors.bevel = palette.bezel_lit;
+        colors.shadow = palette.bezel_dim;
+        colors.engage = if pressed {
+            0.85
+        } else if hovered {
+            1.3
+        } else {
+            1.
+        };
+        colors
     }
 
     fn light(self, c: &Palette, active: bool) -> Colors {
         let base = Colors::base(c);
-        let color = |hex, alpha| gpui::Hsla::from(gpui::rgb(hex)).alpha(alpha);
+        let tokens = ButtonPalette::new(c, false);
         let (tint, foreground, border) = match self {
             Self::Default => (
                 if active {
@@ -128,35 +116,47 @@ impl ButtonVariant {
                 transparent_black(),
             ),
             Self::Secondary => (
-                color(0x1a1a1a, if active { 0.96 } else { 0.87 }),
-                color(0xf1f1f1, 1.),
+                tokens.neutral.opacity(if active { 0.96 } else { 0.87 }),
+                tokens.on_neutral,
                 transparent_black(),
             ),
             Self::Destructive => (
                 if active {
-                    color(0xc9000a, 1.)
+                    tokens.danger_hover
                 } else {
-                    color(0xe7000b, 0.83)
+                    tokens.danger_fill.opacity(0.9)
                 },
-                color(0xf1f1f1, 1.),
+                tokens.on_danger,
                 transparent_black(),
             ),
             Self::Outline => (
-                color(0x262626, if active { 0.06 } else { 0. }),
-                color(0x0a0a0a, 1.),
-                color(0x0a0a0a, if active { 0.41 } else { 0.16 }),
+                tokens.neutral.opacity(if active { 0.05 } else { 0.02 }),
+                c.fg,
+                c.fg.opacity(if active { 0.41 } else { 0.16 }),
             ),
             Self::DestructiveOutline => (
-                color(0xae0000, if active { 0.1 } else { 0.01 }),
-                color(if active { 0xb50009 } else { 0x7a0006 }, 1.),
-                color(0x930007, if active { 0.35 } else { 0.25 }),
+                c.danger.opacity(if active { 0.05 } else { 0.02 }),
+                if active {
+                    c.danger
+                } else {
+                    c.danger.mix(&c.shadow, 0.2)
+                },
+                c.danger.opacity(if active { 0.5 } else { 0.35 }),
             ),
             Self::Ghost => (
-                color(0xc9c9c9, if active { 0.42 } else { 0. }),
-                color(0x0c0c0c, 0.93),
+                tokens.neutral.opacity(if active { 0.08 } else { 0. }),
+                c.fg,
                 transparent_black(),
             ),
-            Self::Link => (transparent_black(), c.link, transparent_black()),
+            Self::Link => (
+                transparent_black(),
+                if active {
+                    c.link.mix(&c.shadow, 0.15)
+                } else {
+                    c.link
+                },
+                transparent_black(),
+            ),
         };
         Colors {
             background: tint,
@@ -167,39 +167,64 @@ impl ButtonVariant {
         }
     }
 
-    fn dark(self, c: &Palette) -> Colors {
+    fn dark(self, c: &Palette, active: bool) -> Colors {
         let base = Colors::base(c);
-        match self {
-            Self::Default => Colors {
-                foreground: c.bg,
-                ..base
-            },
-            Self::Secondary => Colors {
-                background: c.surface.alpha(0.5),
-                foreground: c.fg,
-                glass_tint: c.surface.alpha(0.5),
-                ..base
-            },
-            Self::Destructive => Colors {
-                foreground: c.on_media,
-                ..base
-            },
-            Self::Outline => Colors {
-                foreground: c.fg,
-                ..base
-            },
-            Self::DestructiveOutline => Colors {
-                foreground: c.fg,
-                ..base
-            },
-            Self::Ghost => Colors {
-                foreground: c.fg,
-                ..base
-            },
-            Self::Link => Colors {
-                foreground: c.link,
-                ..base
-            },
+        let tokens = ButtonPalette::new(c, true);
+        let (tint, foreground, border) = match self {
+            Self::Default => (
+                if active {
+                    c.accent_hover.opacity(0.95)
+                } else {
+                    c.accent.opacity(0.85)
+                },
+                c.fg,
+                transparent_black(),
+            ),
+            Self::Secondary => (
+                tokens.neutral.opacity(if active { 0.14 } else { 0.08 }),
+                c.fg,
+                c.border,
+            ),
+            Self::Destructive => (
+                if active {
+                    tokens.danger_hover.opacity(0.98)
+                } else {
+                    tokens.danger_fill.opacity(0.9)
+                },
+                tokens.on_danger,
+                transparent_black(),
+            ),
+            Self::Outline => (
+                tokens.neutral.opacity(if active { 0.05 } else { 0.03 }),
+                c.fg,
+                if active { c.fg.opacity(0.4) } else { c.border },
+            ),
+            Self::DestructiveOutline => (
+                c.danger.opacity(if active { 0.05 } else { 0.03 }),
+                c.danger,
+                c.danger.opacity(if active { 0.75 } else { 0.5 }),
+            ),
+            Self::Ghost => (
+                tokens.neutral.opacity(if active { 0.08 } else { 0. }),
+                c.fg,
+                transparent_black(),
+            ),
+            Self::Link => (
+                transparent_black(),
+                if active {
+                    c.link.mix(&c.on_media, 0.2)
+                } else {
+                    c.link
+                },
+                transparent_black(),
+            ),
+        };
+        Colors {
+            background: tint,
+            glass_tint: tint,
+            foreground,
+            border,
+            ..base
         }
     }
 }
@@ -230,31 +255,6 @@ impl Colors {
             glass_tint: transparent_black(),
             engage: 1.,
             highlight: 0.,
-        }
-    }
-
-    /// Hover fades the background slightly and a press fades it further.
-    fn engaged(self, hovered: bool, pressed: bool) -> Self {
-        let fade = if pressed {
-            0.8
-        } else if hovered {
-            0.9
-        } else {
-            1.0
-        };
-        let (engage, highlight) = if pressed {
-            (0.85, 0.14)
-        } else if hovered {
-            (1.3, 0.08)
-        } else {
-            (1., 0.)
-        };
-        Self {
-            background: self.foreground.opacity(highlight),
-            glass_tint: self.glass_tint.opacity(self.glass_tint.a * fade),
-            engage,
-            highlight,
-            ..self
         }
     }
 }

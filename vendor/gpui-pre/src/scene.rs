@@ -1,6 +1,9 @@
 // todo("windows"): remove
 #![cfg_attr(windows, allow(dead_code))]
 
+mod paint_scale;
+use paint_scale::PaintScale;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -42,6 +45,7 @@ pub struct Scene {
     pub(crate) paint_operations: Vec<PaintOperation>,
     primitive_bounds: BoundsTree<ScaledPixels>,
     layer_stack: Vec<DrawOrder>,
+    scale_stack: Vec<PaintScale>,
     pub shadows: Vec<Shadow>,
     pub quads: Vec<Quad>,
     pub paths: Vec<Path<ScaledPixels>>,
@@ -62,6 +66,7 @@ impl Scene {
         self.paint_operations.clear();
         self.primitive_bounds.clear();
         self.layer_stack.clear();
+        self.scale_stack.clear();
         self.paths.clear();
         self.shadows.clear();
         self.quads.clear();
@@ -78,7 +83,11 @@ impl Scene {
     }
 
     pub fn push_layer(&mut self, bounds: Bounds<ScaledPixels>) {
-        let order = self.primitive_bounds.insert(bounds);
+        let mut transformed = bounds;
+        for scale in self.scale_stack.iter().rev() {
+            transformed = scale.bounds(transformed);
+        }
+        let order = self.primitive_bounds.insert(transformed);
         self.layer_stack.push(order);
         self.paint_operations
             .push(PaintOperation::StartLayer(bounds));
@@ -87,6 +96,29 @@ impl Scene {
     pub fn pop_layer(&mut self) {
         self.layer_stack.pop();
         self.paint_operations.push(PaintOperation::EndLayer);
+    }
+
+    pub(crate) fn push_scale(
+        &mut self,
+        center: Point<ScaledPixels>,
+        factor: f32,
+        clip: ContentMask<ScaledPixels>,
+    ) {
+        self.scale_stack.push(PaintScale {
+            center,
+            factor,
+            clip,
+        });
+        self.paint_operations.push(PaintOperation::StartScale {
+            center,
+            factor,
+            clip,
+        });
+    }
+
+    pub(crate) fn pop_scale(&mut self) {
+        self.scale_stack.pop();
+        self.paint_operations.push(PaintOperation::EndScale);
     }
 
     /// The draw order of a batch's first primitive. Backdrop blurs sit outside
@@ -111,8 +143,14 @@ impl Scene {
     }
 
     pub fn insert_backdrop_blur(&mut self, mut blur: BackdropBlur) {
+        let raw = blur;
+        for scale in self.scale_stack.iter().rev() {
+            scale.blur(&mut blur);
+        }
         let clipped_bounds = blur.bounds.intersect(&blur.content_mask.bounds);
         if clipped_bounds.is_empty() {
+            self.paint_operations
+                .push(PaintOperation::BackdropBlur(raw));
             return;
         }
         blur.order = self
@@ -122,16 +160,26 @@ impl Scene {
             .unwrap_or_else(|| self.primitive_bounds.insert(clipped_bounds));
         self.backdrop_blurs.push(blur);
         self.paint_operations
-            .push(PaintOperation::BackdropBlur(blur));
+            .push(PaintOperation::BackdropBlur(raw));
     }
 
     pub fn insert_primitive(&mut self, primitive: impl Into<Primitive>) {
         let mut primitive = primitive.into();
+        let raw = if self.scale_stack.is_empty() {
+            None
+        } else {
+            Some(primitive.clone())
+        };
+        for scale in self.scale_stack.iter().rev() {
+            scale.primitive(&mut primitive);
+        }
         let clipped_bounds = primitive
             .bounds()
             .intersect(&primitive.content_mask().bounds);
 
         if clipped_bounds.is_empty() {
+            self.paint_operations
+                .push(PaintOperation::Primitive(raw.unwrap_or(primitive)));
             return;
         }
 
@@ -176,7 +224,7 @@ impl Scene {
             }
         }
         self.paint_operations
-            .push(PaintOperation::Primitive(primitive));
+            .push(PaintOperation::Primitive(raw.unwrap_or(primitive)));
     }
 
     pub fn replay(&mut self, range: Range<usize>, prev_scene: &Scene) {
@@ -186,6 +234,12 @@ impl Scene {
                 PaintOperation::BackdropBlur(blur) => self.insert_backdrop_blur(*blur),
                 PaintOperation::StartLayer(bounds) => self.push_layer(*bounds),
                 PaintOperation::EndLayer => self.pop_layer(),
+                PaintOperation::StartScale {
+                    center,
+                    factor,
+                    clip,
+                } => self.push_scale(*center, *factor, *clip),
+                PaintOperation::EndScale => self.pop_scale(),
             }
         }
     }
@@ -259,6 +313,12 @@ pub(crate) enum PaintOperation {
     BackdropBlur(BackdropBlur),
     StartLayer(Bounds<ScaledPixels>),
     EndLayer,
+    StartScale {
+        center: Point<ScaledPixels>,
+        factor: f32,
+        clip: ContentMask<ScaledPixels>,
+    },
+    EndScale,
 }
 
 #[derive(Clone)]

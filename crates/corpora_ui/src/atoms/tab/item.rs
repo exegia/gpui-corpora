@@ -73,12 +73,12 @@ impl RenderOnce for TabItem {
             let theme = cx.theme();
             (
                 theme.colors.clone(),
-                theme.control_height(ControlSize::Lg) * 0.8,
+                theme.control_height(ControlSize::Lg) * 0.9,
                 theme.control_padding(ControlSize::Md),
                 theme.tab_width().0,
-                theme.radius(Radius::Lg) * 1.1,
+                theme.radius(Radius::Lg) * 1.15,
                 theme.text_size(TextSize::Sm),
-                theme.control_height(ControlSize::Sm) * 0.8,
+                theme.control_height(ControlSize::Sm) * 0.9,
             )
         };
         let (selection_duration, selection_easing) = {
@@ -187,7 +187,8 @@ impl RenderOnce for TabItem {
             tab.glass_with(glass_spec(cx.theme(), strength))
                 .into_any_element()
         } else {
-            tab.into_any_element()
+            tab.glass_with(glass_spec(cx.theme(), MIN_GLASS_STRENGTH))
+                .into_any_element()
         };
 
         let group = SharedString::from(format!("tab-{index}"));
