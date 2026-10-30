@@ -4,7 +4,13 @@ use super::*;
 pub fn execute(id: CommandId, cx: &mut App) {
     match id {
         CommandId::OpenHome => navigate(navigation::HOME, cx),
-        CommandId::OpenSettings => navigate(navigation::SETTINGS, cx),
+        CommandId::OpenSettings => {
+            cx.defer(|cx| {
+                if let Err(error) = crate::app::window::open_settings_window(None, cx) {
+                    tracing::error!(%error, "could not open Settings window");
+                }
+            });
+        }
         CommandId::OpenNotifications => navigate(navigation::NOTIFICATIONS, cx),
         CommandId::OpenDiagnostics => navigate(navigation::DIAGNOSTICS, cx),
         CommandId::OpenAbout => navigate(navigation::ABOUT, cx),

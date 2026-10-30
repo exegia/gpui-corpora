@@ -8,8 +8,16 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
     let create_project = workspace.clone();
     let page = |select: fn(&shell::Pages) -> AnyElement| {
         let workspace = workspace.clone();
-        move |_: &mut gpui::Window, cx: &mut App| match workspace.upgrade() {
-            Some(entity) => select(&entity.read(cx).pages),
+        move |window: &mut gpui::Window, cx: &mut App| match workspace.upgrade() {
+            Some(entity) => {
+                let path = gpui_router::use_location(cx).pathname.to_string();
+                entity.update(cx, |state, cx| state.prepare_route(&path, window, cx));
+                entity
+                    .read(cx)
+                    .pages()
+                    .map(select)
+                    .unwrap_or_else(|| gpui::div().into_any_element())
+            }
             None => pages::not_found().into_any_element(),
         }
     };
@@ -18,6 +26,21 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
             .path("/")
             .element(move |window, cx| shell::frame(frame.clone(), Outlet::new(), window, cx))
             .children([
+                #[cfg(debug_assertions)]
+                Route::new().path("ui").children([
+                    Route::new()
+                        .index()
+                        .element(page(|p| p.ui.clone().into_any_element())),
+                    Route::new()
+                        .path("breadcrumb")
+                        .element(page(|p| p.ui.clone().into_any_element())),
+                    Route::new()
+                        .path("button")
+                        .element(page(|p| p.button.clone().into_any_element())),
+                    Route::new()
+                        .path("glass")
+                        .element(page(|p| p.glass.clone().into_any_element())),
+                ]),
                 Route::new().index().element(|_, _| pages::home()),
                 Route::new()
                     .path("tabs/new/:tabId")
@@ -53,14 +76,6 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
                             .path("create")
                             .element(|_, _| pages::license_create()),
                     ]),
-                ]),
-                Route::new().path("settings").children([
-                    Route::new()
-                        .index()
-                        .element(page(|p| p.settings.clone().into_any_element())),
-                    Route::new()
-                        .path(":section")
-                        .element(page(|p| p.settings.clone().into_any_element())),
                 ]),
                 Route::new()
                     .path("notifications")

@@ -1,4 +1,4 @@
-use ely_gpui_component::{buttons::Button, feedback::ErrorView, primitives::IconName};
+use corpora_ui::ely::{buttons::Button, feedback::ErrorView, primitives::IconName};
 use gpui::{prelude::*, *};
 
 mod reload_current_page;

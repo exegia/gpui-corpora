@@ -6,8 +6,12 @@ use crate::{
     shell::{self, Workspace},
 };
 
+mod panes;
 mod section;
+#[cfg(debug_assertions)]
+pub mod ui;
 mod view;
 
+pub use panes::{Panes, panes};
 pub use section::section;
 pub use view::view;

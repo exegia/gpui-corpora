@@ -1,4 +1,4 @@
-use ely_gpui_component::{primitives::IconName, shell::AboutDialog};
+use corpora_ui::ely::{primitives::IconName, shell::AboutDialog};
 use gpui::{prelude::*, *};
 
 pub struct AboutPage;

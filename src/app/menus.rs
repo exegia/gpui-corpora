@@ -1,10 +1,10 @@
 //! The native application menu bar, rebuilt when its checked or enabled state can change.
 
-use ely_gpui_component::{
+use corpora_ui::ely::{
     forms::{Copy, Cut, Paste, SelectAll},
     theme::Theme,
 };
-use gpui::{App, Menu, MenuItem, SharedString};
+use gpui_kit::{App, Menu, MenuItem, SharedString};
 
 use crate::{
     app::{

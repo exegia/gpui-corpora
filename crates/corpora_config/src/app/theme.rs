@@ -1,4 +1,4 @@
-use ely_gpui_component::theme::{ActiveTheme as _, Mode, Theme};
+use corpora_ui::ely::theme::{Mode, Theme};
 use gpui::App;
 use serde::{Deserialize, Serialize};
 

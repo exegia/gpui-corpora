@@ -1,5 +1,5 @@
 pub use corpora_config::services::{notifications, undo_stack};
-pub use corpora_runtime_services::services::{
+pub use corpora_runtime::services::{
     accessibility, connectivity, i18n, secure_storage, session, streaming, tasks, telemetry,
     tokio_runtime,
 };

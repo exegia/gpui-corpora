@@ -1,23 +1,34 @@
-#[allow(unused_imports)]
-use super::*;
-
-pub(crate) const SECTIONS: [(&str, &str, IconName); 6] = [
+pub(crate) const SECTIONS: [(&str, &str, &[u8]); 4] = [
     (
         "general",
         "settings_section_general",
-        IconName::SlidersHorizontal,
-    ),
-    (
-        "notifications",
-        "settings_section_notifications",
-        IconName::Bell,
+        include_bytes!("assets/tabs/general.svg"),
     ),
     (
         "workspace",
         "settings_section_workspace",
-        IconName::LayoutDashboard,
+        include_bytes!("assets/tabs/workspace.svg"),
     ),
-    ("shortcuts", "settings_shortcuts", IconName::Keyboard),
-    ("storage", "settings_storage", IconName::Database),
-    ("developer", "settings_developer", IconName::Code),
+    (
+        "shortcuts",
+        "settings_shortcuts",
+        include_bytes!("assets/tabs/shortcuts.svg"),
+    ),
+    (
+        "developer",
+        "settings_developer",
+        include_bytes!("assets/tabs/developer.svg"),
+    ),
 ];
+
+pub(super) fn section_index(section: &str) -> usize {
+    let section = match section {
+        "notifications" => "general",
+        "storage" | "dev" => "developer",
+        section => section,
+    };
+    SECTIONS
+        .iter()
+        .position(|(key, ..)| *key == section)
+        .unwrap_or(0)
+}

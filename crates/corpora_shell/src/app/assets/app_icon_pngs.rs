@@ -5,5 +5,5 @@ use super::*;
 /// window icon).
 #[cfg(target_os = "linux")]
 #[derive(rust_embed::RustEmbed)]
-#[folder = "../../assets/app-icon/hicolor"]
+#[folder = "src/shell/assets/app-icon/hicolor"]
 pub(crate) struct AppIconPngs;

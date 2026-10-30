@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 pub(crate) use corpora_config::services::*;
 #[allow(unused_imports)]
-pub(crate) use corpora_runtime_services::services::*;
+pub(crate) use corpora_runtime::services::*;
 
 pub mod crash_report;
 pub mod desktop_actions;

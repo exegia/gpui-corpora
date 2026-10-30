@@ -16,6 +16,12 @@ pub fn initialize(cx: &mut App) {
                 .with_ansi(false)
                 .with_writer(file_writer),
         )
+        // gpui's `.log_err()` strips its target to a `crates/` path segment the
+        // registry path lacks, emitting empty-target noise (e.g. a splash-window
+        // teardown frame logging "window not found"). Drop that category.
+        .with(tracing_subscriber::filter::filter_fn(|meta| {
+            !meta.target().is_empty()
+        }))
         .with(env_filter())
         .try_init();
 

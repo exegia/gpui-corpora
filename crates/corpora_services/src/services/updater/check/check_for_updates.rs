@@ -2,6 +2,14 @@
 use super::*;
 
 pub fn check_for_updates(cx: &mut App) {
+    if DEFAULT_MANIFEST_URL.is_none() {
+        super::super::set_status(
+            UpdateStatus::Error("Updates are not configured for this build".to_string()),
+            cx,
+        );
+        return;
+    }
+
     let current = super::super::snapshot(cx);
     match &current.status {
         UpdateStatus::Checking | UpdateStatus::Downloading { .. } => {

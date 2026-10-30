@@ -1,12 +1,15 @@
 #[allow(unused_imports)]
 use super::*;
 
-use ely_gpui_component::theme::ActiveTheme;
+use corpora_ui::ely::theme::ActiveTheme;
 use gpui::Half;
 
 /// Open the workspace at its persisted bounds, or centered at a size that
 /// fits the primary display.
-pub fn open_workspace_window(title: &str, cx: &mut App) -> anyhow::Result<WindowHandle<Workspace>> {
+pub fn open_workspace_window(
+    title: &str,
+    cx: &mut App,
+) -> anyhow::Result<(AnyWindowHandle, Entity<Workspace>)> {
     let mut window_size = size(px(1440.0), px(900.0));
     if let Some(display) = cx.primary_display() {
         let display_size = display.bounds().size;
@@ -48,12 +51,14 @@ pub fn open_workspace_window(title: &str, cx: &mut App) -> anyhow::Result<Window
         ..Default::default()
     };
 
-    let handle = cx.open_window(options, |window, cx| {
+    let (handle, workspace) = gpui_kit::open_window(options, cx, |window, cx| {
         cx.new(|cx| Workspace::new(window, cx))
     })?;
-    cx.set_global(RootWindow(handle.into()));
+    #[cfg(target_os = "macos")]
+    super::frosted_backdrop::install(handle, cx)?;
+    cx.set_global(RootWindow(handle));
     // App level (not inside the window update) so the new window reports as
     // active in the accessibility snapshot.
     crate::accessibility::refresh(cx);
-    Ok(handle)
+    Ok((handle, workspace))
 }

@@ -8,7 +8,7 @@ pub(crate) use corpora_foundation::{errors, foundation, ids, navigation, time};
 #[allow(unused_imports)]
 pub(crate) use corpora_platform::{capabilities, events, ipc, paths, runtime, single_instance};
 #[allow(unused_imports)]
-pub(crate) use corpora_runtime_services::{
+pub(crate) use corpora_runtime::{
     accessibility, connectivity, i18n, secure_storage, session, streaming, tasks, telemetry,
     tokio_runtime,
 };
@@ -52,13 +52,16 @@ pub mod platform {
     pub(crate) use corpora_platform::platform::*;
 
     pub mod input;
+    mod tray_icon;
+
+    pub use tray_icon::{apply_tray_icon, tray_icon_png};
 }
 
 pub mod services {
     #[allow(unused_imports)]
     pub(crate) use corpora_config::services::*;
     #[allow(unused_imports)]
-    pub(crate) use corpora_runtime_services::services::*;
+    pub(crate) use corpora_runtime::services::*;
     #[allow(unused_imports)]
     pub(crate) use corpora_services::services::*;
 

@@ -1,5 +1,5 @@
-use ely_gpui_component::theme::Theme;
-use gpui::{App, KeyBinding};
+use corpora_ui::ely::theme::Theme;
+use gpui_kit::{App, KeyBinding};
 
 use crate::app::actions::*;
 use crate::app::locale::set_locale;
@@ -20,7 +20,7 @@ macro_rules! startup_step {
     }};
 }
 
-/// App services and globals. Runs after `ely_gpui_component::init`, before
+/// App services and globals. Runs after `corpora_ui::ely::init`, before
 /// any window opens.
 pub fn init(cx: &mut App) {
     let startup_start = std::time::Instant::now();
@@ -105,8 +105,11 @@ pub fn init(cx: &mut App) {
     set_locale(&locale_to_use, cx);
 
     // Install before set_mode_now: it cancels set_palette's fade and jumps to the new palette.
-    corpora_ui::styles::tokens::MacosClassic::new().install(cx);
-    Theme::set_mode_now(persisted.theme.into(), cx);
+    corpora_ui::styles::tokens::DefaultTheme::new().install(cx);
+    let appearance = cx.window_appearance();
+    Theme::set_mode_now(persisted.theme.resolve(appearance), cx);
+    gpui_kit::component::Theme::change(persisted.theme.kit_mode(appearance), None, cx);
+    corpora_ui::styles::tokens::sync_kit_theme(cx);
 
     cx.on_action(|switch: &SwitchThemeMode, cx| {
         set_theme_mode(switch.0, cx);
@@ -192,6 +195,11 @@ pub fn init(cx: &mut App) {
     cx.bind_keys([
         KeyBinding::new(crate::app::keys::TOGGLE_SEARCH, ToggleSearch, None),
         KeyBinding::new("/", ToggleSearch, None),
+        KeyBinding::new(
+            "secondary-,",
+            ExecuteCommand(crate::commands::CommandId::OpenSettings),
+            None,
+        ),
         #[cfg(target_os = "macos")]
         KeyBinding::new("secondary-q", Quit, None),
         #[cfg(not(target_os = "macos"))]

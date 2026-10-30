@@ -2,17 +2,17 @@
 
 use std::time::Duration;
 
-use ely_gpui_component::{
+use corpora_ui::ely::{
     Assets,
-    primitives::IconName,
-    shell::{SplashScreen, TrayIcon, TrayItem, set_dock_badge},
+    shell::{TrayIcon, TrayItem, set_dock_badge},
 };
-use gpui::App;
+use gpui_kit::App;
 
 use crate::navigation;
 
 mod bootstrap;
 mod open_with_splash;
+mod splash_artwork;
 mod tray;
 mod tray_paths;
 mod tray_quit;

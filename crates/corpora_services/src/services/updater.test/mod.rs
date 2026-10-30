@@ -13,4 +13,5 @@ mod semver_equal;
 mod semver_invalid_version;
 mod semver_newer_available;
 mod semver_older_manifest;
+mod unconfigured_manifest_fails_without_network;
 mod update_status_default_is_idle;

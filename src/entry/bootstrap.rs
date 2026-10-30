@@ -10,11 +10,16 @@ pub fn bootstrap() {
     let startup_runtime = preflight.runtime;
     let startup_deep_link = preflight.initial_deep_link;
 
+    let assets = Assets::before(gpui_kit::assets::Assets);
+
     // `run` blocks for the whole app lifetime, so the stack frame keeps the App alive.
-    gpui_platform::application()
-        .with_assets(Assets)
-        .run(move |cx: &mut App| {
-            ely_gpui_component::init(cx).expect("Ely failed to start");
+    corpora_shell::shell::Devtools::application(gpui_kit::application(), assets).run(
+        move |cx: &mut App| {
+            gpui_kit::init(cx);
+            corpora_shell::shell::Devtools::init(cx).expect("UI and Agentation failed to start");
+            corpora_shell::shell::register_brand_fonts(cx).expect("Caudex failed to load");
+            #[cfg(debug_assertions)]
+            corpora_ui::ely::tooling::install_inspector(cx);
             gpui_router::init(cx);
             crate::app::init(cx);
             crate::app::menus::init("Corpora", cx);
@@ -34,7 +39,8 @@ pub fn bootstrap() {
                 }
             })
             .detach();
-        });
+        },
+    );
 
     // Runs post-run only: the instance-mutex Global drops inside run()'s
     // frame, and spawning outside any App borrow avoids gpui's Win32

@@ -1,4 +1,4 @@
-use ely_gpui_component::i18n::I18n;
+use corpora_ui::ely::i18n::I18n;
 use gpui::{App, Global, SharedString};
 
 mod current_locale;

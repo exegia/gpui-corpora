@@ -20,7 +20,7 @@ corpora_config.workspace = true
 corpora_foundation.workspace = true
 corpora_persistence.workspace = true
 corpora_platform.workspace = true
-corpora_runtime_services.workspace = true
+corpora_runtime.workspace = true
 
 anyhow.workspace = true
 arboard.workspace = true

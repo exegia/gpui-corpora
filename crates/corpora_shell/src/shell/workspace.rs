@@ -2,15 +2,14 @@
 use super::*;
 
 pub struct Workspace {
-    #[cfg(debug_assertions)]
-    annotations: Option<Entity<gpui_agentation::AnnotationOverlay>>,
+    pub(super) devtools: super::Devtools,
     pub(crate) focus: FocusHandle,
     pub(crate) dock: Entity<Dock>,
     pub(crate) toaster: Entity<Toaster>,
-    pub pages: Pages,
-    pub(crate) tabs: WorkspaceTabs,
+    pub(crate) tabs: WorkspaceTabs<super::tab_workspace::TabWorkspace>,
+    routing_to: Option<String>,
+    closing_tabs: Vec<String>,
     pub tray: Option<TrayIcon>,
-    pub sidebar_visible: bool,
     pub dock_visible: bool,
     pub loading: bool,
     pub badge: bool,
@@ -20,9 +19,6 @@ pub struct Workspace {
     pub(crate) pending_path: Option<String>,
     /// Last path written to config, so unchanged frames skip the write.
     pub(crate) persisted_path: String,
-    /// The error boundary replaces the routed page after a render panic until
-    /// the next navigation or "Reload Page".
-    pub(crate) error_page: Option<Entity<RenderErrorPage>>,
     pub(crate) _subscriptions: Vec<Subscription>,
 }
 
@@ -36,15 +32,18 @@ impl Workspace {
         let toaster = cx.new(|_| Toaster::default());
         crate::ui::toasts::install(toaster.clone(), cx);
 
-        let pages = Pages {
-            settings: cx.new(|cx| SettingsPage::new(this.clone(), window, cx)),
-            notifications: cx.new(|cx| NotificationsPage::new(window, cx)),
-            diagnostics: cx.new(|cx| DiagnosticsPage::new(window, cx)),
-            about: cx.new(|_| AboutPage::new()),
-        };
-        let dock = Self::new_dock(this, cx);
+        let dock = Self::new_dock(this.clone(), cx);
 
         let mut subscriptions = vec![
+            cx.observe_window_appearance(window, |_, _, cx| {
+                if crate::app::theme::current_mode(cx) == crate::app::theme::ThemeMode::System {
+                    crate::app::theme::set_theme_mode_with_record(
+                        crate::app::theme::ThemeMode::System,
+                        false,
+                        cx,
+                    );
+                }
+            }),
             cx.observe_global_in::<events::AppEventQueue>(window, |this, _, cx| {
                 this.drain_events(cx);
             }),
@@ -63,24 +62,49 @@ impl Workspace {
             notify_on::<crate::connectivity::ConnectivitySnapshot>(cx),
             notify_on::<crate::session::SessionSnapshot>(cx),
             notify_on::<crate::app_state::AppState>(cx),
+            notify_on::<crate::app::window::SettingsWindowState>(cx),
         ]);
 
+        cx.bind_keys([
+            KeyBinding::new("secondary-b", super::tab_workspace::ToggleSidebar, None),
+            KeyBinding::new(
+                "secondary-shift-b",
+                super::tab_workspace::ToggleInspector,
+                None,
+            ),
+        ]);
         cx.bind_keys(
             (0..navigation::SECTIONS.len().min(9))
-                .map(|i| KeyBinding::new(&crate::app::keys::page(i), NavigateToSection(i), None))
-                .chain([KeyBinding::new(
-                    crate::app::keys::TOGGLE_SIDEBAR,
-                    ToggleSidebar,
-                    None,
-                )]),
+                .map(|i| KeyBinding::new(&crate::app::keys::page(i), NavigateToSection(i), None)),
         );
 
-        let (active_path, collapsed) =
-            crate::app_state::with_config(cx, |c| (c.active_path.clone(), c.sidebar_collapsed));
-        #[cfg(debug_assertions)]
-        let annotations = super::dev_feedback::mount(&active_path, window, cx);
+        let mut active_path = crate::app_state::with_config(cx, |c| c.active_path.clone());
+        if active_path.split('/').nth(1) == Some("settings") {
+            let path = active_path.clone();
+            cx.defer(move |cx| {
+                if let Err(error) =
+                    crate::app::window::open_settings_window(path.split('/').nth(2), cx)
+                {
+                    tracing::error!(%error, "could not open Settings window");
+                }
+            });
+            active_path = navigation::HOME.to_string();
+            crate::app_state::update_config(cx, |config| config.active_path = active_path.clone());
+        }
+        if !cfg!(debug_assertions) && active_path.split('/').nth(1) == Some("ui") {
+            active_path = navigation::HOME.to_string();
+        }
+        let devtools = super::Devtools::mount(&active_path, false, window, cx);
         let mut tabs = WorkspaceTabs::default();
-        tabs.restore_empty(&active_path);
+        #[cfg(debug_assertions)]
+        tabs.pin(
+            "/ui",
+            super::tab_workspace::TabWorkspace::new("/ui", window, cx),
+        );
+        tabs.open(
+            &active_path,
+            super::tab_workspace::TabWorkspace::new(&active_path, window, cx),
+        );
         // Startup deep links were queued before this window existed.
         let drain = cx.entity().downgrade();
         cx.defer(move |cx| {
@@ -100,15 +124,14 @@ impl Workspace {
         .detach();
 
         Self {
-            #[cfg(debug_assertions)]
-            annotations,
+            devtools,
             focus,
             dock,
             toaster,
-            pages,
             tabs,
+            routing_to: Some(active_path.clone()),
+            closing_tabs: Vec::new(),
             tray: None,
-            sidebar_visible: !collapsed,
             dock_visible: false,
             loading: true,
             badge: false,
@@ -116,7 +139,6 @@ impl Workspace {
             project_statuses: HashMap::new(),
             pending_path: (active_path != navigation::HOME).then_some(active_path.clone()),
             persisted_path: active_path,
-            error_page: None,
             _subscriptions: subscriptions,
         }
     }
@@ -148,9 +170,69 @@ impl Workspace {
         })
     }
 
-    /// Navigate after the routes next render.
+    /// Navigate after the routes next render. A tab path selects its tab; any
+    /// other path shows in the route view.
     pub fn navigate(&mut self, path: impl Into<String>, cx: &mut Context<Self>) {
-        self.pending_path = Some(path.into());
+        let path = path.into();
+        if path.split('/').nth(1) == Some("settings") {
+            cx.defer(move |cx| {
+                if let Err(error) =
+                    crate::app::window::open_settings_window(path.split('/').nth(2), cx)
+                {
+                    tracing::error!(%error, "could not open Settings window");
+                }
+            });
+            return;
+        }
+        self.routing_to = Some(path.clone());
+        self.pending_path = Some(path);
+        cx.notify();
+    }
+
+    fn tab_mut(&mut self) -> Option<&mut super::tab_workspace::TabWorkspace> {
+        self.tabs.active_mut().map(|tab| &mut tab.state)
+    }
+
+    pub(crate) fn pages(&self) -> Option<&Pages> {
+        self.tabs.active().map(|tab| &tab.state.pages)
+    }
+
+    pub(crate) fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let state = super::tab_workspace::TabWorkspace::new(EMPTY_TAB_PREFIX, window, cx);
+        let path = self.tabs.insert_empty(state);
+        self.navigate(path, cx);
+    }
+
+    pub(crate) fn close_tab(&mut self, id: &str, cx: &mut Context<Self>) {
+        if self.closing_tabs.iter().any(|closing| closing == id)
+            || !self
+                .tabs
+                .entries()
+                .iter()
+                .any(|tab| tab.id == id && tab.closable)
+        {
+            return;
+        }
+        if self.tabs.active_id() == Some(id)
+            || self.tabs.path(id).as_deref() == self.routing_to.as_deref()
+        {
+            self.closing_tabs.push(id.to_string());
+            if let Some(path) = self.tabs.path_after_close(id, &self.closing_tabs) {
+                self.navigate(path, cx);
+            } else {
+                for id in std::mem::take(&mut self.closing_tabs) {
+                    self.tabs.close(&id);
+                }
+                self.pending_path = None;
+                self.routing_to = None;
+            }
+        } else {
+            self.tabs.close(id);
+            if self.tabs.active().is_none() {
+                self.pending_path = None;
+                self.routing_to = None;
+            }
+        }
         cx.notify();
     }
 
@@ -174,14 +256,6 @@ impl Workspace {
                 .ok();
         })
         .detach();
-    }
-
-    /// Persisted so restarts keep the choice.
-    pub(crate) fn toggle_sidebar(&mut self, cx: &mut Context<Self>) {
-        self.sidebar_visible = !self.sidebar_visible;
-        let collapsed = !self.sidebar_visible;
-        crate::app_state::update_config(cx, |config| config.sidebar_collapsed = collapsed);
-        cx.notify();
     }
 
     pub(crate) fn open_deep_link(&mut self, link: &str, cx: &mut Context<Self>) {
@@ -236,13 +310,43 @@ impl Workspace {
     /// The error page while the boundary is up, after taking any render
     /// panic recorded since the last frame.
     pub(crate) fn error_view(&mut self, cx: &mut Context<Self>) -> Option<AnyView> {
+        let tab = self.tab_mut()?;
         if crate::lifecycle::take_render_panic() {
             tracing::warn!(target: "corpora::workspace", "render panic detected; activating error boundary");
             let summary = crate::lifecycle::last_panic_summary()
                 .unwrap_or_else(|| crate::i18n::localize("render_error_unknown"));
-            self.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+            tab.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
         }
-        self.error_page.clone().map(Into::into)
+        tab.error_page.clone().map(Into::into)
+    }
+
+    /// Commits the router's current path before selecting retained pages or pane state.
+    pub(crate) fn prepare_route(
+        &mut self,
+        path: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self
+            .routing_to
+            .as_deref()
+            .is_some_and(|target| target != path)
+            || (self.tabs.active().is_none() && self.routing_to.is_none())
+        {
+            return;
+        }
+        for id in std::mem::take(&mut self.closing_tabs) {
+            self.tabs.close(&id);
+        }
+        if !self.tabs.show(path) {
+            self.tabs.open(
+                path,
+                super::tab_workspace::TabWorkspace::new(path, window, cx),
+            );
+        }
+        if let Some(tab) = self.tabs.active_mut() {
+            tab.state.panels.navigate(path);
+        }
     }
 
     /// Persist the routed path once it changes; leaving a path also clears
@@ -253,20 +357,29 @@ impl Workspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        #[cfg(not(debug_assertions))]
-        let _ = window;
+        if self.tabs.active().is_none() {
+            return;
+        }
+        if self
+            .routing_to
+            .as_deref()
+            .is_some_and(|target| target != path)
+        {
+            return;
+        }
+        self.routing_to = None;
+        self.tabs.navigated(path);
+        if let Some(tab) = self.tabs.active_mut() {
+            tab.state.panels.navigate(path);
+        }
         if self.persisted_path == path {
             return;
         }
         self.persisted_path = path.to_string();
-        self.tabs.navigated(path);
-        #[cfg(debug_assertions)]
-        if let Some(annotations) = &self.annotations {
-            annotations.update(cx, |overlay, cx| {
-                overlay.set_route(&format!("gpui://corpora{path}"), window, cx)
-            });
+        self.devtools.set_route(path, window, cx);
+        if let Some(tab) = self.tab_mut() {
+            tab.error_page = None;
         }
-        self.error_page = None;
         let path = path.to_string();
         crate::app_state::update_config(cx, |config| config.active_path = path);
         cx.notify();
@@ -303,11 +416,22 @@ impl Workspace {
 
 impl Render for Workspace {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        #[cfg(debug_assertions)]
-        gpui_agentation::begin_frame(window, cx);
         let started = std::time::Instant::now();
         if let Some(path) = self.pending_path.take() {
-            window.defer(cx, move |window, cx| use_navigate(window, cx).push(path));
+            let owner = cx.entity().downgrade();
+            window.defer(cx, move |window, cx| {
+                let navigate = owner
+                    .update(cx, |this, _| {
+                        if this.routing_to.as_deref() != Some(path.as_str()) {
+                            return false;
+                        }
+                        true
+                    })
+                    .unwrap_or(false);
+                if navigate {
+                    use_navigate(window, cx).push(path);
+                }
+            });
         }
         let body = if self.dock_visible {
             self.dock.clone().into_any_element()
@@ -317,9 +441,12 @@ impl Render for Workspace {
         let status = status::bar(window, cx);
         let palette = self.palette_open.then(|| self.palette(cx));
         let theme = cx.theme();
-        let background = window_background(theme.is_dark());
-        let scope = FocusScope::new(&self.focus)
-            .root()
+        let background = window_background(&theme.colors, theme.is_dark());
+        #[cfg(not(debug_assertions))]
+        let scope = FocusScope::new(&self.focus).root();
+        #[cfg(debug_assertions)]
+        let scope = div().id("workspace-focus").track_focus(&self.focus);
+        let scope = scope
             .size_full()
             .flex()
             .flex_col()
@@ -335,6 +462,28 @@ impl Render for Workspace {
             .relative()
             .w(window.viewport_size().width)
             .h(window.viewport_size().height)
+            .on_action(cx.listener(
+                |this, _: &super::tab_workspace::ToggleSidebar, window, cx| {
+                    if let Some(tab) = this.tabs.active_mut()
+                        && routes::panes(&tab.path).sidebar
+                    {
+                        tab.state.panels.sidebar_visible = !tab.state.panels.sidebar_visible;
+                    }
+                    window.focus(&this.focus, cx);
+                    cx.notify();
+                },
+            ))
+            .on_action(cx.listener(
+                |this, _: &super::tab_workspace::ToggleInspector, window, cx| {
+                    if let Some(tab) = this.tabs.active_mut()
+                        && routes::panes(&tab.path).inspector
+                    {
+                        tab.state.panels.inspector_visible = !tab.state.panels.inspector_visible;
+                    }
+                    window.focus(&this.focus, cx);
+                    cx.notify();
+                },
+            ))
             .on_action(
                 cx.listener(|this, NavigateToSection(i): &NavigateToSection, _, cx| {
                     if let Some(path) = navigation::SECTIONS.get(*i) {
@@ -342,24 +491,29 @@ impl Render for Workspace {
                     }
                 }),
             )
-            .on_action(cx.listener(|this, _: &ToggleSidebar, _, cx| this.toggle_sidebar(cx)))
             .on_action(
                 cx.listener(|this, _: &crate::app::ToggleSearch, _, cx| this.toggle_palette(cx)),
             )
             .on_action(cx.listener(|this, _: &ReloadCurrentPage, _, cx| {
-                this.error_page = None;
+                if let Some(tab) = this.tab_mut() {
+                    tab.error_page = None;
+                }
                 cx.notify();
             }))
             .on_action(cx.listener(|this, action: &TriggerRenderError, _, cx| {
                 let summary = action.message.clone();
-                this.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+                if let Some(tab) = this.tab_mut() {
+                    tab.error_page = Some(cx.new(|_| RenderErrorPage::new(summary)));
+                }
                 cx.notify();
             }))
             .child(background)
             .child(scope);
-        #[cfg(debug_assertions)]
-        let root = root.children(self.annotations.clone());
         frame_time::store_frame_time(started.elapsed().as_micros() as u64);
         root
     }
 }
+
+#[cfg(test)]
+#[path = "workspace.test.rs"]
+mod tests;

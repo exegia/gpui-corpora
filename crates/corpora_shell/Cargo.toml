@@ -19,25 +19,32 @@ default = []
 corpora_config.workspace = true
 corpora_foundation.workspace = true
 corpora_platform.workspace = true
-corpora_runtime_services.workspace = true
+corpora_runtime.workspace = true
 corpora_services.workspace = true
 corpora_ui.workspace = true
 
 anyhow.workspace = true
-ely-gpui-component.workspace = true
+gpui-kit.workspace = true
 flume.workspace = true
 gpui.workspace = true
 gpui-router.workspace = true
-gpui_agentation.workspace = true
+image.workspace = true
+gpui-agentation.workspace = true
 rust-embed.workspace = true
 serde.workspace = true
 tracing.workspace = true
 
+[dev-dependencies]
+tempfile.workspace = true
+gpui-agentation = { workspace = true, features = ["test-support"] }
+gpui-kit = { workspace = true, features = ["test-support"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 global-hotkey.workspace = true
-
-[target.'cfg(target_os = "linux")'.dependencies]
-image.workspace = true
+objc2.workspace = true
+objc2-app-kit.workspace = true
+objc2-foundation.workspace = true
+raw-window-handle.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 global-hotkey.workspace = true

@@ -2,7 +2,7 @@
 
 A native macOS workspace bootstrap using Ely's default components and theme,
 with `gpui-router` for navigation. The attached design guides the title bar,
-sidebar, overview cards, and status bar.
+activity rail, overview cards, and status bar.
 
 ```sh
 cargo run
@@ -10,6 +10,23 @@ cargo run
 
 Requires Rust 1.95 or newer. Runtime Metal shaders are enabled, so the build
 does not require the full Xcode Metal toolchain.
+
+On Linux, install the native dependencies listed in
+[`scripts/install-linux-deps.sh`](scripts/install-linux-deps.sh). If Homebrew's
+`pkg-config` is first on `PATH`, select the system executable so Cargo can find
+the system font and display libraries:
+
+```sh
+export PKG_CONFIG=/usr/bin/pkg-config
+cargo run --locked
+```
+
+Keep that variable set for direct Cargo commands, Clippy, and tests.
+`just dev` selects `/usr/bin/pkg-config` automatically on Linux when available;
+an explicit `PKG_CONFIG` setting takes precedence.
+
+Automatic updates are disabled unless `GPUI_UPDATE_MANIFEST_URL` is set to a
+release manifest URL at build time.
 
 ## Development watcher
 
@@ -33,21 +50,63 @@ On macOS the watcher builds, signs, and launches `target/debug/Corpora.app` so
 native notifications have the `com.corpora.app` identity. Unbundled launches
 use in-app notifications when native delivery is unavailable.
 
-Development builds include a floating annotation toolbar for native UI feedback.
-Saved notes survive rebuilds and are available to local agent tools at
-`http://127.0.0.1:4748`. See [gpui_agentation](crates/gpui_agentation/README.md)
-for usage and the REST/SSE API. Release builds exclude the annotation feature.
+Development builds include an annotation toolbar below each window's title bar.
+The published [gpui-agentation 0.5.1](https://crates.io/crates/gpui-agentation/0.5.1)
+library supplies the tools with its `native` feature. Release builds exclude
+the annotation API and UI.
+
+The checkout's `.codex/config.toml` connects directly to the native MCP listeners;
+no CLI bridge is required:
+
+| Window | MCP endpoint | Feedback store |
+| --- | --- | --- |
+| Workspace | `http://127.0.0.1:4748/mcp` | `target/agentation/feedback.json` |
+| Settings | `http://127.0.0.1:4751/mcp` | `target/agentation/feedback-settings.json` |
+
+Restart the MCP client after changing its configuration. Keep Corpora running in
+debug mode, with Settings open when using its listener. The native listeners
+accept loopback requests and reject browser origins. Agentation's toolbar Settings
+shows the actual endpoint and copyable client configuration.
+
+Set `GPUI_AGENTATION_STORE` to change the workspace path; Settings derives its own
+filename by adding `-settings`, or uses `GPUI_AGENTATION_SETTINGS_STORE` when set.
+Use different files for the two windows. Set `GPUI_AGENTATION_PORT` or
+`GPUI_AGENTATION_SETTINGS_PORT` to change their ports and match the MCP config.
+`GPUI_AGENTATION=0` disables the tools. Run only one app process per store.
+
+The app-local `shell::Devtools` adapter composes assets, initializes Agentation,
+and retains one `Agentation` per window. It renders through `Agentation::root`
+and switches feedback routes after committed workspace or Settings navigation.
+Existing notes remain in the workspace store after upgrading.
+
+`corpora_ui::ely` exposes Agentation's bundled Ely in debug builds and the
+standalone Ely crate in release builds. App controls and feedback share one
+initialization, asset source, theme, and focus system; linking both Ely copies
+would register duplicate GPUI actions. Screen roots and selected shared views
+are inspectable targets; individual child controls are not automatically targets.
 
 ## Window
 
 The Ely title bar supplies native macOS traffic-light spacing and its built-in
-`drag_region` for dragging and double-click zoom. Home, Explore, and Projects
-use an Ely `TabBar`; the `ActivityBar` also opens Settings and Profile.
+`drag_region` for dragging and double-click zoom. The tab bar lists only
+workspace tabs, with the New tab button after the last one. Route pages share
+one view outside the tab bar, which the activity rail and sidebar navigate. Each
+tab, and the route view, owns its retained pages, scroll position, sidebar
+visibility, and inspector visibility and width. Closing the active tab shows its
+neighbor, else the route view; with neither, the window is empty.
 
-The title-bar panel buttons toggle the sidebar and activity dock. The dock
-starts closed and uses Ely's `Dock` with a movable activity panel. A splash
-window precedes the workspace, which briefly shows `Skeleton` placeholders.
-Unconnected pages use `EmptyState`.
+`routes::panes` sets which panes each page offers: sidebar, inspector, a second
+content pane, and a bottom panel. Route pages keep the sidebar and inspector;
+workspace tabs get all four. The sidebar has a fixed gap beside the workspace;
+the inspector, second pane, and bottom panel have draggable splitters. All panes
+share the same fill and inset shadows and round every corner except where they
+meet the window's right edge. The title-bar controls animate their visibility
+and respect reduced motion. Use Ctrl+B for the sidebar and Ctrl+Shift+B for the
+inspector (Cmd on macOS).
+
+The activity dock starts closed and uses Ely's `Dock` with a movable activity
+panel. A splash window precedes the workspace, which briefly shows `Skeleton`
+placeholders. Unconnected pages use `EmptyState`.
 
 The menu-bar tray opens the workspace or navigates to its main sections.
 Settings provides light/dark mode, connectivity previews, a loading preview,
@@ -87,6 +146,12 @@ this session. No runtime metrics or saved records are simulated.
 Ely and `gpui-router` are pinned to Git revisions. The linked router README
 describes version 0.7, which was not published to crates.io when bootstrapped.
 Ely, the router, and the application all resolve to `gpui-pre` 0.3.8.
+
+GPUI Kit is pinned to 0.7.1, which shares that GPUI version. The application
+uses Kit's platform entry point and window root, with Ely's assets loaded
+before Kit's assets. Both libraries are initialized at startup; theme and
+locale changes update both. Ely's root `FocusScope` and inspector remain
+installed. See [Ely's interoperability guide](https://elygpui.com/docs/gpui-kit/).
 
 ```sh
 cargo fmt --check

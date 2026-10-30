@@ -12,7 +12,7 @@ pub(crate) use corpora_platform::{
     capabilities, events, ipc, paths, platform, runtime, single_instance,
 };
 #[allow(unused_imports)]
-pub(crate) use corpora_runtime_services::{
+pub(crate) use corpora_runtime::{
     accessibility, connectivity, i18n, secure_storage, session, streaming, tasks, telemetry,
     tokio_runtime,
 };

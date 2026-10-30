@@ -14,6 +14,14 @@ WATCH_FILES = ("Cargo.toml", "Cargo.lock", "build.rs", "rust-toolchain.toml")
 IGNORED_DIRS = {"target", ".git", "node_modules", "__pycache__"}
 
 
+def build_environment():
+    env = os.environ.copy()
+    # Homebrew's pkg-config cannot discover the distro's font and display libraries.
+    if sys.platform == "linux" and os.access("/usr/bin/pkg-config", os.X_OK):
+        env.setdefault("PKG_CONFIG", "/usr/bin/pkg-config")
+    return env
+
+
 def snapshot(root):
     paths = [root / name for name in WATCH_FILES]
     for name in WATCH_DIRS:
@@ -72,6 +80,7 @@ def main():
     root = Path(__file__).resolve().parent.parent
     app = None
     builder = None
+    build_env = build_environment()
     executable = root / "target" / "debug" / ("gpui-corpora.exe" if os.name == "nt" else "gpui-corpora")
     build_command = ["cargo", "build", "--bin", "gpui-corpora", "--target-dir", str(root / "target")]
     if sys.platform == "darwin":
@@ -88,7 +97,7 @@ def main():
             print("[dev] Building…", flush=True)
             builder = subprocess.Popen(
                 build_command,
-                cwd=root, start_new_session=True,
+                cwd=root, env=build_env, start_new_session=True,
             )
             if builder.wait():
                 print("[dev] Build failed; keeping the current app. Save a fix to retry.", flush=True)

@@ -2,7 +2,7 @@
 use super::*;
 
 pub(crate) fn tray(cx: &mut App) -> anyhow::Result<TrayIcon> {
-    TrayIcon::new(
+    let tray = TrayIcon::new(
         "books.vertical",
         vec![
             TrayItem::Action("Show Corpora".into()),
@@ -29,5 +29,11 @@ pub(crate) fn tray(cx: &mut App) -> anyhow::Result<TrayIcon> {
             }
         },
         cx,
-    )
+    )?;
+    // Ely only accepts an SF Symbol; swap in the Corpora mark. The symbol
+    // stays as the fallback if AppKit can't give us the button.
+    if let Err(error) = corpora_shell::platform::apply_tray_icon() {
+        tracing::warn!(target: "corpora::startup", %error, "tray keeps its symbol icon");
+    }
+    Ok(tray)
 }
