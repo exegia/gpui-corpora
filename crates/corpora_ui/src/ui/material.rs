@@ -1,11 +1,11 @@
 //! Glass surface wrapper adapted from Bezel's MIT-licensed `ui::surface` module.
 
+use crate::ely::theme::{Mode, Palette};
 use crate::styles::{palette::color, tokens::DefaultTheme};
 use gpui::{
     AbsoluteLength, AnyElement, App, Bounds, Corners, Element, GlobalElementId, Hsla,
     InspectorElementId, IntoElement, LayoutId, Pixels, Styled, Window, px, transparent_black,
 };
-use gpui_agentation::ely::theme::{Mode, Palette};
 
 use super::glass;
 
@@ -169,7 +169,7 @@ pub struct GlassSurface {
     corners: Corners<AbsoluteLength>,
     spec: GlassSpec,
     scale: f32,
-    bezel: Option<(Hsla, Hsla, Hsla)>,
+    bezel: Option<(gpui_specular::Surface, Hsla)>,
     child: AnyElement,
 }
 
@@ -191,8 +191,8 @@ impl GlassSurface {
     }
 
     /// Adds a lit upper inset, a dim lower inset, and an outline inside the surface.
-    pub fn bezel(mut self, lit: Hsla, dim: Hsla, border: Hsla) -> Self {
-        self.bezel = Some((lit, dim, border));
+    pub fn bezel(mut self, surface: gpui_specular::Surface, border: Hsla) -> Self {
+        self.bezel = Some((surface, border));
         self
     }
 
@@ -255,19 +255,8 @@ impl Element for GlassSurface {
         window.with_paint_scale(bounds.center(), self.scale, |window| {
             window.paint_layer(bounds, |window| {
                 glass::paint(bounds, corners, self.spec, window, cx);
-                if let Some((lit, dim, border)) = self.bezel {
-                    window.paint_inset_shadows(
-                        bounds,
-                        corners,
-                        &[
-                            gpui::BoxShadow::new(px(0.), px(1.), lit)
-                                .blur_radius(px(1.4))
-                                .inset(),
-                            gpui::BoxShadow::new(px(0.), px(-1.), dim)
-                                .blur_radius(px(1.4))
-                                .inset(),
-                        ],
-                    );
+                if let Some((surface, border)) = self.bezel {
+                    window.paint_inset_shadows(bounds, corners, &surface.shadows());
                     window.paint_quad(
                         gpui::outline(bounds, border, gpui::BorderStyle::Solid)
                             .corner_radii(corners)

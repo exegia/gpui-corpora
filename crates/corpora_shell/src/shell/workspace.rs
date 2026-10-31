@@ -2,7 +2,6 @@
 use super::*;
 
 pub struct Workspace {
-    pub(super) devtools: super::Devtools,
     pub(crate) focus: FocusHandle,
     pub(crate) dock: Entity<Dock>,
     pub(crate) toaster: Entity<Toaster>,
@@ -94,7 +93,6 @@ impl Workspace {
         if !cfg!(debug_assertions) && active_path.split('/').nth(1) == Some("ui") {
             active_path = navigation::HOME.to_string();
         }
-        let devtools = super::Devtools::mount(&active_path, false, window, cx);
         let mut tabs = WorkspaceTabs::default();
         #[cfg(debug_assertions)]
         tabs.pin(
@@ -124,7 +122,6 @@ impl Workspace {
         .detach();
 
         Self {
-            devtools,
             focus,
             dock,
             toaster,
@@ -354,7 +351,7 @@ impl Workspace {
     pub(crate) fn path_rendered(
         &mut self,
         path: &str,
-        window: &mut Window,
+        _window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         if self.tabs.active().is_none() {
@@ -376,7 +373,6 @@ impl Workspace {
             return;
         }
         self.persisted_path = path.to_string();
-        self.devtools.set_route(path, window, cx);
         if let Some(tab) = self.tab_mut() {
             tab.error_page = None;
         }
@@ -442,11 +438,8 @@ impl Render for Workspace {
         let palette = self.palette_open.then(|| self.palette(cx));
         let theme = cx.theme();
         let background = window_background(&theme.colors, theme.is_dark());
-        #[cfg(not(debug_assertions))]
-        let scope = FocusScope::new(&self.focus).root();
-        #[cfg(debug_assertions)]
-        let scope = div().id("workspace-focus").track_focus(&self.focus);
-        let scope = scope
+        let scope = FocusScope::new(&self.focus)
+            .root()
             .size_full()
             .flex()
             .flex_col()
@@ -454,7 +447,7 @@ impl Render for Workspace {
             .text_size(theme.text_size(TextSize::Base))
             .text_color(theme.colors.fg)
             .child(div().flex_1().min_h_0().w_full().child(body))
-            .child(super::dev_target("status-bar", "Status bar", status))
+            .child(status)
             .child(ToastViewport::new("toasts", &self.toaster))
             .children(palette);
         // Actions bubble from the focused element, so handlers sit outside the scope.

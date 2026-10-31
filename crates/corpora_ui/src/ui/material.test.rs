@@ -1,5 +1,5 @@
+use crate::ely::theme::Mode;
 use gpui::{Hsla, px};
-use gpui_agentation::ely::theme::Mode;
 
 use super::{GlassOverrides, GlassSpec};
 

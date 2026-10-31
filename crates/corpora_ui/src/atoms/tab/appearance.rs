@@ -1,8 +1,6 @@
-use gpui::{Hsla, px};
-use gpui_agentation::ely::theme::Mode;
-
-use crate::ely::theme::{Palette, Theme};
+use crate::ely::theme::{Mode, Palette, Theme};
 use crate::ui::material::{GlassOverrides, GlassSpec};
+use gpui::{Hsla, px};
 
 pub(super) const VERTICAL_TAB_RADIUS: f32 = 14.;
 pub(super) const VERTICAL_TAB_LABEL_SIZE: f32 = 9.;
