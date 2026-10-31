@@ -4,7 +4,6 @@ use super::*;
 use gpui_kit::component::{ActiveTheme, TitleBar, setting::Settings};
 
 pub struct SettingsPage {
-    devtools: crate::shell::Devtools,
     focus: FocusHandle,
     pub(crate) workspace: Option<WeakEntity<Workspace>>,
     pub(crate) selected: usize,
@@ -87,7 +86,6 @@ impl SettingsPage {
         }
 
         Self {
-            devtools: crate::shell::Devtools::mount("/settings/general", true, window, cx),
             focus,
             workspace,
             selected: 0,
@@ -107,11 +105,9 @@ impl SettingsPage {
         self.select_index(index, window, cx);
     }
 
-    fn select_index(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
+    fn select_index(&mut self, index: usize, _window: &mut Window, cx: &mut Context<Self>) {
         if self.selected != index {
             self.selected = index;
-            self.devtools
-                .set_route(&format!("/settings/{}", SECTIONS[index].0), window, cx);
             cx.notify();
         }
     }
@@ -204,9 +200,6 @@ impl Render for SettingsPage {
                             .page(page),
                     ),
             );
-        let body = self
-            .devtools
-            .frame("settings-screen", "Settings", body, window, cx);
         div()
             .id("settings-window")
             .relative()

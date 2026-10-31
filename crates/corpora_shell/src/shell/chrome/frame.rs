@@ -145,45 +145,14 @@ pub fn frame(
         .size_full()
         .overflow_y_scroll()
         .track_scroll(&scroll)
-        .child(crate::shell::dev_target(
-            "route-page",
-            "Current page",
-            content,
-        ));
+        .child(content);
     let body = panels::layout(workspace.clone(), body, window, cx);
-    let mut content = Some(
-        div()
-            .flex()
-            .flex_1()
-            .min_h_0()
-            .child(crate::shell::dev_target(
-                "activity-bar",
-                "Activity bar",
-                activity,
-            ))
-            .child(body)
-            .into_any_element(),
-    );
-    let framed = workspace
-        .update(cx, |state, cx| {
-            state.devtools.frame(
-                "workspace-screen",
-                "Workspace",
-                content.take().unwrap(),
-                window,
-                cx,
-            )
-        })
-        .unwrap_or_else(|_| content.take().unwrap());
+    let framed = div().flex().flex_1().min_h_0().child(activity).child(body);
     div()
         .border_0()
         .size_full()
         .flex()
         .flex_col()
-        .child(crate::shell::dev_target(
-            "titlebar",
-            "Title bar and window tabs",
-            titlebar,
-        ))
+        .child(titlebar)
         .child(div().flex_1().min_h_0().child(framed))
 }

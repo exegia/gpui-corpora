@@ -219,14 +219,10 @@ pub(super) fn layout(
             .with_handle_appearance(splitter())
             .child(resizable_panel().pr(rems(HALF_GAP)).child(primary))
             .child(
-                resizable_panel()
-                    .pl(rems(HALF_GAP))
-                    .child(crate::shell::dev_target(
-                        "tab-split-pane",
-                        "Tab split pane",
-                        layout::main(dark, placeholder("Split view", "Nothing open", cx))
-                            .flush_right(flush),
-                    )),
+                resizable_panel().pl(rems(HALF_GAP)).child(
+                    layout::main(dark, placeholder("Split view", "Nothing open", cx))
+                        .flush_right(flush),
+                ),
             )
             .into_any_element()
     } else {
@@ -238,14 +234,10 @@ pub(super) fn layout(
             .with_handle_appearance(splitter())
             .child(resizable_panel().pb(rems(HALF_GAP)).child(top))
             .child(
-                resizable_panel()
-                    .pt(rems(HALF_GAP))
-                    .child(crate::shell::dev_target(
-                        "tab-bottom-panel",
-                        "Tab bottom panel",
-                        layout::main(dark, placeholder("Activity", "No workspace events", cx))
-                            .flush_right(flush),
-                    )),
+                resizable_panel().pt(rems(HALF_GAP)).child(
+                    layout::main(dark, placeholder("Activity", "No workspace events", cx))
+                        .flush_right(flush),
+                ),
             )
             .into_any_element()
     } else {
@@ -266,13 +258,13 @@ pub(super) fn layout(
                     .h_full()
                     .flex_shrink_0()
                     .overflow_hidden()
-                    .child(div().w(sidebar_width).h_full().pr(rems(0.5)).child(
-                        crate::shell::dev_target(
-                            "tab-sidebar",
-                            "Tab sidebar",
-                            layout::sidebar(dark, sidebar_content),
-                        ),
-                    )),
+                    .child(
+                        div()
+                            .w(sidebar_width)
+                            .h_full()
+                            .pr(rems(0.5))
+                            .child(layout::sidebar(dark, sidebar_content)),
+                    ),
             )
         })
         .child(div().flex_1().min_w_0().h_full().child(split))

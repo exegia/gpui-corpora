@@ -11,15 +11,11 @@ pub fn search() -> impl IntoElement {
                 .flex()
                 .items_center()
                 .justify_center()
-                .child(crate::shell::dev_target(
+                .child(empty(
                     "search-empty",
-                    "Search empty state",
-                    empty(
-                        "search-empty",
-                        IconName::Search,
-                        "No texts connected",
-                        "Connect a corpus source to search its contents.",
-                    ),
+                    IconName::Search,
+                    "No texts connected",
+                    "Connect a corpus source to search its contents.",
                 )),
         )
 }
