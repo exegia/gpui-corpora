@@ -48,9 +48,9 @@ corpora_runtime = { path = "crates/corpora_runtime" }
 corpora_services = { path = "crates/corpora_services" }
 corpora_shell = { path = "crates/corpora_shell" }
 corpora_ui = { path = "crates/corpora_ui" }
-gpui-agentation = { version = "=6.0.0", default-features = false, features = [
-    "native",
-] }
+# Pinned Ely snapshot. Never also depend on the upstream `ely-gpui-component` Git/registry
+# package: two copies mean duplicate theme globals and GPUI action names.
+ely-gpui-component = { package = "gpui-agentation-ely", version = "=0.1.1" }
 
 # Ely pins gpui-pre =0.3.8; any other GPUI source is a different, type-incompatible crate.
 gpui = { package = "gpui-pre", version = "=0.3.8", default-features = false, features = [
@@ -60,6 +60,7 @@ gpui-router = { git = "https://github.com/justjavac/gpui-router", rev = "e2ec6ea
     "gpui-pre",
 ] }
 gpui-kit = "=0.7.1"
+gpui-specular = "=0.1.0"
 
 anyhow = "1"
 arboard = { version = "3.6.1", features = ["image-data"] }

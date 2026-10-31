@@ -29,14 +29,13 @@ flume.workspace = true
 gpui.workspace = true
 gpui-router.workspace = true
 image.workspace = true
-gpui-agentation.workspace = true
 rust-embed.workspace = true
 serde.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
-gpui-agentation = { workspace = true, features = ["test-support"] }
+ely-gpui-component = { workspace = true, features = ["test-support"] }
 gpui-kit = { workspace = true, features = ["test-support"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
