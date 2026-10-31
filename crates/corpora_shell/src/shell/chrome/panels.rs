@@ -214,30 +214,42 @@ pub(super) fn layout(
     let flush = inspector <= gpui::px(0.);
     let primary = layout::main(dark, content).flush_right(flush && !panes.split);
     let top = if panes.split {
-        h_resizable(format!("{}-content-split", tab.id))
-            .with_state(&state.content_split)
-            .with_handle_appearance(splitter())
-            .child(resizable_panel().pr(rems(HALF_GAP)).child(primary))
+        div()
+            .size_full()
+            .flex_1()
+            .min_h_0()
             .child(
-                resizable_panel().pl(rems(HALF_GAP)).child(
-                    layout::main(dark, placeholder("Split view", "Nothing open", cx))
-                        .flush_right(flush),
-                ),
+                h_resizable(format!("{}-content-split", tab.id))
+                    .with_state(&state.content_split)
+                    .with_handle_appearance(splitter())
+                    .child(resizable_panel().pr(rems(HALF_GAP)).child(primary))
+                    .child(
+                        resizable_panel().pl(rems(HALF_GAP)).child(
+                            layout::main(dark, placeholder("Split view", "Nothing open", cx))
+                                .flush_right(flush),
+                        ),
+                    ),
             )
             .into_any_element()
     } else {
         primary.into_any_element()
     };
     let center = if panes.dock {
-        v_resizable(format!("{}-dock-split", tab.id))
-            .with_state(&state.dock_split)
-            .with_handle_appearance(splitter())
-            .child(resizable_panel().pb(rems(HALF_GAP)).child(top))
+        div()
+            .size_full()
+            .flex_1()
+            .min_h_0()
             .child(
-                resizable_panel().pt(rems(HALF_GAP)).child(
-                    layout::main(dark, placeholder("Activity", "No workspace events", cx))
-                        .flush_right(flush),
-                ),
+                v_resizable(format!("{}-dock-split", tab.id))
+                    .with_state(&state.dock_split)
+                    .with_handle_appearance(splitter())
+                    .child(resizable_panel().pb(rems(HALF_GAP)).child(top))
+                    .child(
+                        resizable_panel().pt(rems(HALF_GAP)).child(
+                            layout::main(dark, placeholder("Activity", "No workspace events", cx))
+                                .flush_right(flush),
+                        ),
+                    ),
             )
             .into_any_element()
     } else {

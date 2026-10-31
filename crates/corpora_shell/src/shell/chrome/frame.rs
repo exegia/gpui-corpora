@@ -147,7 +147,13 @@ pub fn frame(
         .track_scroll(&scroll)
         .child(content);
     let body = panels::layout(workspace.clone(), body, window, cx);
-    let framed = div().flex().flex_1().min_h_0().child(activity).child(body);
+    let framed = div()
+        .flex()
+        .flex_1()
+        .min_h_0()
+        .size_full()
+        .child(activity)
+        .child(body);
     div()
         .border_0()
         .size_full()
