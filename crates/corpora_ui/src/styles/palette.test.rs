@@ -1,4 +1,5 @@
 use super::*;
+use crate::styles::utils::oklch;
 
 #[test]
 fn resolves_named_and_hex_colors() {
@@ -11,6 +12,7 @@ fn resolves_named_and_hex_colors() {
 fn resolves_a_scale_step_through_oklch() {
     // amber.500 is oklch(76.9% 0.188 70.08) in palette.toml.
     assert_eq!(resolve("amber.500"), oklch(0.769, 0.188, 70.08));
+    assert_eq!(resolve("amber.500"), palette("amber", 500));
 }
 
 #[test]
@@ -27,10 +29,7 @@ fn build_maps_roles_onto_palette_fields() {
 
 #[test]
 fn every_palette_color_uses_the_theme_document() {
-    let base = parsed();
     let mut custom = Parsed {
-        scales: base.scales.clone(),
-        named: base.named.clone(),
         theme: toml::from_str(include_str!("../themes/default.toml")).unwrap(),
     };
     for role in custom.theme.colors.values_mut() {
