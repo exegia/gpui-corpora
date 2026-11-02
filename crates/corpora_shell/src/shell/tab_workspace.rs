@@ -20,6 +20,7 @@ impl TabWorkspace {
     pub fn new(path: &str, window: &mut Window, cx: &mut App) -> Self {
         Self {
             pages: Pages {
+                native: cx.new(|cx| crate::pages::native::NativePage::new(window, cx)),
                 #[cfg(debug_assertions)]
                 ui: cx.new(|cx| crate::routes::ui::Ui::new(window, cx)),
                 #[cfg(debug_assertions)]

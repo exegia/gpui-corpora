@@ -46,14 +46,16 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
                     .path("tabs/new/:tabId")
                     .element(|_, _| gpui::div()),
                 Route::new().path("explore").children([
-                    Route::new().index().element(|_, _| pages::search()),
+                    Route::new()
+                        .index()
+                        .element(page(|p| p.native.clone().into_any_element())),
                     Route::new().path("detail/:type/:id").children([
                         Route::new()
                             .index()
                             .element(|_, cx| pages::explore_detail(cx)),
                         Route::new()
                             .path("viewer")
-                            .element(|_, cx| pages::viewer(cx)),
+                            .element(page(|p| p.native.clone().into_any_element())),
                     ]),
                 ]),
                 Route::new().path("projects").children([
