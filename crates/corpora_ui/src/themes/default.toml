@@ -1,0 +1,245 @@
+# Default theme for the desktop app. Every value references a scale.step (or a
+# named color) from palette.toml; a resolver turns those into concrete colors.
+name = "Default"
+description = "The default theme for the desktop app."
+
+# Surfaces, from the base canvas up to raised and inset layers.
+[colors.background]
+description = "Base canvas behind everything."
+light = "slate.200"
+dark = "neutral.800"
+
+[colors.surface]
+description = "Cards, panels, and sidebars raised off the canvas."
+light = "neutral.100"
+dark = "neutral.800"
+
+[colors.elevated]
+description = "Menus, popovers, and dialogs floating above surfaces."
+light = "white"
+dark = "neutral.800"
+
+[colors.sunken]
+description = "Wells and inset areas recessed into a surface."
+light = "neutral.100"
+dark = "neutral.950"
+
+[colors.hover]
+description = "Background of an interactive element under the pointer."
+light = "neutral.100"
+dark = "neutral.800"
+
+[colors.active]
+description = "Background of a pressed or selected element."
+light = "neutral.200"
+dark = "neutral.700"
+
+[colors.border]
+description = "Dividers and outlines between regions."
+light = "neutral.200"
+dark = "neutral.800"
+
+[colors.border-subtle]
+description = "Low-contrast separators within a region."
+light = "neutral.100"
+dark = "neutral.900"
+
+# Foreground content, from primary text down to disabled.
+[colors.foreground]
+description = "Primary text and icons."
+light = "neutral.950"
+dark = "neutral.50"
+
+[colors.muted]
+description = "Secondary text and supporting labels."
+light = "neutral.500"
+dark = "neutral.400"
+
+[colors.subtle]
+description = "Tertiary text, placeholders, and hints."
+light = "neutral.400"
+dark = "neutral.500"
+
+[colors.disabled]
+description = "Text and icons of disabled controls."
+light = "neutral.300"
+dark = "neutral.600"
+
+# Accent and the content that sits on top of it.
+[colors.accent]
+description = "Primary accent for emphasis and active controls."
+light = "indigo.600"
+dark = "indigo.500"
+
+[colors.accent-hover]
+description = "Accent under the pointer."
+light = "indigo.500"
+dark = "indigo.400"
+
+[colors.on-accent]
+description = "Text and icons placed on an accent fill."
+light = "white"
+dark = "black"
+
+# Status colors and their tinted backgrounds.
+[colors.success]
+description = "Confirmation and healthy state."
+light = "green.600"
+dark = "green.400"
+
+[colors.success-subtle]
+description = "Tinted background for a success message."
+light = "green.100"
+dark = "green.950"
+
+[colors.warning]
+description = "Caution that needs attention."
+light = "amber.600"
+dark = "amber.400"
+
+[colors.warning-subtle]
+description = "Tinted background for a warning message."
+light = "amber.100"
+dark = "amber.950"
+
+[colors.danger]
+description = "Errors and destructive actions."
+light = "red.600"
+dark = "red.400"
+
+[colors.danger-subtle]
+description = "Tinted background for an error message."
+light = "red.100"
+dark = "red.700"
+
+[colors.info]
+description = "Neutral informational state."
+light = "sky.600"
+dark = "sky.400"
+
+[colors.info-subtle]
+description = "Tinted background for an info message."
+light = "sky.100"
+dark = "sky.950"
+
+# Interaction cues.
+[colors.focus]
+description = "Focus ring on keyboard-focused controls."
+light = "indigo.600"
+dark = "indigo.300"
+
+[colors.link]
+description = "Hyperlinks and inline navigation."
+light = "indigo.700"
+dark = "indigo.300"
+
+[colors.selection]
+description = "Highlight behind selected text."
+light = "indigo.200"
+dark = "indigo.900"
+
+
+# Material, inverse text, and document colors.
+[colors.border-strong]
+light = "neutral.400"
+dark = "neutral.600"
+
+[colors.on-media]
+light = "white"
+dark = "white"
+
+[colors.backdrop]
+light = "neutral.950"
+dark = "black"
+light-alpha = 0.32
+dark-alpha = 0.5
+
+[colors.media-backdrop]
+light = "neutral.950"
+dark = "black"
+light-alpha = 0.97
+dark-alpha = 0.97
+
+[colors.shimmer]
+light = "white"
+dark = "white"
+light-alpha = 0.7
+dark-alpha = 0.063
+
+[colors.shadow]
+light = "black"
+dark = "black"
+
+[colors.tooltip-background]
+light = "neutral.950"
+dark = "neutral.700"
+
+[colors.tooltip-foreground]
+light = "neutral.50"
+dark = "neutral.50"
+
+[colors.paper]
+light = "white"
+dark = "neutral.50"
+
+[colors.ink]
+light = "neutral.950"
+dark = "neutral.950"
+
+[colors.on-danger]
+light = "white"
+dark = "red.950"
+
+[colors.on-success]
+light = "green.950"
+dark = "green.950"
+
+[colors.on-warning]
+light = "amber.950"
+dark = "amber.950"
+
+[colors.on-info]
+light = "sky.950"
+dark = "sky.950"
+
+# Eight series colors shared by Ely and Kit charts.
+[chart]
+light = ["blue.600", "teal.600", "amber.700", "rose.600", "violet.600", "green.600", "orange.700", "cyan.700"]
+dark = ["blue.400", "teal.400", "amber.400", "rose.400", "violet.400", "green.400", "orange.400", "cyan.400"]
+
+# Complete terminal ANSI rows, including neutral and bright colors.
+[ansi]
+light = ["#181613", "#d21f07", "#319a00", "#b59a00", "#0060de", "#9a0068", "#007e8a", "#acaaa8", "#605d5a", "#bd6158", "#439458", "#a57710", "#4c82c6", "#a067ac", "#00959c", "#cccac8"]
+dark = ["#3f3f3f", "#ff5257", "#30d158", "#ffc600", "#419cff", "#a550a7", "#07fdd3", "#afadab", "#5c5a58", "#fda297", "#89d298", "#e3b667", "#8dc1ff", "#dda7ea", "#56d3da", "#f3f1f0"]
+
+# Syntax highlighting. Most values are fixed editor colors; operator, punctuation,
+# and the dark neutrals reuse palette steps.
+[syntax.light]
+keyword = "#0433ff"
+string = "#036a07"
+number = "#0433ff"
+comment = "#007fff"
+function = "#0000a2"
+type_name = "#6f42c1"
+constant = "#c5060b"
+property = "#333333"
+tag = "#0433ff"
+attribute = "#957931"
+operator = "neutral.950"
+punctuation = "neutral.950"
+variable = "#333333"
+
+[syntax.dark]
+keyword = "#c28b12"
+string = "#62ba46"
+number = "#e1d797"
+comment = "#9e9e9e"
+function = "#fdd888"
+type_name = "#c75828"
+constant = "#e1d797"
+property = "slate.100"
+tag = "#b5af9a"
+attribute = "#e7cb8f"
+operator = "slate.100"
+punctuation = "slate.100"
+variable = "slate.100"

@@ -1,0 +1,45 @@
+[package]
+name = "corpora_platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license = "MIT"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/corpora_platform.rs"
+
+[features]
+default = []
+websocket = ["dep:tokio-tungstenite"]
+
+[dependencies]
+corpora_foundation.workspace = true
+
+anyhow.workspace = true
+directories.workspace = true
+flume.workspace = true
+futures-util.workspace = true
+gpui.workspace = true
+interprocess.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+single-instance.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-tungstenite = { workspace = true, optional = true }
+tracing.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows.workspace = true
+windows-registry.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true

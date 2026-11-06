@@ -32,7 +32,9 @@ apply_branch_protection() {
   "required_status_checks": {
     "strict": true,
     "contexts": [
-      "validate-template"
+      "guard",
+      "check",
+      "Detect hardcoded secrets"
     ]
   },
   "enforce_admins": false,
