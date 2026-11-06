@@ -40,6 +40,7 @@ unnecessary_sort_by = "allow"
 unneeded_wildcard_pattern = "allow"
 
 [workspace.dependencies]
+context_fabric_core = { git = "https://github.com/exegia/corpora-context-fabric", rev = "3f431862f67defca3717d8d20ec4b9498e607419", default-features = false }
 corpora_config = { path = "crates/corpora_config" }
 corpora_foundation = { path = "crates/corpora_foundation" }
 corpora_persistence = { path = "crates/corpora_persistence" }

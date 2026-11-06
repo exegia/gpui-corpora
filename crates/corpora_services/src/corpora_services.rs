@@ -30,3 +30,5 @@ pub use app::lifecycle;
 pub use services::{
     crash_report, desktop_actions, error_surface, first_run, logging, storage, updater,
 };
+
+pub mod native_corpus;

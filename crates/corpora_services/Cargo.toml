@@ -16,6 +16,7 @@ path = "src/corpora_services.rs"
 default = []
 
 [dependencies]
+context_fabric_core.workspace = true
 corpora_config.workspace = true
 corpora_foundation.workspace = true
 corpora_persistence.workspace = true

@@ -19,15 +19,14 @@ mod information;
 mod license;
 mod license_create;
 mod licenses;
+pub mod native;
 mod nav_button;
 mod not_found;
 mod page;
 mod parameter;
 mod project;
 mod projects;
-mod search;
 mod statuses;
-mod viewer;
 
 pub use authentication::authentication;
 use empty::empty;
@@ -43,6 +42,5 @@ use page::page;
 use parameter::parameter;
 pub use project::project;
 pub use projects::projects;
-pub use search::search;
+
 pub use statuses::statuses;
-pub use viewer::viewer;
