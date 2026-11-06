@@ -1,0 +1,16 @@
+use std::path::Path;
+
+use super::{command_matches, scheme_key};
+
+// === split-modules: generated submodules ===
+mod command_matches_current_exe_ignoring_case;
+mod command_rewritten_for_a_different_exe;
+mod command_rewritten_for_unquoted_or_garbage_values;
+mod command_rewritten_when_placeholder_is_missing_or_altered;
+mod scheme_key_is_the_scheme_minus_separator;
+
+use command_matches_current_exe_ignoring_case::command_matches_current_exe_ignoring_case;
+use command_rewritten_for_a_different_exe::command_rewritten_for_a_different_exe;
+use command_rewritten_for_unquoted_or_garbage_values::command_rewritten_for_unquoted_or_garbage_values;
+use command_rewritten_when_placeholder_is_missing_or_altered::command_rewritten_when_placeholder_is_missing_or_altered;
+use scheme_key_is_the_scheme_minus_separator::scheme_key_is_the_scheme_minus_separator;
