@@ -1,0 +1,304 @@
+{
+  "features" : [
+    "refractivity",
+    "specular-location"
+  ],
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.00490,0.02248,0.24917,1.00000",
+      "display-p3:0.01707,0.07069,0.45655,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 1
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0
+      }
+    }
+  },
+  "groups" : [
+    {
+      "blend-mode" : "normal",
+      "blur-material" : 0.9,
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "linear-gradient" : [
+              "gray:1.00000,1.00000",
+              "gray:0.83847,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.7453244220958055,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 1
+              }
+            }
+          },
+          "hidden" : true,
+          "image-name" : "Foreground 2.png",
+          "name" : "Foreground 2",
+          "opacity" : 1,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -37.32000000000005,
+              -11.999999999999943
+            ]
+          }
+        },
+        {
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:0.83742,0.83742,0.83742,1.00000",
+                  "display-p3:1.00000,1.00000,1.00000,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 1.109365191462649,
+                    "y" : -0.0849968612680476
+                  },
+                  "stop" : {
+                    "x" : -0.11930123979912116,
+                    "y" : 1.1154013653483992
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:0.26608,0.28498,0.64202,1.00000",
+                  "display-p3:0.11599,0.29674,0.80748,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 1.1352106873822976,
+                    "y" : -0.09873493408662888
+                  },
+                  "stop" : {
+                    "x" : -0.12102754237288135,
+                    "y" : 1.1052041745134966
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : "automatic"
+            }
+          ],
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "corpora.svg",
+          "name" : "corpora",
+          "opacity-specializations" : [
+            {
+              "value" : 1
+            },
+            {
+              "appearance" : "tinted",
+              "value" : 0.7
+            }
+          ],
+          "position" : {
+            "scale" : 2.7,
+            "translation-in-points" : [
+              0,
+              10.799999999999955
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "beta",
+      "refractivity" : {
+        "depth" : 0.511015625,
+        "enabled" : true,
+        "strength" : 0.813046875
+      },
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 0.15000000000000027
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.43
+      }
+    },
+    {
+      "blend-mode" : "normal",
+      "blur-material" : null,
+      "hidden" : false,
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "srgb:0.00000,0.00000,0.10085,1.00000"
+          },
+          "hidden" : true,
+          "image-name" : "grid.png",
+          "name" : "grid",
+          "opacity" : 0.05,
+          "position" : {
+            "scale" : 3,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+          },
+          "hidden" : true,
+          "image-name" : "corpora-back 2.png",
+          "name" : "corpora-back 2",
+          "opacity" : 0.8,
+          "position" : {
+            "scale" : 0.9,
+            "translation-in-points" : [
+              -59,
+              -39.00000000000006
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "automatic-gradient" : "display-p3:0.00490,0.02248,0.24917,1.00000",
+            "orientation" : {
+              "start" : {
+                "x" : 0.5470776125095347,
+                "y" : 0.1433155608214849
+              },
+              "stop" : {
+                "x" : 0.5883322436526098,
+                "y" : 1
+              }
+            }
+          },
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "Foreground 2.png",
+          "name" : "Foreground 2",
+          "position" : {
+            "scale" : 0.8400000000000002,
+            "translation-in-points" : [
+              -39.70850467289716,
+              -11.21495327102798
+            ]
+          }
+        },
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.47939,0.49256,0.81471,1.00000",
+              "display-p3:0.25112,0.16809,0.80588,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.8344314967834959,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0,
+                "y" : 1
+              }
+            }
+          },
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "Foreground 2.png",
+          "name" : "Foreground 2",
+          "position" : {
+            "scale" : 1.1199999999999999,
+            "translation-in-points" : [
+              -34.878504672897236,
+              5.684341886080802e-14
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "name" : "prod",
+      "position" : {
+        "scale" : 1.07,
+        "translation-in-points" : [
+          0,
+          0
+        ]
+      },
+      "refractivity" : {
+        "depth" : 0.4277734375,
+        "enabled" : false,
+        "strength" : -0.6133984375
+      },
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    },
+    {
+      "blend-mode" : "plus-lighter",
+      "blur-material" : null,
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "display-p3:0.03542,0.11535,0.63836,1.00000"
+          },
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "circle.svg",
+          "name" : "circle",
+          "opacity" : 0.4,
+          "position" : {
+            "scale" : 3,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "name" : "default",
+      "refractivity" : {
+        "depth" : 1,
+        "enabled" : true,
+        "strength" : -0.382734375
+      },
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "specular" : "inside",
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.3
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

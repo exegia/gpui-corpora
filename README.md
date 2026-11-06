@@ -1,117 +1,171 @@
-# `repo-template`
+# Corpora GPUI
 
-GitHub repository template for teams that want a sane default branch model, GitHub Agentic Workflows, Copilot setup, Claude review/chat automation, and template-safe validation before product code exists.
+A native macOS workspace bootstrap using Ely's default components and theme,
+with `gpui-router` for navigation. The attached design guides the title bar,
+activity rail, overview cards, and status bar.
 
-## What this template includes
-
-- **Branch model:** `feature/*` / `bug/*` / `doc/*` / `chore/*` into `dev`, promotion from `dev` to `next`, and release from `next` to `main`
-- **Agentic workflows:** issue triage, branch creation, PR review, QA follow-up, promotion flows, and release documentation/tagging
-- **GitHub integrations:** Copilot setup workflow plus Claude chat/review workflows
-- **Guardrails:** branch-policy automation, protected-branch/ruleset bootstrap assets, and validation workflows that compile `gh-aw` sources
-- **Secret scanning:** a `gitleaks` pre-commit hook plus a CI gate, so credentials cannot be committed
-
-## Use this template
-
-1. Create a new repository from this template.
-2. Configure the generated repository's `MAIN_BYPASS_ACTORS_JSON` for the `main` ruleset bypass actors.
-3. Run `.github/scripts/apply-branch-guardrails.sh` to create `dev` and `next`, make `dev` the
-   default branch, and apply guardrails.
-4. Run `pre-commit install` so the secret-scanning hook is active in your clone.
-5. Replace the placeholders in `README.md`, `AGENTS.md`, and `CLAUDE.md`.
-6. Update `.github/copilot-instructions.md` and the validation workflows to match the real stack.
-
-## Validation commands
-
-These are the only commands this template assumes before you add app code:
-
-| Task | Command |
-| --- | --- |
-| Compile agentic workflows | `gh aw compile` |
-| Compile + lint generated workflows | `gh aw compile --actionlint` |
-| Show workflow status | `gh aw status` |
-| Install the secret-scanning hook | `pre-commit install` |
-| Scan the working tree for secrets | `gitleaks dir .` |
-| Scan full history for secrets | `gitleaks git .` |
-
-Once a generated repository has its own app or service, replace this section with the real build, lint, and test commands.
-
-## Secret scanning
-
-Credentials must never reach a commit. Two layers enforce this:
-
-1. **`.pre-commit-config.yaml`** runs `gitleaks` on staged changes. Install it once per clone:
-
-   ```sh
-   pre-commit install
-   ```
-
-2. **`.github/workflows/secret-scan.yml`** runs the same scan in CI — on the diff for pull
-   requests, and over full history for pushes to `dev`, `next`, and `main`.
-
-The hook is advisory: `git commit --no-verify` skips it. **CI is the actual gate**, so make
-`Secret Scan` a required status check on `dev`, `next`, and `main` in the generated repository.
-
-`.gitleaks.toml` extends the default ruleset and allowlists only the template's own placeholder
-values. Keep that allowlist narrow — it exists so `.env.example` does not trip the scanner, not to
-silence real findings. Documentation files are deliberately **not** path-allowlisted: a real
-credential pasted into a README is still a leak.
-
-`.env` is gitignored. Commit `.env.example` with placeholder values instead.
-
-## Branching and releases
-
-The template's default lifecycle is documented in:
-
-- `.github/BRANCH-AND-RELEASE-POLICY.md`
-- `.github/LIFECYCLE.md`
-
-By default:
-
-1. Lifecycle branches open pull requests into `dev`.
-2. Promotion pull requests go from `dev` into `next`.
-3. Release pull requests go from `next` into `main`.
-4. `main` is read-only except for configured owner and GitHub Actions bypass actors.
-
-## Deployment configuration
-
-`next-preview.yml` and `production-deploy.yml` are intentionally generic. Configure repository
-variables `INSTALL_COMMAND`, `TEST_COMMAND`, `BUILD_COMMAND`, `CONTAINER_REGISTRY`,
-`CONTAINER_IMAGE`, `CONTAINER_REGISTRY_USERNAME`, `PREVIEW_DEPLOY_COMMAND`, and
-`PRODUCTION_DEPLOY_COMMAND` for the generated
-application. Use the `preview` and `production` environments to hold the
-`CONTAINER_REGISTRY_PASSWORD` and `VERCEL_TOKEN` secrets; no deployment occurs until a command is
-configured.
-
-If you change the branch model, update the policy docs, workflow triggers, and agent instruction files together.
-
-## Required GitHub configuration
-
-| Setting / secret | Required | Purpose |
-| --- | --- | --- |
-| Repository template enabled | yes | Lets teams create new repos from this template |
-| Copilot enabled for the repo/org | yes | Powers the agentic `copilot` workflows |
-| `CLAUDE_CODE_OAUTH_TOKEN` | yes for Claude workflows | Auth for `anthropics/claude-code-action` |
-| Branch protections / rulesets | yes | Prevent deletion and direct mutation of `main`, `dev`, and `next` |
-| `Secret Scan` required status check | recommended | Blocks pull requests that introduce credentials |
-
-## Repository structure
-
-```text
-.
-├── .github/
-│   ├── workflows/
-│   ├── rulesets/
-│   ├── scripts/
-│   └── copilot-instructions.md
-├── AGENTS.md
-├── CLAUDE.md
-└── README.md
+```sh
+cargo run
 ```
 
-## AI collaboration files
+Requires Rust 1.95 or newer. Runtime Metal shaders are enabled, so the build
+does not require the full Xcode Metal toolchain.
 
-- `CLAUDE.md`: repo-specific guidance for Claude-style coding agents
-- `AGENTS.md`: cross-agent operating rules for coding agents
-- `.github/copilot-instructions.md`: GitHub Copilot repository instructions
+On Linux, install the native dependencies listed in
+[`scripts/install-linux-deps.sh`](scripts/install-linux-deps.sh). If Homebrew's
+`pkg-config` is first on `PATH`, select the system executable so Cargo can find
+the system font and display libraries:
 
-Keep those files aligned so local agents, GitHub-hosted agents, and humans follow the same workflow.
+```sh
+export PKG_CONFIG=/usr/bin/pkg-config
+cargo run --locked
+```
+
+Keep that variable set for direct Cargo commands, Clippy, and tests.
+`just dev` selects `/usr/bin/pkg-config` automatically on Linux when available;
+an explicit `PKG_CONFIG` setting takes precedence.
+
+Automatic updates are disabled unless `GPUI_UPDATE_MANIFEST_URL` is set to a
+release manifest URL at build time.
+
+## Development watcher
+
+Quit any running Corpora instance, then start dev mode:
+
+```sh
+just mac
+# Equivalent alternatives:
+just dev
+python3 scripts/dev.py
+```
+
+Save changes in your editor (`Cmd+S` on macOS) to rebuild and restart the app.
+The watcher covers `src/`, `crates/`, `locales/`, `assets/`, root Cargo files,
+`build.rs`, and `rust-toolchain.toml`. It ignores build output and temporary
+editor files, and groups rapid saves into one rebuild. A failed build leaves
+the current app running; saving a fix retries it. Saves during a build trigger
+another rebuild. Press `Ctrl+C` to stop the watcher and its app.
+
+On macOS the watcher builds, signs, and launches `target/debug/Corpora.app` so
+native notifications have the `com.corpora.app` identity. Unbundled launches
+use in-app notifications when native delivery is unavailable.
+
+Development builds include an annotation toolbar below each window's title bar.
+The published [gpui-agentation 0.5.1](https://crates.io/crates/gpui-agentation/0.5.1)
+library supplies the tools with its `native` feature. Release builds exclude
+the annotation API and UI.
+
+The checkout's `.codex/config.toml` connects directly to the native MCP listeners;
+no CLI bridge is required:
+
+| Window | MCP endpoint | Feedback store |
+| --- | --- | --- |
+| Workspace | `http://127.0.0.1:4748/mcp` | `target/agentation/feedback.json` |
+| Settings | `http://127.0.0.1:4751/mcp` | `target/agentation/feedback-settings.json` |
+
+Restart the MCP client after changing its configuration. Keep Corpora running in
+debug mode, with Settings open when using its listener. The native listeners
+accept loopback requests and reject browser origins. Agentation's toolbar Settings
+shows the actual endpoint and copyable client configuration.
+
+Set `GPUI_AGENTATION_STORE` to change the workspace path; Settings derives its own
+filename by adding `-settings`, or uses `GPUI_AGENTATION_SETTINGS_STORE` when set.
+Use different files for the two windows. Set `GPUI_AGENTATION_PORT` or
+`GPUI_AGENTATION_SETTINGS_PORT` to change their ports and match the MCP config.
+`GPUI_AGENTATION=0` disables the tools. Run only one app process per store.
+
+The app-local `shell::Devtools` adapter composes assets, initializes Agentation,
+and retains one `Agentation` per window. It renders through `Agentation::root`
+and switches feedback routes after committed workspace or Settings navigation.
+Existing notes remain in the workspace store after upgrading.
+
+`corpora_ui::ely` exposes Agentation's bundled Ely in debug builds and the
+standalone Ely crate in release builds. App controls and feedback share one
+initialization, asset source, theme, and focus system; linking both Ely copies
+would register duplicate GPUI actions. Screen roots and selected shared views
+are inspectable targets; individual child controls are not automatically targets.
+
+## Window
+
+The Ely title bar supplies native macOS traffic-light spacing and its built-in
+`drag_region` for dragging and double-click zoom. The tab bar lists only
+workspace tabs, with the New tab button after the last one. Route pages share
+one view outside the tab bar, which the activity rail and sidebar navigate. Each
+tab, and the route view, owns its retained pages, scroll position, sidebar
+visibility, and inspector visibility and width. Closing the active tab shows its
+neighbor, else the route view; with neither, the window is empty.
+
+`routes::panes` sets which panes each page offers: sidebar, inspector, a second
+content pane, and a bottom panel. Route pages keep the sidebar and inspector;
+workspace tabs get all four. The sidebar has a fixed gap beside the workspace;
+the inspector, second pane, and bottom panel have draggable splitters. All panes
+share the same fill and inset shadows and round every corner except where they
+meet the window's right edge. The title-bar controls animate their visibility
+and respect reduced motion. Use Ctrl+B for the sidebar and Ctrl+Shift+B for the
+inspector (Cmd on macOS).
+
+The activity dock starts closed and uses Ely's `Dock` with a movable activity
+panel. A splash window precedes the workspace, which briefly shows `Skeleton`
+placeholders. Unconnected pages use `EmptyState`.
+
+The menu-bar tray opens the workspace or navigates to its main sections.
+Settings provides light/dark mode, connectivity previews, a loading preview,
+and a native Dock badge preview. The status bar includes `OfflineIndicator`.
+Connectivity defaults to offline; the preview does not detect network status.
+
+## Routes
+
+| Page | Path |
+| --- | --- |
+| Home | `/` |
+| Explore / Search (index) | `/explore` |
+| Explore detail | `/explore/detail/:type/:id` |
+| Explore viewer | `/explore/detail/:type/:id/viewer` |
+| Projects / List (index) | `/projects` |
+| Project detail | `/projects/detail/:projectId` |
+| Create project | `/projects/create` |
+| Statuses / List (index) | `/projects/statuses` |
+| Licenses / List (index) | `/projects/licenses` |
+| License detail | `/projects/licenses/detail/:licenseId` |
+| Create license | `/projects/licenses/create` |
+| Settings | `/settings` |
+| Profile / Information (index) | `/profile` |
+| Profile information | `/profile/information` |
+| Profile authentication | `/profile/authentication` |
+
+Unknown paths show a page-not-found state. All navigation shares the same
+route tree, including when the activity dock is open.
+
+This is a UI bootstrap: corpus search, project/license creation, profile data,
+and authentication remain placeholders. Project detail/create pages use Ely's
+`PriorityIndicator` and interactive `StatusSelect`; changes stay in memory for
+this session. No runtime metrics or saved records are simulated.
+
+## Dependencies and checks
+
+Ely and `gpui-router` are pinned to Git revisions. The linked router README
+describes version 0.7, which was not published to crates.io when bootstrapped.
+Ely, the router, and the application all resolve to `gpui-pre` 0.3.8.
+
+GPUI Kit is pinned to 0.7.1, which shares that GPUI version. The application
+uses Kit's platform entry point and window root, with Ely's assets loaded
+before Kit's assets. Both libraries are initialized at startup; theme and
+locale changes update both. Ely's root `FocusScope` and inspector remain
+installed. See [Ely's interoperability guide](https://elygpui.com/docs/gpui-kit/).
+
+```sh
+cargo fmt --check
+cargo check --locked
+cargo build --locked
+```
+
+## GitHub automation
+
+Rust CI checks formatting, Clippy, and tests on `dev`, `next`, and `main`.
+Dependabot checks Cargo and GitHub Actions dependencies. The release flow is
+`dev` → `next` → `main`; this repository does not use the template's Python
+wheel or Make-based release pipeline.
+
+Copilot agent jobs require the organization's **Allow use of Copilot CLI
+billed to the organization** policy. See [.github/WORKFLOW.md](.github/WORKFLOW.md)
+for configuration and verification commands.
