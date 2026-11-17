@@ -16,6 +16,7 @@ pub fn home() -> impl IntoElement {
         .flex()
         .flex_col()
         .gap_6()
+        .child(nav_button("open-api-qa", "Open API QA", "/api-qa"))
         .child(Overline::new("Workspace overview"))
         .child(crate::shell::dev_target(
             "home-heading",

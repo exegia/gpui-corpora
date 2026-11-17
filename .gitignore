@@ -1,5 +1,6 @@
 /target
 com.corpora.app.instance
+com.corpora.qa.instance
 .idea/
 .DS_Store
 **/.DS_Store

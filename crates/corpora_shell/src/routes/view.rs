@@ -43,6 +43,9 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
                 ]),
                 Route::new().index().element(|_, _| pages::home()),
                 Route::new()
+                    .path("api-qa")
+                    .element(page(|p| p.api_qa.clone().into_any_element())),
+                Route::new()
                     .path("tabs/new/:tabId")
                     .element(|_, _| gpui::div()),
                 Route::new().path("explore").children([

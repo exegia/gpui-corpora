@@ -4,6 +4,7 @@ use super::*;
 /// Retained pages owned by one workspace tab.
 #[derive(Clone)]
 pub struct Pages {
+    pub api_qa: Entity<crate::pages::api_qa::ApiQa>,
     #[cfg(debug_assertions)]
     pub ui: Entity<crate::routes::ui::Ui>,
     #[cfg(debug_assertions)]

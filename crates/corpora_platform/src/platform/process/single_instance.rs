@@ -142,14 +142,19 @@ mod native {
         let ipc_name = ipc_name();
         let queue_file = queue_file_path();
 
-        let acquire = || match SingleInstance::new(INSTANCE_NAME) {
-            Ok(instance) if instance.is_single() => AcquireOutcome::Acquired(instance),
-            Ok(_) => AcquireOutcome::Busy,
-            Err(err) => {
-                eprintln!("single-instance init failed: {err}");
-                AcquireOutcome::Failed
-            }
-        };
+        let acquire =
+            || match SingleInstance::new(if std::env::var_os("CORPORA_QA_MODE").is_some() {
+                "com.corpora.qa.instance"
+            } else {
+                INSTANCE_NAME
+            }) {
+                Ok(instance) if instance.is_single() => AcquireOutcome::Acquired(instance),
+                Ok(_) => AcquireOutcome::Busy,
+                Err(err) => {
+                    eprintln!("single-instance init failed: {err}");
+                    AcquireOutcome::Failed
+                }
+            };
         let outcome = if std::env::var_os(crate::app::reload::RESTART_HANDOFF_ENV).is_some() {
             retry_until_single(acquire, RESTART_LOCK_ATTEMPTS, RESTART_LOCK_INTERVAL)
         } else {
@@ -525,7 +530,14 @@ mod native {
 
     fn ipc_name() -> Option<String> {
         if GenericNamespaced::is_supported() {
-            return Some("com.corpora.app.forwarder".to_string());
+            return Some(
+                if std::env::var_os("CORPORA_QA_MODE").is_some() {
+                    "com.corpora.qa.forwarder"
+                } else {
+                    "com.corpora.app.forwarder"
+                }
+                .to_string(),
+            );
         }
         // Prefer the user-owned cache dir; the no-XDG fallback is an
         // app-owned 0700 runtime dir, never a predictable $TMPDIR socket.
@@ -539,7 +551,13 @@ mod native {
     /// pre-create it or write into it. `None` disables forwarding.
     fn fallback_runtime_dir() -> Option<PathBuf> {
         #[cfg(target_family = "unix")]
-        let stem = format!("corpora-{}", unsafe { libc::geteuid() });
+        let prefix = if std::env::var_os("CORPORA_QA_MODE").is_some() {
+            "corpora-qa"
+        } else {
+            "corpora"
+        };
+        #[cfg(target_family = "unix")]
+        let stem = format!("{prefix}-{}", unsafe { libc::geteuid() });
         #[cfg(not(target_family = "unix"))]
         let stem = "corpora-runtime".to_string();
         let dir = std::env::temp_dir().join(stem);

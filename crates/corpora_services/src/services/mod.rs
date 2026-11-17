@@ -11,3 +11,5 @@ pub mod logging;
 // query module is provided by the gpui_query (v2) crate
 pub mod storage;
 pub mod updater;
+
+pub mod api_qa;

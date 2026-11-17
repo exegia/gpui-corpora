@@ -1642,6 +1642,7 @@ dependencies = [
  "anyhow",
  "arboard",
  "async-trait",
+ "atomic-write-file",
  "base64 0.22.1",
  "chrono",
  "corpora_config",
