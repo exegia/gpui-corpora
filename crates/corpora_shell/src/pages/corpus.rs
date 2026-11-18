@@ -419,14 +419,7 @@ impl CorpusPage {
             self.section_path.clear();
             self.next_section = None;
         }
-        if !append {
-            self.passages.clear();
-        }
-        self.selected_ref = reference.clone();
-        self.next_offset = None;
-        self.selected = Some(corpus.clone());
-        self.running = true;
-        self.status = "Loading corpus text…".into();
+        self.begin_content_load(corpus.clone(), reference.clone(), append);
         let task = runtime.spawn(async move {
             let sections = if new_corpus {
                 Some(corpus_client::sections(&config, session.clone(), corpus.id, 0, None).await)
@@ -471,6 +464,17 @@ impl CorpusPage {
         })
         .detach();
         cx.notify();
+    }
+
+    fn begin_content_load(&mut self, corpus: Corpus, reference: Option<String>, append: bool) {
+        if !append {
+            self.passages.clear();
+            self.next_offset = None;
+        }
+        self.selected_ref = reference;
+        self.selected = Some(corpus);
+        self.running = true;
+        self.status = "Loading corpus text…".into();
     }
 }
 

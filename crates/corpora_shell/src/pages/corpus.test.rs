@@ -69,3 +69,23 @@ fn sign_in_masks_the_password_field(cx: &mut TestAppContext) {
     let (_, page) = setup(cx);
     cx.update(|cx| assert!(page.read(cx).password.read(cx).is_masked()));
 }
+
+#[gpui::test]
+fn loading_more_text_keeps_the_retry_cursor(cx: &mut TestAppContext) {
+    let (_, page) = setup(cx);
+    cx.update(|cx| {
+        page.update(cx, |page, _| {
+            let corpus = Corpus {
+                id: Uuid::new_v4(),
+                title: "Example".into(),
+                state: "ready".into(),
+                language: None,
+            };
+            page.next_offset = Some(50);
+            page.begin_content_load(corpus.clone(), None, true);
+            assert_eq!(page.next_offset, Some(50));
+            page.begin_content_load(corpus, None, false);
+            assert_eq!(page.next_offset, None);
+        });
+    });
+}
