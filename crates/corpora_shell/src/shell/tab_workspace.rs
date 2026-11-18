@@ -27,6 +27,7 @@ impl TabWorkspace {
                 button: cx.new(|_| crate::routes::ui::button::ButtonShowcase::new()),
                 #[cfg(debug_assertions)]
                 glass: cx.new(crate::routes::ui::glass::GlassShowcase::new),
+                corpus: cx.new(|cx| crate::pages::CorpusPage::new(window, cx)),
                 notifications: cx.new(|cx| NotificationsPage::new(window, cx)),
                 diagnostics: cx.new(|cx| DiagnosticsPage::new(window, cx)),
                 about: cx.new(|_| AboutPage::new()),

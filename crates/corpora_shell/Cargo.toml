@@ -33,6 +33,8 @@ gpui-agentation.workspace = true
 rust-embed.workspace = true
 serde.workspace = true
 tracing.workspace = true
+tokio.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
