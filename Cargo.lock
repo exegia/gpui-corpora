@@ -1682,6 +1682,7 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "url",
  "uuid",
 ]
 
@@ -1710,7 +1711,9 @@ dependencies = [
  "rust-embed",
  "serde",
  "tempfile",
+ "tokio",
  "tracing",
+ "uuid",
  "windows 0.61.3",
 ]
 

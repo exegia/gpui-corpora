@@ -24,6 +24,9 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+        if cx.try_global::<crate::pages::CorpusSession>().is_none() {
+            cx.set_global(crate::pages::CorpusSession::default());
+        }
         let focus = cx.focus_handle();
         window.focus(&focus, cx);
         let this = cx.entity().downgrade();
