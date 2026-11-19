@@ -1559,7 +1559,11 @@ dependencies = [
 name = "corpora_conversion"
 version = "0.1.0"
 dependencies = [
+ "flume 0.11.1",
+ "serde",
+ "serde_json",
  "tempfile",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

@@ -11,5 +11,11 @@ path = "src/corpora_conversion.rs"
 [lints]
 workspace = true
 
+[dependencies]
+flume.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
 [dev-dependencies]
 tempfile.workspace = true

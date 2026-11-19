@@ -1,4 +1,13 @@
-//! Locate the bundled EPUB tools and configure the local sidecar environment.
+//! Locate the bundled EPUB tools and run conversion jobs through the local sidecar.
+
+mod protocol;
+mod sidecar;
+
+pub use protocol::{
+    CancelStatus, DiagnosticLocation, DiagnosticSeverity, JobError, JobOutcome, JobOutput,
+    OutputKind, ProgressPhase, SidecarMessage,
+};
+pub use sidecar::{CloseReason, ShutdownOutcome, Sidecar, SidecarError, SidecarEvent};
 
 use std::{
     env,
