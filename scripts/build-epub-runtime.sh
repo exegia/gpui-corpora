@@ -128,6 +128,9 @@ from corpora_cli.sidecar import serve
 
 raise SystemExit(serve())
 PY
+# Hash-checked bytecode stays valid when copies reset mtimes, so Python never rewrites a signed bundle.
+"$STAGED/python/bin/python3.13" -m compileall -q -f -j 0 \
+    --invalidation-mode unchecked-hash "$STAGED/python/lib"
 
 if "$STAGED/corpora-epub-check" >"$WORK_DIR/checker-smoke.txt" 2>&1; then
     printf 'Error: corpora-epub-check unexpectedly accepted an empty invocation.\n' >&2
@@ -140,7 +143,7 @@ grep -q '^usage: corpora-epub-check INPUT.epub' "$WORK_DIR/checker-smoke.txt"
 "$STAGED/epub-to-tf/epub-to-tf" --help >/dev/null
 printf '' | CORPORA_EPUB_CHECK_BIN="$STAGED/corpora-epub-check" \
 CORPORA_EPUB_TO_TF_BIN="$STAGED/epub-to-tf/epub-to-tf" \
-PYTHONNOUSERSITE=1 "$STAGED/python/bin/python3.13" "$STAGED/corpora-sidecar.py" --protocol 1 \
+PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 "$STAGED/python/bin/python3.13" "$STAGED/corpora-sidecar.py" --protocol 1 \
     >"$WORK_DIR/sidecar-smoke.jsonl"
 grep -Fq '"capabilities":["epub_to_tf"]' "$WORK_DIR/sidecar-smoke.jsonl"
 
@@ -151,7 +154,7 @@ printf '{"core_version":"%s","core_commit":"%s","cli_commit":"%s","python_versio
     "$CORE_VERSION" "$CORE_COMMIT" "$CLI_COMMIT" "$PYTHON_VERSION" "$PLATFORM" "$ARCH" > "$RUNTIME_DIR/runtime.json"
 printf '' | CORPORA_EPUB_CHECK_BIN="$RUNTIME_DIR/corpora-epub-check" \
 CORPORA_EPUB_TO_TF_BIN="$RUNTIME_DIR/epub-to-tf/epub-to-tf" \
-PYTHONNOUSERSITE=1 "$RUNTIME_DIR/python/bin/python3.13" "$RUNTIME_DIR/corpora-sidecar.py" --protocol 1 \
+PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 "$RUNTIME_DIR/python/bin/python3.13" "$RUNTIME_DIR/corpora-sidecar.py" --protocol 1 \
     >"$WORK_DIR/relocated-sidecar-smoke.jsonl"
 grep -Fq '"capabilities":["epub_to_tf"]' "$WORK_DIR/relocated-sidecar-smoke.jsonl"
 printf 'Bundled EPUB runtime: %s\n' "$RUNTIME_DIR"

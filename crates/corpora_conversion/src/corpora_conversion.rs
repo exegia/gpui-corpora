@@ -71,7 +71,9 @@ impl EpubTools {
         command
             .env(CHECKER_ENV, &self.checker)
             .env(EXPORTER_ENV, &self.exporter)
-            .env("PYTHONNOUSERSITE", "1");
+            .env("PYTHONNOUSERSITE", "1")
+            // Writing bytecode into the app bundle invalidates its code signature.
+            .env("PYTHONDONTWRITEBYTECODE", "1");
     }
 
     /// Create the bundled sidecar command without relying on a user Python installation.

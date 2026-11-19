@@ -74,6 +74,9 @@ fn configures_sidecar_with_bundled_absolute_paths() {
     assert!(environment.iter().any(|(key, value)| {
         *key == OsStr::new("CORPORA_EPUB_TO_TF_BIN") && *value == Some(tools.exporter.as_os_str())
     }));
+    assert!(environment.iter().any(|(key, value)| {
+        *key == OsStr::new("PYTHONDONTWRITEBYTECODE") && *value == Some(OsStr::new("1"))
+    }));
     assert_eq!(command.get_program(), tools.python.as_os_str());
     assert_eq!(
         command.get_args().collect::<Vec<_>>(),
