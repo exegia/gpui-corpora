@@ -7,6 +7,8 @@ pub mod entry;
 pub mod platform;
 pub mod services;
 
+pub use corpora_conversion::{EpubTools, RuntimeUnavailable as EpubRuntimeUnavailable};
+
 pub use corpora_config::state;
 pub use corpora_foundation::{foundation, navigation};
 pub use corpora_persistence::persistence;

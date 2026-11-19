@@ -1556,6 +1556,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "corpora_conversion"
+version = "0.1.0"
+dependencies = [
+ "tempfile",
+]
+
+[[package]]
 name = "corpora_foundation"
 version = "0.1.0"
 dependencies = [
@@ -3183,6 +3190,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "corpora_config",
+ "corpora_conversion",
  "corpora_foundation",
  "corpora_persistence",
  "corpora_platform",

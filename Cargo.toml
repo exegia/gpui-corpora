@@ -1,6 +1,7 @@
 [workspace]
 members = [
     ".",
+    "crates/corpora_conversion",
     "crates/corpora_config",
     "crates/corpora_foundation",
     "crates/corpora_persistence",
@@ -40,6 +41,7 @@ unnecessary_sort_by = "allow"
 unneeded_wildcard_pattern = "allow"
 
 [workspace.dependencies]
+corpora_conversion = { path = "crates/corpora_conversion" }
 corpora_config = { path = "crates/corpora_config" }
 corpora_foundation = { path = "crates/corpora_foundation" }
 corpora_persistence = { path = "crates/corpora_persistence" }
@@ -206,6 +208,7 @@ websocket = ["corpora_platform/websocket"]
 notifications-portal = ["corpora_config/notifications-portal"]
 
 [dependencies]
+corpora_conversion.workspace = true
 corpora_config.workspace = true
 corpora_foundation.workspace = true
 corpora_persistence.workspace = true
