@@ -12,6 +12,7 @@ use gpui_router::{use_navigate, use_params};
 use crate::shell::Workspace;
 
 mod authentication;
+mod corpus;
 mod empty;
 mod explore_detail;
 mod home;
@@ -19,17 +20,17 @@ mod information;
 mod license;
 mod license_create;
 mod licenses;
+pub mod native;
 mod nav_button;
 mod not_found;
 mod page;
 mod parameter;
 mod project;
 mod projects;
-mod search;
 mod statuses;
-mod viewer;
 
 pub use authentication::authentication;
+pub use corpus::{CorpusPage, CorpusSession};
 use empty::empty;
 pub use explore_detail::explore_detail;
 pub use home::home;
@@ -43,6 +44,5 @@ use page::page;
 use parameter::parameter;
 pub use project::project;
 pub use projects::projects;
-pub use search::search;
+
 pub use statuses::statuses;
-pub use viewer::viewer;

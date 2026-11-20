@@ -20,12 +20,14 @@ impl TabWorkspace {
     pub fn new(path: &str, window: &mut Window, cx: &mut App) -> Self {
         Self {
             pages: Pages {
+                native: cx.new(|cx| crate::pages::native::NativePage::new(window, cx)),
                 #[cfg(debug_assertions)]
                 ui: cx.new(|cx| crate::routes::ui::Ui::new(window, cx)),
                 #[cfg(debug_assertions)]
                 button: cx.new(|_| crate::routes::ui::button::ButtonShowcase::new()),
                 #[cfg(debug_assertions)]
                 glass: cx.new(crate::routes::ui::glass::GlassShowcase::new),
+                corpus: cx.new(|cx| crate::pages::CorpusPage::new(window, cx)),
                 notifications: cx.new(|cx| NotificationsPage::new(window, cx)),
                 diagnostics: cx.new(|cx| DiagnosticsPage::new(window, cx)),
                 about: cx.new(|_| AboutPage::new()),

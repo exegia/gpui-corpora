@@ -94,6 +94,7 @@ Connectivity defaults to offline; the preview does not detect network status.
 | Home | `/` |
 | Explore / Search (index) | `/explore` |
 | Explore detail | `/explore/detail/:type/:id` |
+| Online corpus library | `/explore/library` |
 | Explore viewer | `/explore/detail/:type/:id/viewer` |
 | Projects / List (index) | `/projects` |
 | Project detail | `/projects/detail/:projectId` |
@@ -110,8 +111,18 @@ Connectivity defaults to offline; the preview does not detect network status.
 Unknown paths show a page-not-found state. All navigation shares the same
 route tree, including when the activity dock is open.
 
-This is a UI bootstrap: corpus search, project/license creation, profile data,
-and authentication remain placeholders. Project detail/create pages use Ely's
+The online corpus library and Profile Authentication pages support Apple, Google, or email
+sign-in and browse owned corpora through the Corpora API. Shared-corpus
+browsing requires an API deployment that exposes the shared-corpora route. The app
+keeps the session in memory, so sign in again after quitting. Apple and Google
+open the system browser and use an isolated callback on localhost port 5173.
+
+Set `CORPORA_SUPABASE_PUBLISHABLE_KEY` to the project's publishable key at
+runtime or build time. The default Supabase and API URLs point to the hosted
+Corpora project; `CORPORA_SUPABASE_URL` and `CORPORA_API_URL` override them.
+Never put a service-role key in the app.
+
+Project/license creation and profile data remain placeholders. Project detail/create pages use Ely's
 `PriorityIndicator` and interactive `StatusSelect`; changes stay in memory for
 this session. No runtime metrics or saved records are simulated.
 
