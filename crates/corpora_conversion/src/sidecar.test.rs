@@ -21,6 +21,8 @@ const READY: &str =
     r#"printf '%s\n' '{"protocol":1,"type":"ready","capabilities":["epub_to_tf"]}'"#;
 const TIMEOUT: Duration = Duration::from_secs(10);
 
+// Scripts `exec` long-running commands: on macOS a concurrently spawned child can inherit
+// another test's pipe, and killing `sh` would leave that grandchild holding it open.
 fn fake_sidecar(directory: &Path, script: &str) -> EpubTools {
     let entry = directory.join("sidecar.sh");
     fs::write(&entry, script).expect("write fake sidecar");
@@ -64,7 +66,7 @@ printf '%s\n' '{{"protocol":1,"type":"accepted","request_id":"req-1","job_id":"j
 printf '%s\n' '{{"protocol":1,"type":"progress","job_id":"job-1","phase":"validating","message":"Checking the EPUB"}}'
 printf '%s\n' '{{"protocol":1,"type":"diagnostic","job_id":"job-1","severity":"warning","code":"EXAMPLE","message":"Review","location":{{"member":"chapter.xhtml","line":12}}}}'
 printf '%s\n' '{{"protocol":1,"type":"finished","job_id":"job-1","outcome":"succeeded","outputs":[{{"kind":"tf_bundle","path":"/books/out"}}]}}'
-cat > /dev/null
+exec cat > /dev/null
 "#,
             log = request_log.display()
         ),
@@ -184,7 +186,10 @@ exit 1
 #[test]
 fn rejects_relative_paths_before_sending() {
     let directory = tempfile::tempdir().expect("create fixture directory");
-    let tools = fake_sidecar(directory.path(), &format!("{READY}\ncat > /dev/null\n"));
+    let tools = fake_sidecar(
+        directory.path(),
+        &format!("{READY}\nexec cat > /dev/null\n"),
+    );
     let mut sidecar = spawn(&tools);
 
     let error = sidecar
@@ -200,7 +205,7 @@ fn refuses_to_start_without_the_capability() {
     let tools = fake_sidecar(
         directory.path(),
         r#"printf '%s\n' '{"protocol":1,"type":"ready","capabilities":[]}'
-cat > /dev/null
+exec cat > /dev/null
 "#,
     );
     let mut sidecar = spawn(&tools);
@@ -224,7 +229,7 @@ fn closes_the_stream_on_an_unknown_field() {
         &format!(
             r#"{READY}
 printf '%s\n' '{{"protocol":1,"type":"progress","job_id":"job-1","phase":"validating","message":"m","percent":5}}'
-cat > /dev/null
+exec cat > /dev/null
 "#
         ),
     );
@@ -270,7 +275,7 @@ fn fails_the_handshake_when_ready_is_not_first() {
 #[test]
 fn times_out_when_ready_never_arrives() {
     let directory = tempfile::tempdir().expect("create fixture directory");
-    let tools = fake_sidecar(directory.path(), "sleep 30\n");
+    let tools = fake_sidecar(directory.path(), "exec sleep 30\n");
 
     let error = Sidecar::spawn(&tools, Duration::from_millis(200))
         .err()
@@ -282,7 +287,7 @@ fn times_out_when_ready_never_arrives() {
 #[test]
 fn kills_a_sidecar_that_ignores_end_of_input() {
     let directory = tempfile::tempdir().expect("create fixture directory");
-    let tools = fake_sidecar(directory.path(), &format!("{READY}\nsleep 30\n"));
+    let tools = fake_sidecar(directory.path(), &format!("{READY}\nexec sleep 30\n"));
     let sidecar = spawn(&tools);
 
     let outcome = sidecar

@@ -1,8 +1,10 @@
 //! Locate the bundled EPUB tools and run conversion jobs through the local sidecar.
 
+mod job;
 mod protocol;
 mod sidecar;
 
+pub use job::{EpubJob, JobResult, JobUpdate, next_output_path};
 pub use protocol::{
     CancelStatus, DiagnosticLocation, DiagnosticSeverity, JobError, JobOutcome, JobOutput,
     OutputKind, ProgressPhase, SidecarMessage,

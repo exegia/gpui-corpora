@@ -1618,6 +1618,7 @@ dependencies = [
 name = "corpora_runtime"
 version = "0.1.0"
 dependencies = [
+ "corpora_conversion",
  "corpora_foundation",
  "corpora_platform",
  "corpora_ui",
@@ -1633,6 +1634,7 @@ dependencies = [
  "rust-i18n",
  "serde",
  "sys-locale",
+ "tempfile",
  "thiserror 2.0.21",
  "tokio",
  "tracing",
