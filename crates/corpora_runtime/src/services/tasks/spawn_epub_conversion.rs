@@ -103,8 +103,9 @@ fn launch(input: &Path) -> Result<(Sidecar, EpubJob), String> {
         crate::i18n::localize("tasks_epub_runtime_missing")
     })?;
     let mut sidecar = Sidecar::spawn(&tools, READY_TIMEOUT).map_err(|error| error.to_string())?;
+    // Repair runs only when validation finds blockers, and the bundle keeps the original.
     let request_id = sidecar
-        .start_epub_to_tf(input, &output, false)
+        .start_epub_to_tf(input, &output, true)
         .map_err(|error| error.to_string())?;
     Ok((sidecar, EpubJob::new(request_id)))
 }

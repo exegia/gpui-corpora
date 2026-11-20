@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CORE_VERSION="v0.6.3"
 CORE_COMMIT="c97f051de18b5f3d90b2073e821f7f9841859af3"
-CLI_COMMIT="5145086dd77322c514f1d71de2d133178bf2ada3"
+CLI_COMMIT="4cfdcc8eae21cdad3441b0ccb00bf20089e2a5be"
 PYTHON_VERSION="3.13.15"
 BUILD_ROOT="$ROOT_DIR/target/epub-runtime-build"
 CORE_DIR="$BUILD_ROOT/corpora-core"
