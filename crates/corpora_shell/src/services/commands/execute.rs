@@ -17,6 +17,11 @@ pub fn execute(id: CommandId, cx: &mut App) {
         CommandId::ThemeLight => crate::app::set_theme_mode(ThemeMode::Light, cx),
         CommandId::ThemeDark => crate::app::set_theme_mode(ThemeMode::Dark, cx),
         CommandId::StartDemoTask => crate::tasks::start_demo_task(cx),
+        CommandId::ConvertEpub => {
+            if let Some(input) = crate::desktop_actions::pick_epub_file(cx) {
+                crate::tasks::start_epub_conversion(input, cx);
+            }
+        }
         CommandId::CheckConnectivity => crate::connectivity::check_now(cx),
         CommandId::CopyDiagnostics => {
             if let Err(error) = crate::desktop_actions::copy_diagnostics(cx) {

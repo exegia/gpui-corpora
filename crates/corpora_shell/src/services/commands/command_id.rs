@@ -11,6 +11,7 @@ pub enum CommandId {
     ThemeLight,
     ThemeDark,
     StartDemoTask,
+    ConvertEpub,
     CheckConnectivity,
     CopyDiagnostics,
     OpenLogsFolder,

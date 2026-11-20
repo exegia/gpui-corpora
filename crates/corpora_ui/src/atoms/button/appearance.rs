@@ -1,7 +1,29 @@
-use crate::ely::theme::{Mix, Palette, Radius, Theme};
-use crate::styles::tokens::ButtonPalette;
+use crate::ely::theme::{Mix, Mode, Palette, Radius, Theme};
+use crate::styles::utils::bezel_tones;
 use crate::ui::material::GlassSpec;
 use gpui::{Hsla, px, transparent_black};
+
+/// Button-specific roles resolved from the shared palette and semantic colors.
+pub(super) struct ButtonPalette {
+    pub neutral: Hsla,
+    pub on_neutral: Hsla,
+    pub danger_fill: Hsla,
+    pub danger_hover: Hsla,
+    pub on_danger: Hsla,
+}
+
+impl ButtonPalette {
+    pub fn new(palette: &Palette, dark: bool) -> Self {
+        let danger_fill = crate::styles::palette::color("danger", Mode::Light);
+        Self {
+            neutral: if dark { palette.on_media } else { palette.fg },
+            on_neutral: if dark { palette.fg } else { palette.on_media },
+            danger_fill,
+            danger_hover: danger_fill.mix(&palette.shadow, 0.12),
+            on_danger: palette.on_media,
+        }
+    }
+}
 
 /// A Button's visual treatment. Colors come from the active theme's semantic roles.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -89,9 +111,12 @@ impl ButtonVariant {
         } else {
             self.light(&theme.colors, hovered || pressed)
         };
-        let palette = ButtonPalette::new(&theme.colors, theme.is_dark());
-        colors.bevel = palette.bezel_lit;
-        colors.shadow = palette.bezel_dim;
+        let mode = if theme.is_dark() {
+            Mode::Dark
+        } else {
+            Mode::Light
+        };
+        (colors.bevel, colors.shadow) = bezel_tones(mode);
         colors.engage = if pressed {
             0.85
         } else if hovered {
