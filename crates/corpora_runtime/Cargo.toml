@@ -25,6 +25,7 @@ corpora_ui.workspace = true
 flume.workspace = true
 futures-util.workspace = true
 gpui.workspace = true
+gpui-kit.workspace = true
 keyring.workspace = true
 network-interface.workspace = true
 opentelemetry.workspace = true

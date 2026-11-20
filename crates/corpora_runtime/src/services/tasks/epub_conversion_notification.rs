@@ -1,9 +1,30 @@
 #[allow(unused_imports)]
 use super::*;
 
+use std::rc::Rc;
+
 use corpora_conversion::ProgressPhase;
+use gpui::{
+    InteractiveElement, ParentElement, SharedString, Styled, div, prelude::FluentBuilder, px,
+};
+use gpui_kit::{
+    base::v_flex,
+    component::{
+        WindowExt,
+        button::{Button, ButtonVariants},
+        dialog::Dialog,
+        notification::Notification,
+        scroll::ScrollableElement,
+    },
+};
 
 use crate::i18n::{localize, localize_with_args};
+
+const DETAILS_WIDTH: f32 = 640.;
+const DETAILS_MAX_HEIGHT: f32 = 420.;
+
+/// Notification ID type; the task ID is the key, so each update replaces the last.
+struct EpubConversionNote;
 
 pub(crate) enum EpubConversionNotification<'a> {
     Running {
@@ -14,6 +35,7 @@ pub(crate) enum EpubConversionNotification<'a> {
         output: &'a str,
     },
     Failed {
+        name: &'a str,
         message: &'a str,
         issues: &'a [String],
         more_issues: usize,
@@ -26,12 +48,22 @@ pub(crate) enum EpubConversionNotification<'a> {
 }
 
 impl EpubConversionNotification<'_> {
-    /// Keyed per task so each phase replaces the previous toast instead of stacking.
+    /// Show the notification in the active window, or the first window when none is active.
     pub(crate) fn push(self, id: TaskId, cx: &mut App) {
-        crate::ui::toasts::replace(format!("epub-conversion-{id}"), self.toast(), cx);
+        let Some(window) = cx
+            .active_window()
+            .or_else(|| cx.windows().into_iter().next())
+        else {
+            tracing::debug!(target: "corpora::tasks", "no window for EPUB notification");
+            return;
+        };
+        let note = self
+            .notification()
+            .id1::<EpubConversionNote>(id.to_string());
+        let _ = window.update(cx, |_, window, cx| window.push_notification(note, cx));
     }
 
-    fn toast(self) -> Toast {
+    fn notification(self) -> Notification {
         match self {
             Self::Running { name, phase } => {
                 let key = match phase {
@@ -40,50 +72,62 @@ impl EpubConversionNotification<'_> {
                     Some(ProgressPhase::Converting) => "tasks_epub_phase_converting",
                     Some(ProgressPhase::Finalizing) => "tasks_epub_phase_finalizing",
                 };
-                Toast::new(localize("tasks_epub_running_title"))
-                    .body(localize_with_args(key, &[("name", name)]))
-                    .severity(Severity::Info)
-                    .stay(None)
+                Notification::info(localize_with_args(key, &[("name", name)]))
+                    .title(localize("tasks_epub_running_title"))
+                    .autohide(false)
             }
-            Self::Succeeded { output } => Toast::new(localize("tasks_epub_succeeded_title"))
-                .body(localize_with_args(
-                    "tasks_epub_succeeded_body",
-                    &[("output", output)],
-                ))
-                .severity(Severity::Success),
+            Self::Succeeded { output } => Notification::success(localize_with_args(
+                "tasks_epub_succeeded_body",
+                &[("output", output)],
+            ))
+            .title(localize("tasks_epub_succeeded_title")),
             Self::Failed {
+                name,
                 message,
                 issues,
                 more_issues,
                 staging,
             } => {
-                let mut body = match staging {
+                let mut summary = match staging {
                     Some(staging) => localize_with_args(
                         "tasks_epub_cleanup_body",
                         &[("message", message), ("staging", staging)],
                     ),
                     None => message.to_string(),
                 };
-                for issue in issues {
-                    body.push_str("\n• ");
-                    body.push_str(issue);
-                }
-                if more_issues > 0 {
-                    body.push('\n');
-                    body.push_str(&localize_with_args(
-                        "tasks_epub_more_issues",
-                        &[("count", &more_issues.to_string())],
+                if !issues.is_empty() {
+                    let count = (issues.len() + more_issues).to_string();
+                    summary.push(' ');
+                    summary.push_str(&localize_with_args(
+                        "tasks_epub_issue_summary",
+                        &[("count", &count)],
                     ));
                 }
-                Toast::new(localize("tasks_epub_failed_title"))
-                    .body(body)
-                    .severity(Severity::Danger)
-                    .stay(None)
+                let note = Notification::error(summary)
+                    .title(localize("tasks_epub_failed_title"))
+                    .autohide(false);
+                if issues.is_empty() {
+                    return note;
+                }
+                let details = Rc::new(IssueDetails {
+                    title: localize_with_args("tasks_epub_details_title", &[("name", name)]).into(),
+                    issues: issues.iter().cloned().map(SharedString::from).collect(),
+                    more_issues,
+                });
+                note.action(move |_, _, _| {
+                    let details = details.clone();
+                    Button::new("epub-issue-details")
+                        .label(localize("tasks_epub_details_button"))
+                        .primary()
+                        .on_click(move |_, window, cx| {
+                            let details = details.clone();
+                            window.open_dialog(cx, move |dialog, _, _| details.dialog(dialog));
+                        })
+                })
             }
-            Self::Cancelled => Toast::new(localize("tasks_epub_cancelled_title"))
-                .body(localize("tasks_epub_cancelled_body"))
-                .severity(Severity::Warning)
-                .stay(None),
+            Self::Cancelled => Notification::warning(localize("tasks_epub_cancelled_body"))
+                .title(localize("tasks_epub_cancelled_title"))
+                .autohide(false),
             Self::Unknown { staging } => {
                 let body = match staging {
                     Some(staging) => {
@@ -91,11 +135,38 @@ impl EpubConversionNotification<'_> {
                     }
                     None => localize("tasks_epub_unknown_no_staging_body"),
                 };
-                Toast::new(localize("tasks_epub_unknown_title"))
-                    .body(body)
-                    .severity(Severity::Danger)
-                    .stay(None)
+                Notification::error(body)
+                    .title(localize("tasks_epub_unknown_title"))
+                    .autohide(false)
             }
         }
+    }
+}
+
+/// Every retained blocking issue, shown in full in a scrollable dialog.
+struct IssueDetails {
+    title: SharedString,
+    issues: Vec<SharedString>,
+    more_issues: usize,
+}
+
+impl IssueDetails {
+    fn dialog(&self, dialog: Dialog) -> Dialog {
+        let more = (self.more_issues > 0).then(|| {
+            localize_with_args(
+                "tasks_epub_more_issues",
+                &[("count", &self.more_issues.to_string())],
+            )
+        });
+        dialog.title(self.title.clone()).w(px(DETAILS_WIDTH)).child(
+            v_flex()
+                .id("epub-issue-list")
+                .gap_2()
+                .max_h(px(DETAILS_MAX_HEIGHT))
+                .text_sm()
+                .children(self.issues.iter().map(|issue| div().child(issue.clone())))
+                .when_some(more, |list, more| list.child(div().child(more)))
+                .overflow_y_scrollbar(),
+        )
     }
 }

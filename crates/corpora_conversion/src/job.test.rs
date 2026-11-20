@@ -106,8 +106,20 @@ fn error_diagnostic(member: Option<&str>, message: &str) -> SidecarEvent {
     })
 }
 
+fn invalid_epub(job: &mut EpubJob) -> JobUpdate {
+    job.apply(finished(
+        "job-1",
+        JobOutcome::Failed,
+        Some(JobError {
+            code: "invalid_epub".into(),
+            message: "EPUB validation found blocking issues.".into(),
+            staging_path: None,
+        }),
+    ))
+}
+
 #[test]
-fn reports_a_bounded_sample_of_distinct_blocking_issues() {
+fn reports_distinct_blocking_issues_with_their_member() {
     let mut job = EpubJob::new("req-1".into());
     job.apply(accepted("req-1", "job-1"));
     job.apply(error_diagnostic(Some("OEBPS/a.xhtml"), "Malformed XML"));
@@ -121,21 +133,9 @@ fn reports_a_bounded_sample_of_distinct_blocking_issues() {
         message: "Review styling".into(),
         location: None,
     }));
-    job.apply(error_diagnostic(Some("OEBPS/b.xhtml"), "Malformed XML"));
-    job.apply(error_diagnostic(Some("OEBPS/c.xhtml"), "Malformed XML"));
-
-    let update = job.apply(finished(
-        "job-1",
-        JobOutcome::Failed,
-        Some(JobError {
-            code: "invalid_epub".into(),
-            message: "EPUB validation found blocking issues.".into(),
-            staging_path: None,
-        }),
-    ));
 
     assert_eq!(
-        update,
+        invalid_epub(&mut job),
         JobUpdate::Finished(JobResult::Failed {
             code: "invalid_epub".into(),
             message: "EPUB validation found blocking issues.".into(),
@@ -144,10 +144,33 @@ fn reports_a_bounded_sample_of_distinct_blocking_issues() {
                 "Too large".into(),
                 "No reading content".into(),
             ],
-            more_issues: 2,
+            more_issues: 0,
             staging_path: None,
         })
     );
+}
+
+#[test]
+fn counts_issues_beyond_the_retained_limit() {
+    let mut job = EpubJob::new("req-1".into());
+    job.apply(accepted("req-1", "job-1"));
+    for index in 0..205 {
+        job.apply(error_diagnostic(
+            Some(&format!("OEBPS/{index}.xhtml")),
+            "Malformed XML",
+        ));
+    }
+
+    let JobUpdate::Finished(JobResult::Failed {
+        issues,
+        more_issues,
+        ..
+    }) = invalid_epub(&mut job)
+    else {
+        panic!("expected a failed result");
+    };
+    assert_eq!(issues.len(), 200);
+    assert_eq!(more_issues, 5);
 }
 
 #[test]

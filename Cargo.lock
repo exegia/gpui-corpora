@@ -1624,6 +1624,7 @@ dependencies = [
  "corpora_ui",
  "flume 0.11.1",
  "futures-util",
+ "gpui-kit",
  "gpui-pre",
  "keyring",
  "network-interface",

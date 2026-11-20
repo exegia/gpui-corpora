@@ -26,6 +26,7 @@ pub(crate) fn spawn_epub_conversion(id: TaskId, input: PathBuf, name: String, cx
                 cx.update(|cx| {
                     finish(
                         id,
+                        &name,
                         JobResult::Failed {
                             code: "launch_failed".into(),
                             message,
@@ -82,7 +83,7 @@ pub(crate) fn spawn_epub_conversion(id: TaskId, input: PathBuf, name: String, cx
             }
         };
 
-        cx.update(|cx| finish(id, result, cx));
+        cx.update(|cx| finish(id, &name, result, cx));
         background
             .spawn(async move {
                 if let Err(error) = sidecar.shutdown(SIDECAR_GRACE) {
@@ -108,7 +109,7 @@ fn launch(input: &Path) -> Result<(Sidecar, EpubJob), String> {
     Ok((sidecar, EpubJob::new(request_id)))
 }
 
-fn finish(id: TaskId, result: JobResult, cx: &mut App) {
+fn finish(id: TaskId, name: &str, result: JobResult, cx: &mut App) {
     tracing::info!(target: "corpora::tasks", task_id = %id, result = ?result_kind(&result), "EPUB conversion finished");
     match result {
         JobResult::Succeeded { output } => {
@@ -129,6 +130,7 @@ fn finish(id: TaskId, result: JobResult, cx: &mut App) {
             fail(id, message.clone(), cx);
             let staging = staging_path.map(|path| path.display().to_string());
             EpubConversionNotification::Failed {
+                name,
                 message: &message,
                 issues: &issues,
                 more_issues,

@@ -9,7 +9,7 @@ use crate::{
 
 const OUTPUT_SUFFIX: &str = "-tf";
 const MAX_OUTPUT_ATTEMPTS: u32 = 100;
-const MAX_REPORTED_ISSUES: usize = 3;
+const MAX_REPORTED_ISSUES: usize = 200;
 const ARCHIVE_MEMBER: &str = "<archive>";
 
 /// How a conversion request ended.
