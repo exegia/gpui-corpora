@@ -24,6 +24,7 @@ fn main() -> anyhow::Result<()> {
         gpui_kit::init(cx);
         corpora_ui::ely::init_for_tests(cx);
         cx.set_reduce_motion(true);
+        corpora_ui::styles::tokens::register_ui_fonts(cx).expect("Manhattan UI failed to load");
         corpora_ui::styles::tokens::DefaultTheme::new().install(cx);
         cx.set_global(LocaleState(LOCALE_EN.into()));
         corpora_config::notifications::initialize(cx);
