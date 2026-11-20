@@ -50,40 +50,14 @@ On macOS the watcher builds, signs, and launches `target/debug/Corpora.app` so
 native notifications have the `com.corpora.app` identity. Unbundled launches
 use in-app notifications when native delivery is unavailable.
 
-Development builds include an annotation toolbar below each window's title bar.
-The published [gpui-agentation 0.5.1](https://crates.io/crates/gpui-agentation/0.5.1)
-library supplies the tools with its `native` feature. Release builds exclude
-the annotation API and UI.
+`corpora_ui::ely` re-exports the pinned Ely snapshot (`gpui-agentation-ely`,
+aliased as `ely-gpui-component`). App controls share one initialization, asset
+source, theme, and focus system; linking a second Ely copy would register
+duplicate GPUI actions.
 
-The checkout's `.codex/config.toml` connects directly to the native MCP listeners;
-no CLI bridge is required:
-
-| Window | MCP endpoint | Feedback store |
-| --- | --- | --- |
-| Workspace | `http://127.0.0.1:4748/mcp` | `target/agentation/feedback.json` |
-| Settings | `http://127.0.0.1:4751/mcp` | `target/agentation/feedback-settings.json` |
-
-Restart the MCP client after changing its configuration. Keep Corpora running in
-debug mode, with Settings open when using its listener. The native listeners
-accept loopback requests and reject browser origins. Agentation's toolbar Settings
-shows the actual endpoint and copyable client configuration.
-
-Set `GPUI_AGENTATION_STORE` to change the workspace path; Settings derives its own
-filename by adding `-settings`, or uses `GPUI_AGENTATION_SETTINGS_STORE` when set.
-Use different files for the two windows. Set `GPUI_AGENTATION_PORT` or
-`GPUI_AGENTATION_SETTINGS_PORT` to change their ports and match the MCP config.
-`GPUI_AGENTATION=0` disables the tools. Run only one app process per store.
-
-The app-local `shell::Devtools` adapter composes assets, initializes Agentation,
-and retains one `Agentation` per window. It renders through `Agentation::root`
-and switches feedback routes after committed workspace or Settings navigation.
-Existing notes remain in the workspace store after upgrading.
-
-`corpora_ui::ely` exposes Agentation's bundled Ely in debug builds and the
-standalone Ely crate in release builds. App controls and feedback share one
-initialization, asset source, theme, and focus system; linking both Ely copies
-would register duplicate GPUI actions. Screen roots and selected shared views
-are inspectable targets; individual child controls are not automatically targets.
+The in-app annotation tools (`gpui-agentation`) are removed for now. To bring
+them back, add the dependency, wrap window roots with `Agentation::root`, and
+re-add `shell::dev_target` around the views you want inspectable.
 
 ## Window
 

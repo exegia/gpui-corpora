@@ -58,7 +58,7 @@ impl Render for Harness {
 fn setup(cx: &mut TestAppContext, reduced: bool) -> (gpui::AnyWindowHandle, gpui::Entity<Harness>) {
     cx.update(|cx| {
         gpui_kit::init(cx);
-        gpui_agentation::init_for_tests(cx);
+        crate::ely::init_for_tests(cx);
         cx.set_reduce_motion(reduced);
         gpui_kit::open_window(Default::default(), cx, |_, cx| {
             cx.new(|_| Harness {

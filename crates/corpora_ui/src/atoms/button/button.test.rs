@@ -48,7 +48,7 @@ fn setup(
 ) -> (gpui::AnyWindowHandle, gpui::Entity<Harness>) {
     cx.update(|cx| {
         gpui_kit::init(cx);
-        gpui_agentation::init_for_tests(cx);
+        crate::ely::init_for_tests(cx);
         cx.set_reduce_motion(reduced);
     });
     cx.update(|cx| {
@@ -526,7 +526,7 @@ fn light_button_colors_follow_the_shared_palette(cx: &mut TestAppContext) {
         crate::styles::tokens::DefaultTheme::new().install(cx);
         crate::ely::theme::Theme::set_mode_now(crate::ely::theme::Mode::Light, cx);
         let theme = cx.theme();
-        let tokens = crate::styles::tokens::ButtonPalette::new(&palette, false);
+        let tokens = super::appearance::ButtonPalette::new(&palette, false);
         for (variant, tint, alpha, foreground) in [
             // Default follows the theme's accent roles, not fixed hex values.
             (
@@ -634,11 +634,9 @@ fn outline_glass_stays_faint_and_neutral_in_both_themes(cx: &mut TestAppContext)
                 let spec =
                     ButtonVariant::Outline.glass_spec(cx.theme(), colors.glass_tint, colors.engage);
                 let tint = spec.tint.unwrap();
-                let neutral = crate::styles::tokens::ButtonPalette::new(
-                    &cx.theme().colors,
-                    cx.theme().is_dark(),
-                )
-                .neutral;
+                let neutral =
+                    super::appearance::ButtonPalette::new(&cx.theme().colors, cx.theme().is_dark())
+                        .neutral;
                 assert_eq!(tint.s, neutral.s, "{mode:?}");
                 assert!(tint.a > 0. && tint.a <= 0.05, "{mode:?}: {tint:?}");
                 assert_eq!(spec.gain_light, 1. - tint.a);
