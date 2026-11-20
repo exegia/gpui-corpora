@@ -62,30 +62,3 @@ pub fn sync_kit_theme(cx: &mut App) {
         theme.focus_ring = false;
     });
 }
-
-/// Button-specific roles resolved from the shared palette and semantic colors.
-pub(crate) struct ButtonPalette {
-    pub neutral: gpui::Hsla,
-    pub on_neutral: gpui::Hsla,
-    pub danger_fill: gpui::Hsla,
-    pub danger_hover: gpui::Hsla,
-    pub on_danger: gpui::Hsla,
-    pub bezel_lit: gpui::Hsla,
-    pub bezel_dim: gpui::Hsla,
-}
-
-impl ButtonPalette {
-    pub fn new(palette: &Palette, dark: bool) -> Self {
-        use crate::ely::theme::Mix as _;
-        let danger_fill = crate::styles::palette::color("danger", Mode::Light);
-        Self {
-            neutral: if dark { palette.on_media } else { palette.fg },
-            on_neutral: if dark { palette.fg } else { palette.on_media },
-            danger_fill,
-            danger_hover: danger_fill.mix(&palette.shadow, 0.12),
-            on_danger: palette.on_media,
-            bezel_lit: palette.on_media.opacity(if dark { 0.24 } else { 0.32 }),
-            bezel_dim: palette.shadow.opacity(if dark { 0.3 } else { 0.22 }),
-        }
-    }
-}

@@ -7,6 +7,10 @@ pub(crate) fn runtime_boundaries_section() -> impl IntoElement {
             outline("connectivity-check-now", "settings_check_connectivity_now")
                 .on_click(|_, _, cx| connectivity::check_now(cx)),
             outline("session-sign-in", "settings_session_sign_in_demo").on_click(|_, _, cx| {
+                if crate::pages::CorpusSession::is_signed_in(cx) {
+                    toast("Sign out of Corpora before using session demos.".into(), cx);
+                    return;
+                }
                 session::set_state(SessionState::SigningIn, cx);
                 session::set_state(
                     SessionState::SignedIn {
@@ -15,9 +19,18 @@ pub(crate) fn runtime_boundaries_section() -> impl IntoElement {
                     cx,
                 );
             }),
-            outline("session-sign-out", "settings_session_sign_out")
-                .on_click(|_, _, cx| session::set_state(SessionState::SignedOut, cx)),
+            outline("session-sign-out", "settings_session_sign_out").on_click(|_, _, cx| {
+                if crate::pages::CorpusSession::is_signed_in(cx) {
+                    toast("Use Corpora sign out for your real session.".into(), cx);
+                    return;
+                }
+                session::set_state(SessionState::SignedOut, cx)
+            }),
             outline("session-error-demo", "settings_session_error_demo").on_click(|_, _, cx| {
+                if crate::pages::CorpusSession::is_signed_in(cx) {
+                    toast("Sign out of Corpora before using session demos.".into(), cx);
+                    return;
+                }
                 session::set_state(SessionState::Error("demo session error".to_string()), cx);
             }),
         ]))

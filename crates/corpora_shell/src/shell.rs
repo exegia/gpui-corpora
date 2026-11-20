@@ -2,21 +2,16 @@
 //! the app event queue that drives navigation.
 
 mod chrome;
-mod dev_feedback;
 mod frame_time;
 mod status;
-pub use dev_feedback::Devtools;
-pub(crate) use dev_feedback::target as dev_target;
 
 use std::{collections::HashMap, time::Duration};
 
-#[cfg(not(debug_assertions))]
-use corpora_ui::ely::primitives::FocusScope;
 use corpora_ui::ely::{
     feedback::{EmptyState, ToastViewport, Toaster},
     layout::{Dock, DockPanel, DockSide},
     navigation::{Command, CommandPalette},
-    primitives::IconName,
+    primitives::{FocusScope, IconName},
     project::Status,
     shell::TrayIcon,
     theme::{ActiveTheme, TextSize},

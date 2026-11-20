@@ -49,6 +49,9 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
                     Route::new()
                         .index()
                         .element(page(|p| p.native.clone().into_any_element())),
+                    Route::new()
+                        .path("library")
+                        .element(page(|p| p.corpus.clone().into_any_element())),
                     Route::new().path("detail/:type/:id").children([
                         Route::new()
                             .index()
@@ -95,7 +98,7 @@ pub fn view(workspace: WeakEntity<Workspace>) -> Routes {
                         .element(|_, _| pages::information()),
                     Route::new()
                         .path("authentication")
-                        .element(|_, _| pages::authentication()),
+                        .element(page(|p| p.corpus.clone().into_any_element())),
                 ]),
                 Route::new().path("*").element(|_, _| pages::not_found()),
             ]),

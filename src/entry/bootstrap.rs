@@ -13,10 +13,11 @@ pub fn bootstrap() {
     let assets = Assets::before(gpui_kit::assets::Assets);
 
     // `run` blocks for the whole app lifetime, so the stack frame keeps the App alive.
-    corpora_shell::shell::Devtools::application(gpui_kit::application(), assets).run(
-        move |cx: &mut App| {
+    gpui_kit::application()
+        .with_assets(assets)
+        .run(move |cx: &mut App| {
             gpui_kit::init(cx);
-            corpora_shell::shell::Devtools::init(cx).expect("UI and Agentation failed to start");
+            corpora_ui::ely::init(cx).expect("Ely failed to start");
             corpora_shell::shell::register_brand_fonts(cx).expect("Caudex failed to load");
             #[cfg(debug_assertions)]
             corpora_ui::ely::tooling::install_inspector(cx);
@@ -39,8 +40,7 @@ pub fn bootstrap() {
                 }
             })
             .detach();
-        },
-    );
+        });
 
     // Runs post-run only: the instance-mutex Global drops inside run()'s
     // frame, and spawning outside any App borrow avoids gpui's Win32
