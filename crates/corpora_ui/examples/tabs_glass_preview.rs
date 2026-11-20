@@ -59,6 +59,7 @@ fn main() -> gpui::Result<()> {
     cx.update(|cx| {
         gpui_kit::init(cx);
         corpora_ui::ely::init_for_tests(cx);
+        corpora_ui::styles::tokens::register_ui_fonts(cx).expect("Manhattan UI failed to load");
         corpora_ui::styles::tokens::DefaultTheme::new().install(cx);
         corpora_ui::ely::theme::Theme::set_mode_now(corpora_ui::ely::theme::Mode::Light, cx);
         corpora_ui::styles::tokens::sync_kit_theme(cx);
