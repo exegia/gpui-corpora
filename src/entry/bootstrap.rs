@@ -19,6 +19,7 @@ pub fn bootstrap() {
             gpui_kit::init(cx);
             corpora_ui::ely::init(cx).expect("Ely failed to start");
             corpora_shell::shell::register_brand_fonts(cx).expect("Caudex failed to load");
+            corpora_ui::styles::tokens::register_ui_fonts(cx).expect("Manhattan UI failed to load");
             #[cfg(debug_assertions)]
             corpora_ui::ely::tooling::install_inspector(cx);
             gpui_router::init(cx);
