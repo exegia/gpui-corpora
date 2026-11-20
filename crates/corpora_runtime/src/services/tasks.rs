@@ -6,11 +6,17 @@ use std::time::{Duration, Instant};
 
 use crate::{ids::TaskId, time::AppTimestamp};
 
+#[cfg(test)]
+#[path = "tasks.test/mod.rs"]
+mod tasks_test;
+
 mod active_count;
 mod background_task;
 mod build_demo_task_notification;
+mod cancel;
 mod demo_task_notification_kind;
 mod drain_with_timeout;
+mod epub_conversion_notification;
 mod fail;
 mod force_cancel_remaining;
 mod initialize;
@@ -20,8 +26,10 @@ mod push_demo_task_notification;
 mod request_shutdown;
 mod shutdown_requested;
 mod spawn_demo_task;
+mod spawn_epub_conversion;
 mod start;
 mod start_demo_task;
+mod start_epub_conversion;
 mod succeed;
 mod task_progress;
 mod task_registry;
@@ -31,8 +39,10 @@ mod update_progress;
 pub use active_count::active_count;
 pub use background_task::BackgroundTask;
 use build_demo_task_notification::build_demo_task_notification;
+use cancel::cancel;
 use demo_task_notification_kind::DemoTaskNotificationKind;
 pub use drain_with_timeout::drain_with_timeout;
+use epub_conversion_notification::EpubConversionNotification;
 use fail::fail;
 use force_cancel_remaining::force_cancel_remaining;
 pub use initialize::initialize;
@@ -42,8 +52,10 @@ use push_demo_task_notification::push_demo_task_notification;
 use request_shutdown::request_shutdown;
 use shutdown_requested::SHUTDOWN_REQUESTED;
 use spawn_demo_task::spawn_demo_task;
+use spawn_epub_conversion::spawn_epub_conversion;
 use start::start;
 pub use start_demo_task::start_demo_task;
+pub use start_epub_conversion::start_epub_conversion;
 use succeed::succeed;
 pub use task_progress::TaskProgress;
 pub use task_registry::TaskRegistry;

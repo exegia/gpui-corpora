@@ -1570,6 +1570,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "corpora_conversion"
+version = "0.1.0"
+dependencies = [
+ "flume 0.11.1",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "corpora_foundation"
 version = "0.1.0"
 dependencies = [
@@ -1621,11 +1632,13 @@ dependencies = [
 name = "corpora_runtime"
 version = "0.1.0"
 dependencies = [
+ "corpora_conversion",
  "corpora_foundation",
  "corpora_platform",
  "corpora_ui",
  "flume 0.11.1",
  "futures-util",
+ "gpui-kit",
  "gpui-pre",
  "keyring",
  "network-interface",
@@ -1636,6 +1649,7 @@ dependencies = [
  "rust-i18n",
  "serde",
  "sys-locale",
+ "tempfile",
  "thiserror 2.0.21",
  "tokio",
  "tracing",
@@ -3201,6 +3215,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "corpora_config",
+ "corpora_conversion",
  "corpora_foundation",
  "corpora_persistence",
  "corpora_platform",
