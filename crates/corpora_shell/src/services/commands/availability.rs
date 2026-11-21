@@ -11,7 +11,8 @@ pub fn availability(id: CommandId, cx: &App) -> CommandAvailability {
         | CommandId::OpenAbout
         | CommandId::ThemeLight
         | CommandId::ThemeDark
-        | CommandId::StartDemoTask => CommandAvailability {
+        | CommandId::StartDemoTask
+        | CommandId::ConvertEpub => CommandAvailability {
             enabled: true,
             disabled_reason: None,
         },

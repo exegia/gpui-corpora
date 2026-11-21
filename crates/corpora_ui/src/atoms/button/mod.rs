@@ -416,7 +416,10 @@ impl RenderOnce for Button {
         let button = button
             .glass_with(glass)
             .scale(scale)
-            .bezel(colors.bevel, colors.shadow, colors.border)
+            .bezel(
+                crate::styles::utils::bezel(colors.bevel, colors.shadow),
+                colors.border,
+            )
             .into_any_element();
         semantics::ButtonSemantics::new(
             button,
