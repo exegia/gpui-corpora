@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Usage: create-dmg.sh <INPUT_APP_DIR> <OUTPUT_DMG>
-# Example: create-dmg.sh target/release/GPUI\ Starter.app target/release/GPUI-Starter-0.2.0.dmg
+# Example: create-dmg.sh target/release/dist/aarch64/Corpora.app target/release/Corpora-0.1.0-macos-arm64.dmg
 
 if [ $# -lt 2 ]; then
     echo "Usage: $0 <INPUT_APP_DIR> <OUTPUT_DMG>" >&2
@@ -11,7 +11,7 @@ fi
 
 INPUT_APP_DIR="$1"
 OUTPUT_DMG="$2"
-VOLUME_NAME="GPUI Starter"
+VOLUME_NAME="Corpora"
 
 if [ ! -d "$INPUT_APP_DIR" ]; then
     echo "Error: App bundle not found at $INPUT_APP_DIR" >&2

@@ -10,23 +10,11 @@ use gpui::{Hsla, rgb};
 use serde::Deserialize;
 
 use crate::ely::theme::{Mode, Palette, Syntax};
-use crate::styles::utils::oklch;
+use crate::styles::utils::{oklch, palette};
 
 #[cfg(test)]
 #[path = "palette.test.rs"]
 mod palette_test;
-
-#[derive(Deserialize)]
-struct PaletteDoc {
-    colors: HashMap<String, Entry>,
-}
-
-#[derive(Deserialize)]
-#[serde(untagged)]
-enum Entry {
-    Named(String),
-    Scale(HashMap<String, String>),
-}
 
 #[derive(Deserialize)]
 struct ThemeDoc {
@@ -74,26 +62,21 @@ struct SyntaxRefs {
 }
 
 struct Parsed {
-    scales: HashMap<String, HashMap<String, String>>,
-    named: HashMap<String, String>,
     theme: ThemeDoc,
 }
 
 impl Parsed {
     fn resolve(&self, reference: &str) -> Hsla {
-        let literal = if let Some((scale, step)) = reference.split_once('.') {
-            self.scales
-                .get(scale)
-                .and_then(|steps| steps.get(step))
-                .unwrap_or_else(|| panic!("unknown palette color `{reference}`"))
+        if let Some((scale, step)) = reference.split_once('.') {
+            let step = step
+                .parse()
+                .unwrap_or_else(|_| panic!("unknown palette color `{reference}`"));
+            palette(scale, step)
         } else if reference.starts_with('#') {
-            return parse_color(reference);
+            parse_color(reference)
         } else {
-            self.named
-                .get(reference)
-                .unwrap_or_else(|| panic!("unknown palette color `{reference}`"))
-        };
-        parse_color(literal)
+            palette(reference, 0)
+        }
     }
 
     fn role(&self, name: &str, mode: Mode) -> Hsla {
@@ -143,22 +126,9 @@ fn pick<T>(mode: Mode, light: T, dark: T) -> T {
 fn parsed() -> &'static Parsed {
     static CACHE: OnceLock<Parsed> = OnceLock::new();
     CACHE.get_or_init(|| {
-        let palette: PaletteDoc = toml::from_str(include_str!("../themes/palette.toml"))
-            .expect("palette.toml is malformed");
         let theme: ThemeDoc = toml::from_str(include_str!("../themes/default.toml"))
             .expect("default.toml is malformed");
-        let (mut scales, mut named) = (HashMap::new(), HashMap::new());
-        for (name, entry) in palette.colors {
-            match entry {
-                Entry::Named(color) => drop(named.insert(name, color)),
-                Entry::Scale(steps) => drop(scales.insert(name, steps)),
-            }
-        }
-        Parsed {
-            scales,
-            named,
-            theme,
-        }
+        Parsed { theme }
     })
 }
 

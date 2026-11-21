@@ -17,6 +17,7 @@ default = []
 otlp = ["dep:opentelemetry-otlp", "dep:opentelemetry_sdk"]
 
 [dependencies]
+corpora_conversion.workspace = true
 corpora_foundation.workspace = true
 corpora_platform.workspace = true
 corpora_ui.workspace = true
@@ -24,6 +25,7 @@ corpora_ui.workspace = true
 flume.workspace = true
 futures-util.workspace = true
 gpui.workspace = true
+gpui-kit.workspace = true
 keyring.workspace = true
 network-interface.workspace = true
 opentelemetry.workspace = true
@@ -36,3 +38,7 @@ sys-locale.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+gpui = { package = "gpui-pre", version = "=0.3.8", features = ["test-support"] }
+tempfile.workspace = true
