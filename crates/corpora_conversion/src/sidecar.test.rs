@@ -146,7 +146,7 @@ exec cat > /dev/null
             "operation": "epub_to_tf",
             "input": {"path": "/books/book.epub"},
             "output": {"path": "/books/out"},
-            "options": {"repair": false},
+            "options": {"repair": false, "max_slots": 4_294_967_295_u64},
         })
     );
 }

@@ -12,7 +12,7 @@ use std::{
 use crate::{
     EpubTools,
     protocol::{
-        self, MAX_FRAME_BYTES, PROTOCOL_VERSION, PathArgument, Request, SidecarMessage,
+        self, MAX_FRAME_BYTES, MAX_SLOTS, PROTOCOL_VERSION, PathArgument, Request, SidecarMessage,
         StartOptions,
     },
 };
@@ -168,7 +168,10 @@ impl Sidecar {
             operation: EPUB_TO_TF,
             input: PathArgument { path: input_path },
             output: PathArgument { path: output_path },
-            options: StartOptions { repair },
+            options: StartOptions {
+                repair,
+                max_slots: MAX_SLOTS,
+            },
         })?;
         Ok(request_id)
     }

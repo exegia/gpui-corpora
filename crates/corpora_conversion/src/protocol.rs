@@ -8,6 +8,10 @@ use serde_json::{Map, Value};
 pub(crate) const PROTOCOL_VERSION: u64 = 1;
 /// Largest frame either side may send, including the trailing newline.
 pub(crate) const MAX_FRAME_BYTES: usize = 1024 * 1024;
+/// Character slots a job may project. Conversion runs on the user's machine, so
+/// this only has to exceed what the core's 500 MiB expanded-content limit allows
+/// (about 1.05 billion slots, counting notes twice); that limit stops a book first.
+pub(crate) const MAX_SLOTS: u64 = u32::MAX as u64;
 
 /// A message the sidecar writes to standard output.
 ///
@@ -151,6 +155,7 @@ pub(crate) struct PathArgument<'a> {
 #[derive(Serialize)]
 pub(crate) struct StartOptions {
     pub repair: bool,
+    pub max_slots: u64,
 }
 
 /// Encode a request as one newline-terminated frame.
