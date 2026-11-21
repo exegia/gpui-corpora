@@ -39,6 +39,17 @@ pub fn bar(window: &mut Window, cx: &mut App) -> AnyElement {
     if let Some(frame) = frame_time_label(cx) {
         bar = bar.right(StatusBarItem::new("frame-time").label(frame));
     }
+    let family = corpora_ui::ely::theme::ActiveTheme::theme(cx)
+        .font_family
+        .clone();
+    let text_system = cx.text_system();
+    let resolved = text_system
+        .get_font_for_id(text_system.resolve_font(&gpui::font(family.clone())))
+        .map(|font| font.family)
+        .unwrap_or_default();
+    let bar = bar.right(
+        StatusBarItem::new("font-check").label(format!("Font: {resolved} (asked for {family})")),
+    );
     let bar = bar.right(
         StatusBarItem::new("auth-status")
             .icon(IconName::Shield)

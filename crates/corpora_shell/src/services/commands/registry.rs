@@ -52,6 +52,12 @@ pub fn registry() -> Vec<CommandSpec> {
             IconName::Play,
         ),
         command(
+            CommandId::ConvertEpub,
+            "command_convert_epub",
+            "command_convert_epub_subtitle",
+            IconName::BookOpen,
+        ),
+        command(
             CommandId::CheckConnectivity,
             "command_check_connectivity",
             "command_check_connectivity_subtitle",

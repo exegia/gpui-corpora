@@ -49,6 +49,7 @@ fn kit_theme_survives_repeated_appearance_changes(cx: &mut gpui::TestAppContext)
             sync_kit_theme(cx);
             let theme = gpui_kit::component::Theme::global(cx);
             assert!(!theme.focus_ring && theme.ring.a == 0.0);
+            assert_eq!(theme.font_family.as_ref(), UI_FONT_FAMILY);
             let mode = if mode.is_dark() {
                 Mode::Dark
             } else {
@@ -97,4 +98,13 @@ fn semantic_text_stays_readable() {
             assert!(ratio >= 4.5, "{mode} {name} is {ratio:.2}:1");
         }
     }
+}
+
+#[gpui::test]
+fn install_sets_the_ui_font_family(cx: &mut gpui::TestAppContext) {
+    cx.update(|cx| {
+        crate::ely::init_for_tests(cx);
+        DefaultTheme::new().install(cx);
+        assert_eq!(cx.global::<Theme>().font_family.as_ref(), UI_FONT_FAMILY);
+    });
 }

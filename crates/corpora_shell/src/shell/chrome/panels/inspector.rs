@@ -79,13 +79,13 @@ pub(super) fn layout(
                     .h_full()
                     .flex_none()
                     .overflow_hidden()
-                    .child(div().w(saved_width).h_full().pl(rems(0.5)).child(
-                        crate::shell::dev_target(
-                            "tab-inspector",
-                            "Tab inspector",
-                            layout::inspector(dark, content),
-                        ),
-                    ))
+                    .child(
+                        div()
+                            .w(saved_width)
+                            .h_full()
+                            .pl(rems(0.5))
+                            .child(layout::inspector(dark, content)),
+                    )
                     .child(
                         resize_handle::<DragInspector, DragPreview>(
                             "inspector-resize",

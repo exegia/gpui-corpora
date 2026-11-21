@@ -11,6 +11,7 @@ pub struct Pages {
     pub button: Entity<crate::routes::ui::button::ButtonShowcase>,
     #[cfg(debug_assertions)]
     pub glass: Entity<crate::routes::ui::glass::GlassShowcase>,
+    pub corpus: Entity<crate::pages::CorpusPage>,
     pub notifications: Entity<NotificationsPage>,
     pub diagnostics: Entity<DiagnosticsPage>,
     pub about: Entity<AboutPage>,

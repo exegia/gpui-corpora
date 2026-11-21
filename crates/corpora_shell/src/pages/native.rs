@@ -206,6 +206,11 @@ impl Render for NativePage {
             .flex_col()
             .gap_4()
             .child(Heading::h1("Local corpus"))
+            .child(super::nav_button(
+                "cloud-corpora",
+                "Your online corpora",
+                "/explore/library",
+            ))
             .child(Paragraph::new(
                 "Open a Text-Fabric feature directory or a compiled CFR file.",
             ))
